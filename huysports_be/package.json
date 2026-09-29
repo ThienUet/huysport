@@ -1,0 +1,48 @@
+{
+  "name": "huysports_be",
+  "version": "1.0.0",
+  "description": "Backend RESTful API for SportX E-Commerce System - Node.js + Express + TypeScript",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:fresh": "tsx src/db/migrate.ts --fresh",
+    "db:seed": "tsx src/db/migrate.ts --seed",
+    "db:status": "tsx src/db/migrate.ts --status",
+    "db:drop": "tsx src/db/migrate.ts --drop"
+  },
+  "keywords": [
+    "express",
+    "ecommerce",
+    "sportx",
+    "chatbot",
+    "vnpay",
+    "mongodb"
+  ],
+  "author": "Dinh Cong Hung",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.1",
+    "morgan": "^1.10.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.13.9",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "huysports-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./huysports_*\" dev",
+    "dev:admin": "pnpm --filter huysports_admin dev",
+    "dev:client": "pnpm --filter huysports_client dev",
+    "dev:be": "pnpm --filter huysports_be dev",
+    "build": "pnpm --recursive run build",
+    "clean-source": "node scripts/clean.cjs"
+  }
+}

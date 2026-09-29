@@ -1,0 +1,8 @@
+packages:
+  - 'huysports_be'
+  - 'huysports_admin'
+  - 'huysports_client'
+allowBuilds:
+  '@heroui/shared-utils': false
+  esbuild: false
+  sharp: false

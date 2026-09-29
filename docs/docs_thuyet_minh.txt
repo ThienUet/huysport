@@ -1,0 +1,161 @@
+ĐẠI HỌC CÔNG NGHIỆP VIỆT - HUNG
+CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do – Hạnh phúc
+KHOA CÔNG NGHỆ THÔNG TIN
+ĐỀ CƯƠNG ĐỀ TÀI
+ĐỒ ÁN TỐT NGHIỆP ĐẠI HỌC
+Họ và tên sinh viên : Đinh Công Hùng
+Lớp                          : K4658-CNTT1
+Khoá                        : 46
+Ngành đào tạo        : Công nghệ thông tin
+Chuyên ngành        : Công nghệ thông tin
+Hệ đào tạo              : Đại học chính quy
+1/ Tên đồ án tốt nghiệp:
+Xây dựng website thương mại điện tử kinh doanh quần áo thể thao tích hợp Chatbot hỗ trợ tư vấn sản phẩm và thanh toán trực tuyến.
+2/ Lý do chọn đề tài:
+Trong những năm gần đây, thị trường thương mại điện tử tại Việt Nam phát triển mạnh mẽ, trong đó ngành hàng thời trang, đặc biệt là quần áo thể thao, có nhu cầu mua sắm trực tuyến ngày càng tăng cao nhờ xu hướng rèn luyện sức khoẻ và thể thao của người tiêu dùng.
+Tuy nhiên, nhiều website bán hàng hiện nay chưa hỗ trợ tốt việc tư vấn cho khách hàng khi lựa chọn sản phẩm, kích cỡ, dẫn đến trải nghiệm mua sắm chưa thực sự thuận tiện và tỉ lệ đổi trả hàng còn cao.
+Việc tích hợp Chatbot vào website giúp tự động hoá việc tư vấn, giải đáp thắc mắc thường gặp và hỗ trợ khách hàng 24/7, qua đó nâng cao chất lượng phục vụ và hiệu quả kinh doanh của cửa hàng.
+Đồng thời, đề tài là cơ hội để em vận dụng, củng cố các kiến thức đã học về phân tích thiết kế hệ thống, cơ sở dữ liệu, lập trình web, tích hợp Chatbot và cổng thanh toán trực tuyến vào một sản phẩm thực tế, phục vụ cho việc học tập và làm việc sau này.
+Bên cạnh đó, việc xây dựng một hệ thống thương mại điện tử hoàn chỉnh, có tích hợp trí tuệ nhân tạo (Chatbot) và thanh toán trực tuyến đòi hỏi sinh viên phải nắm vững quy trình phát triển phần mềm từ khảo sát, phân tích, thiết kế đến kiểm thử, triển khai - đây là những kỹ năng thiết yếu của một kỹ sư Công nghệ thông tin.
+Xuất phát từ những lý do trên, em lựa chọn đề tài "Xây dựng website thương mại điện tử kinh doanh quần áo thể thao tích hợp Chatbot hỗ trợ tư vấn sản phẩm và thanh toán trực tuyến" làm đề tài đồ án tốt nghiệp của mình.
+3/ Nội dung, nhiệm vụ nghiên cứu:
+Nội dung báo cáo đồ án gồm 04 chương như sau:
+CHƯƠNG 1: TỔNG QUAN ĐỀ TÀI
+1.Mục tiêu và phương pháp nghiên cứu
+Mục tiêu nghiên cứu
+Xây dựng hoàn chỉnh một website thương mại điện tử bán quần áo thể thao với đầy đủ tính năng mua sắm, thanh toán và quản trị.
+Tích hợp thành công Chatbot AI có khả năng tự động tư vấn kích cỡ (size), gợi ý sản phẩm theo nhu cầu và giải đáp các thắc mắc thường gặp của khách hàng.
+Phương pháp nghiên cứu
+Nghiên cứu lý thuyết: Phân tích tài liệu về thương mại điện tử, các mô hình thanh toán trực tuyến và công nghệ xử lý ngôn ngữ tự nhiên (NLP) ứng dụng trong Chatbot.
+Khảo sát thực tế: Phân tích ưu/nhược điểm của các hệ thống bán hàng hiện có để rút ra bài học thiết kế.
+Phương pháp phát triển phần mềm: Sử dụng mô hình linh hoạt (Agile/Scrum) kết hợp với các công cụ lập trình web hiện đại để xây dựng và kiểm thử hệ thống.
+2. Khảo sát hiện trạng và đánh giá các website tương tự
+Hiện trạng kinh doanh trực tuyến: Các cửa hàng đồ thể thao truyền thống đang dần chuyển dịch lên không gian số để tiếp cận tệp khách hàng Gen Z và Millennials. Tuy nhiên, nhiều doanh nghiệp vừa và nhỏ hiện chỉ phụ thuộc vào mạng xã hội (Facebook, Instagram) hoặc các sàn TMĐT tổng hợp (Shopee, Lazada), dẫn đến việc khó xây dựng nhận diện thương hiệu riêng và thiếu tính năng tư vấn chuyên sâu.
+Đánh giá các website tương tự
+Các sàn TMĐT lớn (Shopee, Lazada): Ưu điểm là hệ thống thanh toán và vận chuyển hoàn thiện. Nhược điểm là giao diện đại trà, dịch vụ chăm sóc khách hàng phụ thuộc hoàn toàn vào nhân viên trực page, tốc độ phản hồi chậm.
+Website thương hiệu riêng (Adidas, Nike, Coolmate): Giao diện chuyên nghiệp, bộ lọc sản phẩm chi tiết theo môn thể thao. Tuy nhiên, tính năng Chatbot (nếu có) thường chỉ là các kịch bản tĩnh (rule-based), chưa có khả năng hiểu ngữ nghĩa và tư vấn linh hoạt như con người.
+3. Xác định yêu cầu nghiệp vụ
+Hệ thống cần đáp ứng các nhóm nghiệp vụ cốt lõi sau:
+Quản lý danh mục và sản phẩm: Phân loại sản phẩm đa dạng theo môn thể thao, giới tính, bộ sưu tập; quản lý biến thể (màu sắc, kích cỡ) và số lượng tồn kho.
+Quản lý giỏ hàng và Đơn hàng: Cho phép thêm/sửa/xóa sản phẩm trong giỏ, áp dụng mã giảm giá, theo dõi trạng thái đơn hàng (chờ duyệt, đang giao, hoàn thành, đã hủy).
+Thanh toán trực tuyến: Tích hợp các cổng thanh toán nội địa và quốc tế (VNPay, MoMo, hoặc PayPal) đảm bảo giao dịch an toàn, tiện lợi bên cạnh hình thức COD truyền thống.
+Tư vấn qua Chatbot: Tự động phản hồi tin nhắn khách hàng, thu thập thông tin chiều cao/cân nặng để gợi ý size áo/quần chuẩn xác, hướng dẫn chính sách đổi trả và bảo hành.
+4. Xác định phạm vi và đối tượng sử dụng
+Đối tượng sử dụng
+Khách hàng (Customer): Người dùng có nhu cầu tìm kiếm, nhận tư vấn, đặt mua sản phẩm và theo dõi đơn hàng.
+Quản trị viên (Admin/Manager): Nhân viên vận hành hệ thống, chịu trách nhiệm đăng tải sản phẩm, xử lý đơn hàng, xem báo cáo doanh thu và cấu hình kịch bản cho Chatbot.
+Chatbot (Hệ thống tự động): Đóng vai trò như một tư vấn viên ảo hoạt động liên tục trên giao diện khách hàng.
+Phạm vi chức năng: Đồ án giới hạn trong việc xây dựng hệ thống web-based phục vụ quy trình mua bán B2C (Business to Consumer). Hệ thống không bao gồm các nghiệp vụ quản lý kho bãi phức tạp (mã vạch, đa kho) hay kế toán nhân sự, mà tập trung làm nổi bật luồng trải nghiệm mua sắm trực tuyến và hiệu quả của trợ lý ảo Chatbot.
+5. Bố cục tổng quan của đồ án
+Chương 1: Tổng quan đề tài. Trình bày bối cảnh, lý do, mục tiêu, phạm vi nghiên cứu và khảo sát hiện trạng nghiệp vụ.
+Chương 2:Giới thiệu ngôn ngữ, công cụ xây dựng hệ thống. Giới thiệu các nền tảng ngôn ngữ lập trình, hệ quản trị cơ sở dữ liệu và thuật toán/công nghệ AI được áp dụng để xây dựng Chatbot.
+Chương 3: Phân tích hệ thống. Mô hình hóa các yêu cầu thông qua biểu đồ Use Case, Activity, Sequence; thiết kế cơ sở dữ liệu (ERD) và phác thảo giao diện người dùng (UI/UX).
+Chương 4: Thiết kế hệ thống. Trình bày kết quả cài đặt, các giao diện chức năng chính của website, cách thức Chatbot hoạt động và các kịch bản kiểm thử (test cases).
+CHƯƠNG 2: GIỚI THIỆU NGÔN NGỮ, CÔNG CỤ XÂY DỰNG HỆ THỐNG
+2.1. Ngôn ngữ lập trình
+Trình bày các ngôn ngữ được sử dụng để xây dựng hệ thống, bao gồm:
+HTML. 
+CSS. 
+JavaScript. 
+Ngôn ngữ lập trình phía máy chủ. 
+Ngôn ngữ truy vấn cơ sở dữ liệu. 
+2.2. Công nghệ phát triển Web
+Kiến trúc Client-Server. 
+RESTful API. 
+Xử lý yêu cầu HTTP. 
+Giao tiếp giữa Frontend và Backend. 
+Quản lý phiên đăng nhập. 
+Xác thực và phân quyền người dùng. 
+2.3. Cơ sở dữ liệu
+Trình bày:
+Khái niệm cơ sở dữ liệu quan hệ. 
+Thiết kế bảng. 
+Khóa chính và khóa ngoại. 
+Quan hệ giữa các bảng. 
+Quản lý dữ liệu sản phẩm. 
+Quản lý khách hàng. 
+Quản lý đơn hàng. 
+Quản lý tồn kho. 
+2.4. Công nghệ xây dựng giao diện
+Thiết kế giao diện người dùng. 
+Thiết kế Responsive Web. 
+Hiển thị sản phẩm. 
+Trang chi tiết sản phẩm. 
+Giỏ hàng. 
+Trang thanh toán. 
+Trang quản trị. 
+2.5. Công nghệ xây dựng Chatbot
+Nguyên lý hoạt động của Chatbot. 
+Xây dựng dữ liệu phục vụ Chatbot. 
+Xử lý câu hỏi của khách hàng. 
+Tư vấn sản phẩm. 
+Tư vấn kích cỡ. 
+Trả lời câu hỏi thường gặp. 
+Lưu trữ nội dung và lịch sử hội thoại. 
+2.6. Công nghệ thanh toán trực tuyến
+Quy trình gửi yêu cầu thanh toán. 
+Xử lý kết quả giao dịch. 
+Cập nhật trạng thái thanh toán. 
+Liên kết trạng thái thanh toán với đơn hàng. 
+Đảm bảo tính nhất quán của dữ liệu.
+CHƯƠNG 3: PHÂN TÍCH HỆ THỐNG
+- Phân tích yêu cầu chức năng và phi chức năng của hệ thống.
+- Xây dựng biểu đồ Use Case, biểu đồ hoạt động cho các chức năng chính: đăng ký, đăng nhập, quản lý sản phẩm, giỏ hàng, đặt hàng, thanh toán, Chatbot tư vấn.
+- Phân tích và thiết kế mô hình dữ liệu (biểu đồ thực thể liên kết ERD) cho hệ thống.
+- Xây dựng biểu đồ tuần tự (Sequence Diagram) cho các nghiệp vụ chính: đặt hàng, thanh toán trực tuyến, tư vấn qua Chatbot.
+- Đặc tả các tác nhân (actor) của hệ thống:
+Khách hàng (Customer): Bao gồm khách vãng lai và thành viên đã đăng ký. Họ tương tác trực tiếp với giao diện cửa hàng để tìm kiếm, mua sắm và nhận tư vấn.
+Quản trị viên (Admin): Nhân viên hoặc chủ cửa hàng có quyền truy cập trang quản trị (Dashboard) để vận hành luồng hàng hóa, xử lý đơn hàng và theo dõi doanh thu.
+Chatbot Engine (Hệ thống/API ngoài): Động cơ xử lý ngôn ngữ tự nhiên (NLP) tiếp nhận tin nhắn thô, phân tích ý định (intent) của khách hàng và trả về kịch bản phản hồi hoặc kết quả truy vấn tương ứng.
+CHƯƠNG 4: THIẾT KẾ HỆ THỐNG 
+Hệ thống thương mại điện tử kinh doanh quần áo thể thao website bán hàng trực tuyến, gồm các thành phần chính:
+Giao diện khách hàng:
+- Trang chủ giới thiệu sản phẩm nổi bật và sản phẩm khuyến mãi. Trang chủ cung cấp thông tin tổng quan về website, giới thiệu các sản phẩm đang được quan tâm, các sản phẩm mới và những chương trình khuyến mãi đang được áp dụng. Giao diện được thiết kế trực quan nhằm giúp khách hàng dễ dàng tiếp cận các sản phẩm và lựa chọn sản phẩm phù hợp với nhu cầu.
+- Trang danh mục sản phẩm và tìm kiếm sản phẩm. Khách hàng có thể xem sản phẩm theo từng danh mục. Bên cạnh đó, chức năng tìm kiếm giúp khách hàng nhanh chóng tìm được sản phẩm thông qua tên hoặc từ khóa liên quan. Hệ thống cũng hỗ trợ lọc sản phẩm theo các tiêu chí như danh mục, thương hiệu và mức giá.
+- Trang chi tiết sản phẩm, hiển thị thông tin và giá bán. Trang chi tiết cung cấp các thông tin cần thiết về sản phẩm như tên sản phẩm, hình ảnh, thương hiệu, danh mục, mô tả, giá bán, giá khuyến mãi, số lượng tồn kho và các thông số kích thước với sản phẩm quần áo thể thao. Khách hàng có thể xem thông tin chi tiết trước khi quyết định mua sản phẩm.
+- Trang đăng ký, đăng nhập. Khách hàng có thể tạo tài khoản để sử dụng các chức năng của hệ thống. Chức năng đăng nhập giúp hệ thống xác định người dùng và hỗ trợ quản lý thông tin cá nhân, giỏ hàng, đơn hàng cũng như quá trình mua hàng của khách hàng.
+- Trang giỏ hàng, thanh toán, tin tức. Trang giỏ hàng hiển thị những sản phẩm khách hàng đã lựa chọn, cho phép cập nhật số lượng hoặc xóa sản phẩm trước khi đặt hàng. Trang thanh toán cho phép khách hàng nhập thông tin nhận hàng, lựa chọn phương thức thanh toán và xác nhận đơn hàng. Trang tin tức cung cấp các nội dung liên quan đến sản phẩm, hoạt động và thông tin của cửa hàng.
+- Trang liên hệ, chatbot. Trang liên hệ cung cấp thông tin để khách hàng có thể gửi yêu cầu hoặc trao đổi với cửa hàng. Chatbot được tích hợp trực tiếp trên website nhằm hỗ trợ khách hàng giải đáp các câu hỏi thường gặp và tư vấn lựa chọn quần áo dựa trên nhu cầu, sở thích và phù hợp với mức ngân sách.
+Giao diện quản trị:
+- Trang tổng quan về doanh thu, đơn hàng, sản phẩm. Trang quản trị cung cấp giao diện tổng quan giúp quản trị viên theo dõi tình hình hoạt động của website thông qua các thông tin như số lượng đơn hàng, doanh thu và tình trạng sản phẩm. Các thông tin này giúp quản trị viên có cái nhìn tổng quát về hoạt động kinh doanh của hệ thống.
+- Trang quản lý sản phẩm, đơn hàng. Quản trị viên có thể thực hiện các thao tác thêm, sửa, xóa và cập nhật thông tin sản phẩm. Các thông tin như tên sản phẩm, danh mục, thương hiệu, giá bán, giá khuyến mãi, số lượng tồn kho, hình ảnh và trạng thái kinh doanh được quản lý trên hệ thống. Đối với đơn hàng, quản trị viên có thể xem thông tin đơn hàng, sản phẩm, khách hàng, phương thức thanh toán và cập nhật trạng thái đơn hàng.
+- Trang quản lý tài khoản (khách hàng). Quản trị viên có thể xem và quản lý thông tin tài khoản của khách hàng, đồng thời theo dõi trạng thái hoạt động của tài khoản. Chức năng này giúp đảm bảo việc quản lý người dùng được thực hiện tập trung và thuận tiện.
+- Trang thống kê, báo cáo. Hệ thống hỗ trợ quản trị viên theo dõi các thông tin liên quan đến tình hình kinh doanh như doanh thu, số lượng đơn hàng và sản phẩm. Các thông tin thống kê và báo cáo giúp hỗ trợ quản trị viên trong việc theo dõi, đánh giá hoạt động của website.
+- Trang quản lý chatbot. Quản trị viên có thể quản lý các câu hỏi, câu trả lời và từ khóa được sử dụng để hỗ trợ chatbot tư vấn khách hàng. Nội dung chatbot có thể được cập nhật hoặc bổ sung khi có sản phẩm mới, chính sách mới hoặc các câu hỏi thường gặp mới từ khách hàng.
+Xây dựng, kiểm thử và đánh giá hệ thống:
+- Xây dựng các giao diện và chức năng dành cho khách hàng và quản trị viên. Các giao diện được triển khai dựa trên kết quả phân tích và thiết kế hệ thống, đảm bảo các chức năng được bố trí rõ ràng và thuận tiện cho từng nhóm người sử dụng. Giao diện khách hàng tập trung vào quá trình tìm kiếm và mua sản phẩm, trong khi giao diện quản trị tập trung vào việc quản lý và theo dõi hoạt động của website.
+- Tích hợp chatbot tư vấn khách hàng và chức năng thanh toán trực tuyến. Chatbot được kết nối với hệ thống để tiếp nhận câu hỏi và cung cấp thông tin tư vấn cho khách hàng. Chức năng thanh toán trực tuyến được tích hợp nhằm hỗ trợ khách hàng thực hiện thanh toán thuận tiện hơn trong quá trình đặt hàng và giúp hệ thống ghi nhận kết quả giao dịch.
+- Kiểm thử các chức năng của hệ thống, xử lý lỗi và đảm bảo hoạt động ổn định. Quá trình kiểm thử được thực hiện đối với các chức năng chính như đăng ký, đăng nhập, tìm kiếm sản phẩm, lọc sản phẩm, xem chi tiết sản phẩm, thêm vào giỏ hàng, đặt hàng, thanh toán, quản lý đơn hàng và chatbot. Các lỗi phát sinh trong quá trình kiểm thử được ghi nhận và xử lý để đảm bảo hệ thống hoạt động đúng với yêu cầu đề ra.
+- Đánh giá giao diện, tính năng và hiệu quả hoạt động của website. Sau khi hoàn thiện, hệ thống được đánh giá dựa trên khả năng đáp ứng các yêu cầu chức năng, mức độ thuận tiện khi sử dụng, tính ổn định của các chức năng và khả năng hỗ trợ khách hàng trong quá trình mua hàng. Kết quả đánh giá được sử dụng để xác định những điểm đã hoàn thiện và những nội dung cần tiếp tục cải thiện.
+Kết luận:
+Kết quả dự kiến đạt được:
+- Xây dựng hoàn chỉnh website thương mại điện tử kinh doanh quần áo thể thao với đầy đủ chức năng cho khách hàng và quản trị viên.
+- Tích hợp thành công Chatbot hỗ trợ tư vấn sản phẩm, kích cỡ và giải đáp các câu hỏi thường gặp của khách hàng.
+- Tích hợp cổng thanh toán trực tuyến, quản lý trạng thái giao dịch và theo dõi đơn hàng.
+- Xây dựng trang quản trị với chức năng thống kê, báo cáo phục vụ công tác quản lý bán hàng.
+- Xây dựng đầy đủ chức năng tìm kiếm, lọc, sắp xếp, đánh giá sản phẩm và theo dõi trạng thái đơn hàng cho khách hàng.
+- Áp dụng các biện pháp xác thực, phân quyền và bảo mật nhằm bảo vệ dữ liệu khách hàng và hệ thống.
+Hạn chế:
+- Chatbot mới hỗ trợ tư vấn các câu hỏi thường gặp ở mức cơ bản, chưa xử lý tốt các tình huống hội thoại phức tạp.
+- Chưa thử nghiệm hệ thống trong môi trường có lượng truy cập lớn để đánh giá đầy đủ khả năng chịu tải.
+- Một vài giao diện chưa thực sự bắt mắt, cần tiếp tục tối ưu về trải nghiệm người dùng (UI/UX).
+- Chưa hỗ trợ đa ngôn ngữ giao diện và các phương thức thanh toán quốc tế trong phạm vi đồ án.
+4/ Tài liệu, dữ liệu tham khảo dự kiến:
+Tiếng Việt
+N. V. Ba, Phân tích và thiết kế hệ thống thông tin. Hà Nội, Việt Nam: NXB Đại học Quốc gia Hà Nội, 2012.
+Nguyễn Thanh Thủy, Trí tuệ nhân tạo: Các phương pháp giải quyết vấn đề và kỹ thuật học. Hà Nội: NXB Giáo dục, 2010. (Cơ sở lý thuyết cho việc thiết kế luồng xử lý thông minh của Chatbot).
+Đồng Thị Bích Thủy (Chủ biên), Giáo trình Hệ cơ sở dữ liệu. TP.HCM: NXB Đại học Quốc gia TP.HCM, 2014. (Tham khảo cho chương thiết kế mô hình dữ liệu ERD).
+Internet
+https://github.com/phanxuanquang/VNPAY.NET
+https://docs.cloud.google.com/dialogflow/es/docs
+https://sandbox.vnpayment.vn/apis/
+6/Ngày giao đề tài:    …… /…./..…...
+7/Ngày nộp quyển :   …… /…./....….
+           
+Hà Nội, ngày ...... tháng ...... năm ...........
+TRƯỞNG KHOA
+GIÁO VIÊN HƯỚNG DẪN
+SINH VIÊN
+      
+ 
