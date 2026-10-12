@@ -195,7 +195,7 @@ flowchart TD
     CheckStock -- Hết hàng (stock = 0) --> DisableBtn[Vô hiệu hóa nút Thêm vào giỏ]
     CheckStock -- Còn hàng --> AddCart[Click 'Thêm Vào Giỏ' hoặc 'Thêm Nhanh +']
     
-    AddCart --> ZustandAction[Gọi addItem() trong Zustand useCartStore]
+    AddCart --> ZustandAction[Gọi addItem trong Zustand useCartStore]
     ZustandAction --> LocalStorage[(Lưu trữ đồng bộ LocalStorage 'sportx-cart')]
     LocalStorage --> OpenDrawer[Tự động bật CartDrawer xem lại giỏ hàng]
     
