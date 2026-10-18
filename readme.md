@@ -273,7 +273,7 @@ flowchart TD
     AuthChoice -- Chưa --> RegisterPage[Truy cập /auth/register]
     RegisterPage --> SubmitRegister[Nhập: Họ tên, Email, Mật khẩu, SĐT]
     SubmitRegister --> PostRegister[POST /api/auth/register]
-    PostRegister --> HashPassword[Backend băm mật khẩu: bcrypt.hashSync(pw, 10)]
+    PostRegister --> HashPassword["Backend băm mật khẩu: bcrypt.hashSync(pw, 10)"]
     HashPassword --> SaveUser[Lưu User mới với role = 'CUSTOMER']
     SaveUser --> RegisterSuccess[Thông báo thành công -> Chuyển sang /auth/login]
     
