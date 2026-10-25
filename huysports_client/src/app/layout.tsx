@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   description: "Cửa hàng trực tuyến quần áo thể thao chính hãng HuySport — Bóng đá, Chạy bộ, Gym, Cầu lông. Tích hợp AI Chatbot tư vấn chuẩn size và thanh toán trực tuyến.",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/logo-icon.png", sizes: "96x96", type: "image/png" },
     ],

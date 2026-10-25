@@ -3,6 +3,7 @@ import { db } from "../db/store.js";
 import { SizeEngine } from "../engine/sizeEngine.js";
 import { FAQEngine } from "../engine/faqEngine.js";
 import { SizeRule, FAQItem, ChatSession, ChatMessage } from "../types/index.js";
+import { formatDateTime } from "../utils/formatUtils.js";
 
 export class ChatbotController {
   // --- Size Rules ---
@@ -101,7 +102,12 @@ export class ChatbotController {
 
   // --- Size Recommendation Engine ---
   public static recommendSize(req: Request, res: Response) {
-    const { height, weight, gender, category, fitPreference } = req.body;
+    const height = req.body.height || req.body.heightCm;
+    const weight = req.body.weight || req.body.weightKg;
+    const gender = req.body.gender;
+    const category = req.body.category;
+    const fitPreference = req.body.fitPreference || req.body.bodyFitPreference;
+
     if (!height || !weight) {
       return res.status(400).json({ success: false, message: "Height (cm) and Weight (kg) are required" });
     }
@@ -114,7 +120,17 @@ export class ChatbotController {
       fitPreference,
     });
 
-    res.json({ success: true, data: result });
+    // Provide unified response compatible with both frontend client and admin dashboard
+    const unifiedData = {
+      ...result,
+      recommendedSize: result.suggestedSize,
+      alternativeSize: result.alternateSizes?.[0]?.size,
+      confidenceScore: Math.round(result.confidence * 100),
+      reason: result.matchedRule ? `Khớp quy tắc ${result.matchedRule.ruleCode}` : "Khớp với chỉ số thể trạng chuẩn của bạn",
+      fitAnalysis: result.advice,
+    };
+
+    res.json({ success: true, data: unifiedData });
   }
 
   // --- Natural Language Chatbot Processor ---
@@ -126,34 +142,58 @@ export class ChatbotController {
 
     const result = FAQEngine.processMessage(message);
 
-    // If a session ID is provided, record the message and response
+    // If a session ID is provided, record or create the chat session
     if (sessionId) {
-      const session = db.getChatSessionById(sessionId);
-      if (session) {
-        const userMsg: ChatMessage = {
-          id: `m-${Date.now()}-user`,
-          sender: "user",
-          text: message,
-          timestamp: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
-        };
-        const botMsg: ChatMessage = {
-          id: `m-${Date.now()}-bot`,
-          sender: "bot",
-          text: result.replyText,
-          timestamp: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
-          productCard: result.suggestedProduct,
-        };
+      let session = db.getChatSessionById(sessionId);
+      const nowFormatted = formatDateTime(new Date());
+      const userMsg: ChatMessage = {
+        id: `m-${Date.now()}-user`,
+        sender: "user",
+        text: message,
+        timestamp: nowFormatted,
+      };
+      const botMsg: ChatMessage = {
+        id: `m-${Date.now()}-bot`,
+        sender: "bot",
+        text: result.replyText,
+        timestamp: nowFormatted,
+        productCard: result.suggestedProduct,
+      };
 
+      if (session) {
         db.updateChatSession(sessionId, {
           lastMessage: result.replyText,
           status: result.suggestedProduct ? "Product Recommended" : "Bot Resolved",
           messages: [...session.messages, userMsg, botMsg],
         });
+      } else {
+        const newSession: ChatSession = {
+          id: sessionId,
+          customerName: "Khách trực tuyến",
+          customerPhone: "Website Client",
+          avatar: "KH",
+          timestamp: nowFormatted,
+          lastMessage: result.replyText,
+          status: result.suggestedProduct ? "Product Recommended" : "Bot Resolved",
+          unreadCount: 0,
+          messages: [userMsg, botMsg],
+        };
+        db.addChatSession(newSession);
       }
     }
 
+    // Unified response structure: all properties are accessible both at root and within `data`
     res.json({
       success: true,
+      reply: result.reply,
+      replyText: result.replyText,
+      intent: result.intent || result.matchedIntent,
+      matchedIntent: result.matchedIntent || result.intent,
+      confidence: result.confidence,
+      sizeRecommendation: result.sizeRecommendation,
+      recommendedProducts: result.recommendedProducts,
+      suggestedProduct: result.suggestedProduct,
+      quickReplies: result.quickReplies,
       data: result,
     });
   }

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db/store.js";
 import { Order } from "../types/index.js";
+import { formatDateTime } from "../utils/formatUtils.js";
 
 export class OrderController {
   public static getAll(req: Request, res: Response) {
@@ -51,7 +52,9 @@ export class OrderController {
 
   public static getById(req: Request, res: Response) {
     const { id } = req.params;
-    const order = db.getOrderById(id);
+    const order =
+      db.getOrderById(id) ||
+      db.getOrders().find((o) => o.orderNumber.toUpperCase() === id.toUpperCase());
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
@@ -59,7 +62,17 @@ export class OrderController {
   }
 
   public static create(req: Request, res: Response) {
-    const { customer, items, totalAmount, paymentMethod = "COD", note } = req.body;
+    const {
+      customer,
+      items,
+      totalAmount,
+      paymentMethod = "COD",
+      note,
+      subtotal,
+      shippingFee,
+      discountAmount,
+      couponCode,
+    } = req.body;
 
     if (!customer || !items || items.length === 0 || !totalAmount) {
       return res.status(400).json({
@@ -68,15 +81,122 @@ export class OrderController {
       });
     }
 
+    // 1. Validate stock availability for all items before placing the order
+    for (const item of items) {
+      const product =
+        db.getProductById(item.id) ||
+        db.getProducts().find(
+          (p) =>
+            p.sku === item.sku ||
+            p.variants?.some((v) => v.sku === item.sku) ||
+            p.title.toLowerCase() === (item.name || "").toLowerCase()
+        );
+
+      if (!product) {
+        return res.status(400).json({
+          success: false,
+          message: `Sản phẩm "${item.name}" không tồn tại hoặc đã ngừng kinh doanh.`,
+        });
+      }
+
+      const itemQty = Number(item.qty || 1);
+      if (itemQty <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Số lượng đặt mua cho sản phẩm "${item.name}" không hợp lệ.`,
+        });
+      }
+
+      if (product.variants && product.variants.length > 0) {
+        const variant =
+          product.variants.find((v) => item.sku && v.sku === item.sku) ||
+          product.variants.find(
+            (v) =>
+              item.size &&
+              v.size.toLowerCase() === item.size.toLowerCase() &&
+              item.color &&
+              v.color.toLowerCase() === item.color.toLowerCase()
+          ) ||
+          product.variants.find((v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()) ||
+          product.variants[0];
+
+        if (variant) {
+          if (variant.stock < itemQty) {
+            return res.status(400).json({
+              success: false,
+              message: `Sản phẩm "${product.title}" (${variant.color ? `màu ${variant.color}, ` : ""}size ${variant.size}) chỉ còn ${variant.stock} cái trong kho (bạn đang đặt ${itemQty} cái).`,
+            });
+          }
+        } else if (product.totalStock < itemQty) {
+          return res.status(400).json({
+            success: false,
+            message: `Sản phẩm "${product.title}" chỉ còn ${product.totalStock} cái trong kho.`,
+          });
+        }
+      } else if (product.totalStock < itemQty) {
+        return res.status(400).json({
+          success: false,
+          message: `Sản phẩm "${product.title}" chỉ còn ${product.totalStock} cái trong kho.`,
+        });
+      }
+    }
+
+    // 2. Deduct stock from inventory
+    for (const item of items) {
+      const product =
+        db.getProductById(item.id) ||
+        db.getProducts().find(
+          (p) =>
+            p.sku === item.sku ||
+            p.variants?.some((v) => v.sku === item.sku) ||
+            p.title.toLowerCase() === (item.name || "").toLowerCase()
+        );
+
+      if (product) {
+        const itemQty = Number(item.qty || 1);
+        if (product.variants && product.variants.length > 0) {
+          let variantIndex = product.variants.findIndex((v) => item.sku && v.sku === item.sku);
+          if (variantIndex === -1) {
+            variantIndex = product.variants.findIndex(
+              (v) =>
+                item.size &&
+                v.size.toLowerCase() === item.size.toLowerCase() &&
+                item.color &&
+                v.color.toLowerCase() === item.color.toLowerCase()
+            );
+          }
+          if (variantIndex === -1) {
+            variantIndex = product.variants.findIndex(
+              (v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()
+            );
+          }
+          if (variantIndex === -1) {
+            variantIndex = 0;
+          }
+
+          if (variantIndex !== -1 && product.variants[variantIndex]) {
+            product.variants[variantIndex].stock = Math.max(
+              0,
+              product.variants[variantIndex].stock - itemQty
+            );
+          }
+          product.totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        } else {
+          product.totalStock = Math.max(0, product.totalStock - itemQty);
+        }
+
+        db.updateProduct(product.id, {
+          variants: product.variants,
+          totalStock: product.totalStock,
+        });
+      }
+    }
+
     const orderNumber = `SPX-${Math.floor(1000 + Math.random() * 9000)}`;
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
       orderNumber,
-      dateTime: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }) + ` • ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
+      dateTime: formatDateTime(new Date()),
       customer: {
         id: customer.id,
         name: customer.name,
@@ -91,10 +211,14 @@ export class OrderController {
         address: customer.address || customer.shippingAddress || "Vietnam",
       },
       items,
+      subtotal: subtotal ? Number(subtotal) : undefined,
+      shippingFee: typeof shippingFee === "number" ? Number(shippingFee) : undefined,
+      discountAmount: discountAmount ? Number(discountAmount) : undefined,
+      couponCode: couponCode ? String(couponCode).trim().toUpperCase() : undefined,
       totalAmount: Number(totalAmount),
       paymentMethod,
       paymentStatus: paymentMethod === "COD" ? "Unpaid" : "Paid",
-      fulfillmentStatus: "Processing",
+      fulfillmentStatus: "Pending Approval",
       note,
       createdAt: new Date().toISOString(),
       transactionDetails:
@@ -118,6 +242,17 @@ export class OrderController {
     };
 
     const created = db.addOrder(newOrder);
+
+    // Increment coupon usage count if a coupon was used
+    if (couponCode) {
+      const cleanCode = String(couponCode).trim().toUpperCase();
+      const appliedCoupon = db.getCoupons().find((c) => c.code.toUpperCase() === cleanCode);
+      if (appliedCoupon) {
+        db.updateCoupon(appliedCoupon.id, {
+          usedCount: (appliedCoupon.usedCount || 0) + 1,
+        });
+      }
+    }
 
     // Update customer spending & order count if customer exists
     if (customer.id) {
@@ -157,15 +292,394 @@ export class OrderController {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
+    const previousStatus = existing.fulfillmentStatus;
+
+    // 1. If transitioning TO Canceled from an active status => RESTORE STOCK
+    if (fulfillmentStatus === "Canceled" && previousStatus !== "Canceled") {
+      for (const item of existing.items) {
+        const product =
+          db.getProductById(item.id) ||
+          db.getProducts().find(
+            (p) =>
+              p.sku === (item as any).sku ||
+              p.variants?.some((v) => v.sku === (item as any).sku) ||
+              p.title.toLowerCase() === item.name.toLowerCase()
+          );
+
+        if (product) {
+          const itemQty = Number(item.qty || 1);
+          if (product.variants && product.variants.length > 0) {
+            let variantIndex = product.variants.findIndex((v) => (item as any).sku && v.sku === (item as any).sku);
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) =>
+                  item.size &&
+                  v.size.toLowerCase() === item.size.toLowerCase() &&
+                  item.color &&
+                  v.color.toLowerCase() === item.color.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = 0;
+            }
+
+            if (variantIndex !== -1 && product.variants[variantIndex]) {
+              product.variants[variantIndex].stock += itemQty;
+            }
+            product.totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+          } else {
+            product.totalStock += itemQty;
+          }
+
+          db.updateProduct(product.id, {
+            variants: product.variants,
+            totalStock: product.totalStock,
+          });
+        }
+      }
+    }
+
+    // 2. If transitioning FROM Canceled to an active status => RE-DEDUCT STOCK
+    if (previousStatus === "Canceled" && fulfillmentStatus && fulfillmentStatus !== "Canceled") {
+      for (const item of existing.items) {
+        const product =
+          db.getProductById(item.id) ||
+          db.getProducts().find(
+            (p) =>
+              p.sku === (item as any).sku ||
+              p.variants?.some((v) => v.sku === (item as any).sku) ||
+              p.title.toLowerCase() === item.name.toLowerCase()
+          );
+
+        if (product) {
+          const itemQty = Number(item.qty || 1);
+          if (product.variants && product.variants.length > 0) {
+            let variantIndex = product.variants.findIndex((v) => (item as any).sku && v.sku === (item as any).sku);
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) =>
+                  item.size &&
+                  v.size.toLowerCase() === item.size.toLowerCase() &&
+                  item.color &&
+                  v.color.toLowerCase() === item.color.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = 0;
+            }
+
+            if (variantIndex !== -1 && product.variants[variantIndex]) {
+              product.variants[variantIndex].stock = Math.max(0, product.variants[variantIndex].stock - itemQty);
+            }
+            product.totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+          } else {
+            product.totalStock = Math.max(0, product.totalStock - itemQty);
+          }
+
+          db.updateProduct(product.id, {
+            variants: product.variants,
+            totalStock: product.totalStock,
+          });
+        }
+      }
+    }
+
     const updates: Partial<Order> = {};
     if (fulfillmentStatus) updates.fulfillmentStatus = fulfillmentStatus;
     if (paymentStatus) updates.paymentStatus = paymentStatus;
     if (transactionDetails) updates.transactionDetails = transactionDetails;
 
+    const {
+      shippingCarrier,
+      trackingCode,
+      cancelReason,
+      failedDeliveryAttempts,
+    } = req.body;
+
+    if (shippingCarrier) updates.shippingCarrier = shippingCarrier;
+    if (trackingCode) updates.trackingCode = trackingCode;
+    if (cancelReason) updates.cancelReason = cancelReason;
+    if (failedDeliveryAttempts !== undefined) updates.failedDeliveryAttempts = Number(failedDeliveryAttempts);
+
+    // Auto set timestamps and COD status
+    if (fulfillmentStatus === "Processing") {
+      // Dispatched / warehouse note generated
+    } else if (fulfillmentStatus === "Shipping") {
+      updates.dispatchedAt = new Date().toISOString();
+    } else if (fulfillmentStatus === "Completed") {
+      updates.deliveredAt = new Date().toISOString();
+      if (existing.paymentMethod === "COD") {
+        updates.paymentStatus = "Paid";
+      }
+    } else if (fulfillmentStatus === "Canceled") {
+      updates.cancelledAt = new Date().toISOString();
+      if (!updates.cancelReason) {
+        updates.cancelReason = cancelReason || "Hủy đơn hàng / Hoàn kho";
+      }
+    }
+
     const updated = db.updateOrder(id, updates);
     res.json({
       success: true,
       message: "Order status updated successfully",
+      data: updated,
+    });
+  }
+
+  public static cancel(req: Request, res: Response) {
+    const { id } = req.params;
+    const { reason, cancelledBy = "customer" } = req.body;
+
+    const order = db.getOrderById(id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    }
+
+    const normStatus = (order.fulfillmentStatus || "").toUpperCase();
+
+    if (normStatus === "CANCELLED" || normStatus === "CANCELED") {
+      return res.status(400).json({ success: false, message: "Đơn hàng này đã được hủy trước đó." });
+    }
+
+    if (normStatus === "COMPLETED" || normStatus === "DELIVERED") {
+      return res.status(400).json({ success: false, message: "Đơn hàng đã giao thành công, không thể hủy." });
+    }
+
+    if (normStatus === "SHIPPING") {
+      return res.status(400).json({ success: false, message: "Đang giao hàng, bạn không được hủy đơn hàng." });
+    }
+
+    // Chỉ cho phép hủy khi ở trạng thái chờ xác nhận (Pending) hoặc đang đóng gói (Processing)
+    if (normStatus !== "PENDING" && normStatus !== "PROCESSING") {
+      return res.status(400).json({
+        success: false,
+        message: `Đơn hàng đang ở trạng thái "${order.fulfillmentStatus}", không thể hủy. Chỉ được hủy khi đơn ở trạng thái chờ xác nhận hoặc đang đóng gói.`,
+      });
+    }
+
+    // Restore stock for all items
+    for (const item of order.items) {
+      const product =
+        db.getProductById(item.id) ||
+        db.getProducts().find(
+          (p) =>
+            p.sku === (item as any).sku ||
+            p.variants?.some((v) => v.sku === (item as any).sku) ||
+            p.title.toLowerCase() === item.name.toLowerCase()
+        );
+
+      if (product) {
+        const itemQty = Number(item.qty || 1);
+        if (product.variants && product.variants.length > 0) {
+          let variantIndex = product.variants.findIndex((v) => (item as any).sku && v.sku === (item as any).sku);
+          if (variantIndex === -1) {
+            variantIndex = product.variants.findIndex(
+              (v) =>
+                item.size &&
+                v.size.toLowerCase() === item.size.toLowerCase() &&
+                item.color &&
+                v.color.toLowerCase() === item.color.toLowerCase()
+            );
+          }
+          if (variantIndex === -1) {
+            variantIndex = product.variants.findIndex(
+              (v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()
+            );
+          }
+          if (variantIndex === -1) {
+            variantIndex = 0;
+          }
+
+          if (variantIndex !== -1 && product.variants[variantIndex]) {
+            product.variants[variantIndex].stock += itemQty;
+          }
+          product.totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        } else {
+          product.totalStock += itemQty;
+        }
+
+        db.updateProduct(product.id, {
+          variants: product.variants,
+          totalStock: product.totalStock,
+        });
+      }
+    }
+
+    const updated = db.updateOrder(id, {
+      fulfillmentStatus: "Canceled",
+      cancelReason: reason || (cancelledBy === "customer" ? "Khách yêu cầu hủy / Sai thông tin" : "Hủy đơn hàng"),
+      cancelledAt: new Date().toISOString(),
+      cancelledBy: cancelledBy as "customer" | "admin" | "system",
+    });
+
+    res.json({
+      success: true,
+      message: "Đã hủy đơn hàng và hoàn trả lại số lượng tồn kho thành công.",
+      data: updated,
+    });
+  }
+
+  public static requestReturn(req: Request, res: Response) {
+    const { id } = req.params;
+    const { reason, detailedReason, bankName, bankAccount, accountHolder, refundAmount } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ success: false, message: "Vui lòng chọn lý do hoàn hàng / đổi trả" });
+    }
+
+    const order =
+      db.getOrderById(id) ||
+      db.getOrders().find((o) => o.orderNumber.toUpperCase() === id.toUpperCase());
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng cần yêu cầu hoàn trả" });
+    }
+
+    if (order.fulfillmentStatus !== "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ đơn hàng đã giao thành công mới có thể gửi yêu cầu đổi trả / hoàn hàng",
+      });
+    }
+
+    if (
+      order.returnRequest &&
+      (order.returnRequest.status === "Pending" || order.returnRequest.status === "Approved")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Đơn hàng này đã có yêu cầu hoàn trả đang ở trạng thái: ${
+          order.returnRequest.status === "Pending" ? "Chờ duyệt" : "Đã duyệt"
+        }`,
+      });
+    }
+
+    const returnRequest = {
+      reason,
+      detailedReason: detailedReason || "",
+      bankName: bankName || "",
+      bankAccount: bankAccount || "",
+      accountHolder: accountHolder || "",
+      refundAmount: Number(refundAmount) || order.totalAmount,
+      status: "Pending" as const,
+      requestedAt: new Date().toISOString(),
+    };
+
+    const updated = db.updateOrder(order.id, {
+      returnRequest,
+    });
+
+    res.json({
+      success: true,
+      message: "Đã gửi yêu cầu đổi trả / hoàn hàng thành công! Đội ngũ SportX sẽ liên hệ hỗ trợ bạn sớm nhất.",
+      data: updated,
+    });
+  }
+
+  public static processReturn(req: Request, res: Response) {
+    const { id } = req.params;
+    const { action, adminNote } = req.body;
+
+    const order =
+      db.getOrderById(id) ||
+      db.getOrders().find((o) => o.orderNumber.toUpperCase() === id.toUpperCase());
+
+    if (!order || !order.returnRequest) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy yêu cầu hoàn trả cho đơn hàng này" });
+    }
+
+    const now = new Date().toISOString();
+
+    if (action === "approve") {
+      order.returnRequest.status = "Approved";
+      order.returnRequest.processedAt = now;
+      order.returnRequest.adminNote =
+        adminNote ||
+        "Yêu cầu hoàn trả đã được duyệt. Quý khách vui lòng đóng gói hàng và gửi về địa chỉ shop để tiến hành kiểm tra & hoàn tiền.";
+    } else if (action === "reject") {
+      order.returnRequest.status = "Rejected";
+      order.returnRequest.processedAt = now;
+      order.returnRequest.adminNote =
+        adminNote || "Yêu cầu hoàn trả không đáp ứng điều kiện đổi trả của cửa hàng (quá thời hạn hoặc sản phẩm không còn nguyên vẹn).";
+    } else if (action === "complete") {
+      order.returnRequest.status = "Completed";
+      order.returnRequest.completedAt = now;
+      order.returnRequest.adminNote =
+        adminNote || "Shop đã nhận được kiện hàng hoàn trả, kiểm tra chất lượng đạt yêu cầu và đã hoàn tất hoàn tiền cho khách.";
+
+      // Restore stock for all items
+      for (const item of order.items) {
+        const product =
+          db.getProductById(item.id) ||
+          db.getProducts().find(
+            (p) =>
+              p.sku === (item as any).sku ||
+              p.variants?.some((v) => v.sku === (item as any).sku) ||
+              p.title.toLowerCase() === item.name.toLowerCase()
+          );
+
+        if (product) {
+          const itemQty = Number(item.qty || 1);
+          if (product.variants && product.variants.length > 0) {
+            let variantIndex = product.variants.findIndex((v) => (item as any).sku && v.sku === (item as any).sku);
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) =>
+                  item.size &&
+                  v.size.toLowerCase() === item.size.toLowerCase() &&
+                  item.color &&
+                  v.color.toLowerCase() === item.color.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = product.variants.findIndex(
+                (v) => item.size && v.size.toLowerCase() === item.size.toLowerCase()
+              );
+            }
+            if (variantIndex === -1) {
+              variantIndex = 0;
+            }
+
+            if (variantIndex !== -1 && product.variants[variantIndex]) {
+              product.variants[variantIndex].stock += itemQty;
+            }
+            product.totalStock = product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+          } else {
+            product.totalStock += itemQty;
+          }
+
+          db.updateProduct(product.id, {
+            variants: product.variants,
+            totalStock: product.totalStock,
+          });
+        }
+      }
+    } else {
+      return res.status(400).json({ success: false, message: "Hành động không hợp lệ: 'approve', 'reject' hoặc 'complete'" });
+    }
+
+    const updated = db.updateOrder(order.id, {
+      returnRequest: order.returnRequest,
+    });
+
+    res.json({
+      success: true,
+      message:
+        action === "approve"
+          ? "Đã duyệt yêu cầu hoàn hàng"
+          : action === "reject"
+          ? "Đã từ chối yêu cầu hoàn hàng"
+          : "Đã xác nhận nhận hàng hoàn & hoàn kho sản phẩm thành công",
       data: updated,
     });
   }

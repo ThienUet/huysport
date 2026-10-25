@@ -17,12 +17,15 @@ import {
   FaMinus,
   FaArrowRight,
   FaTruckFast,
+  FaCircleExclamation,
 } from "react-icons/fa6";
 import { useCartStore } from "@/stores/useCartStore";
 
 export default function CartDrawer() {
   const {
     items,
+    coupon,
+    discountAmount,
     isCartDrawerOpen,
     setIsCartDrawerOpen,
     removeItem,
@@ -37,6 +40,7 @@ export default function CartDrawer() {
   const total = getTotal();
   const freeShipThreshold = 500000;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShipThreshold) * 100));
+  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
 
   return (
     <Drawer
@@ -102,61 +106,93 @@ export default function CartDrawer() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3 divide-y divide-gray-100">
-                  {items.map((item) => (
-                    <div key={item.sku} className="pt-3 first:pt-0 flex gap-3">
-                      <div className="relative w-18 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                        <img
-                          src={item.productImage || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"}
-                          alt={item.productName}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-start justify-between gap-1">
-                            <h4 className="font-bold text-xs text-gray-900 line-clamp-2">
-                              {item.productName}
-                            </h4>
-                            <button
-                              onClick={() => removeItem(item.sku)}
-                              className="text-gray-400 hover:text-red-500 transition p-1 cursor-pointer"
-                              title="Xóa khỏi giỏ"
-                            >
-                              <FaTrashCan className="w-3 h-3" />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500">
-                            <span className="bg-gray-100 px-1.5 py-0.5 rounded-md font-medium text-gray-800">Size: {item.size}</span>
-                            <span className="bg-gray-100 px-1.5 py-0.5 rounded-md font-medium text-gray-800">Màu: {item.color}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                            <button
-                              onClick={() => updateQuantity(item.sku, item.quantity - 1)}
-                              className="p-1 hover:bg-gray-200 transition text-gray-600 cursor-pointer"
-                            >
-                              <FaMinus className="w-2.5 h-2.5" />
-                            </button>
-                            <span className="px-2.5 text-xs font-bold text-gray-800">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.sku, item.quantity + 1)}
-                              className="p-1 hover:bg-gray-200 transition text-gray-600 cursor-pointer"
-                            >
-                              <FaPlus className="w-2.5 h-2.5" />
-                            </button>
-                          </div>
-
-                          <div className="font-bold text-xs text-emerald-600">
-                            {(item.price * item.quantity).toLocaleString("vi-VN")}đ
-                          </div>
-                        </div>
-                      </div>
+                <div className="space-y-3">
+                  {hasOutOfStockItems && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-medium flex items-center gap-2">
+                      <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>Trong giỏ có sản phẩm tạm hết hàng. Vui lòng xóa trước khi thanh toán.</span>
                     </div>
-                  ))}
+                  )}
+
+                  <div className="divide-y divide-gray-100">
+                    {items.map((item) => (
+                      <div key={item.sku} className="pt-3 first:pt-0 flex gap-3">
+                        <div className="relative w-18 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                          <img
+                            src={
+                              item.productImage && (item.productImage.startsWith("http") || item.productImage.startsWith("/"))
+                                ? item.productImage
+                                : "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"
+                            }
+                            alt={item.productName}
+                            className={`w-full h-full object-cover ${item.maxStock <= 0 ? "grayscale-[30%]" : ""}`}
+                          />
+                          {item.maxStock <= 0 && (
+                            <span className="absolute inset-0 bg-slate-900/40 text-white text-[9px] font-bold flex items-center justify-center text-center p-1 leading-tight">
+                              Hết hàng
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-start justify-between gap-1">
+                              <h4 className="font-bold text-xs text-gray-900 line-clamp-2">
+                                {item.productName}
+                              </h4>
+                              <button
+                                onClick={() => removeItem(item.sku)}
+                                className="text-gray-400 hover:text-red-500 transition p-1 cursor-pointer"
+                                title="Xóa khỏi giỏ"
+                              >
+                                <FaTrashCan className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500">
+                              <span className="bg-gray-100 px-1.5 py-0.5 rounded-md font-medium text-gray-800">Size: {item.size}</span>
+                              <span className="bg-gray-100 px-1.5 py-0.5 rounded-md font-medium text-gray-800">Màu: {item.color}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                              <button
+                                onClick={() => updateQuantity(item.sku, item.quantity - 1)}
+                                className="p-1 hover:bg-gray-200 transition text-gray-600 cursor-pointer"
+                                title="Giảm số lượng"
+                              >
+                                <FaMinus className="w-2.5 h-2.5" />
+                              </button>
+                              <span className="px-2.5 text-xs font-bold text-gray-800">{item.quantity}</span>
+                              <button
+                                onClick={() => updateQuantity(item.sku, item.quantity + 1)}
+                                disabled={item.quantity >= item.maxStock || item.maxStock <= 0}
+                                className="p-1 hover:bg-gray-200 transition text-gray-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                title={item.maxStock <= 0 ? "Sản phẩm tạm hết hàng" : item.quantity >= item.maxStock ? "Đã đạt số lượng tồn kho tối đa" : "Tăng số lượng"}
+                              >
+                                <FaPlus className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+
+                            <div className="text-right">
+                              <div className="font-bold text-xs text-emerald-600">
+                                {(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                              </div>
+                              {item.maxStock <= 0 ? (
+                                <span className="text-[9px] font-bold text-rose-600">
+                                  Tạm hết hàng
+                                </span>
+                              ) : item.quantity >= item.maxStock ? (
+                                <span className="text-[9px] font-bold text-amber-600">
+                                  Tối đa kho ({item.maxStock})
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </DrawerBody>
@@ -174,6 +210,12 @@ export default function CartDrawer() {
                       {shippingFee === 0 ? <span className="text-emerald-600 font-bold">Miễn phí</span> : `${shippingFee.toLocaleString("vi-VN")}đ`}
                     </span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-600 font-bold">
+                      <span>Mã giảm giá ({coupon?.code}):</span>
+                      <span>-{discountAmount.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
                     <span>Tổng thanh toán:</span>
                     <span className="text-emerald-600 text-base">{total.toLocaleString("vi-VN")}đ</span>
@@ -191,13 +233,18 @@ export default function CartDrawer() {
                     Xem Giỏ Hàng
                   </Button>
                   <Button
-                    className="font-bold text-xs h-10 rounded-full shadow-md bg-emerald-600 text-white hover:bg-emerald-700"
+                    isDisabled={hasOutOfStockItems}
+                    className={`font-bold text-xs h-10 rounded-full shadow-md ${
+                      hasOutOfStockItems
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                    }`}
                     endContent={<FaArrowRight className="w-3.5 h-3.5" />}
-                    onPress={() => setIsCartDrawerOpen(false)}
+                    onPress={() => !hasOutOfStockItems && setIsCartDrawerOpen(false)}
                     as={Link}
-                    href="/checkout"
+                    href={hasOutOfStockItems ? "#" : "/checkout"}
                   >
-                    Thanh Toán
+                    {hasOutOfStockItems ? "Có SP Hết Hàng" : "Thanh Toán"}
                   </Button>
                 </div>
               </DrawerFooter>

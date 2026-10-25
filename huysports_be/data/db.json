@@ -212,7 +212,7 @@
         }
       ],
       "totalStock": 0,
-      "status": "Draft",
+      "status": "Active",
       "description": "Steep attacking power badminton racket used by tournament champions.",
       "variants": [
         {
@@ -266,7 +266,7 @@
           "hex": "#1E3A8A"
         }
       ],
-      "totalStock": 85,
+      "totalStock": 86,
       "status": "Active",
       "description": "Breathable moisture-wicking fabric for intense gym and fitness sessions.",
       "variants": [
@@ -277,7 +277,7 @@
           "colorHex": "#0F172A",
           "size": "M",
           "price": 35,
-          "stock": 30
+          "stock": 31
         },
         {
           "id": "v5-2",
@@ -324,7 +324,7 @@
           "hex": "#0F172A"
         }
       ],
-      "totalStock": 250,
+      "totalStock": 252,
       "status": "Active",
       "description": "Anti-blister silicone cushion grip pads for maximum stability on pitch.",
       "variants": [
@@ -344,7 +344,7 @@
           "colorHex": "#0F172A",
           "size": "L",
           "price": 15,
-          "stock": 125
+          "stock": 127
         }
       ],
       "createdAt": "2026-09-16T15:00:00Z"
@@ -352,9 +352,260 @@
   ],
   "orders": [
     {
+      "id": "ord-1792953546448",
+      "orderNumber": "SPX-3561",
+      "dateTime": "26-10-2026 01:39",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 229000,
+      "shippingFee": 30000,
+      "discountAmount": 22900,
+      "couponCode": "SPORTX10",
+      "totalAmount": 236100,
+      "paymentMethod": "COD",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Completed",
+      "note": "",
+      "createdAt": "2026-10-25T18:39:06.448Z",
+      "shippingCarrier": "GHTK",
+      "trackingCode": "GHTK-3561",
+      "dispatchedAt": "2026-10-25T18:39:50.069Z",
+      "deliveredAt": "2026-10-25T18:55:59.629Z",
+      "returnRequest": {
+        "reason": "Sản phẩm thực tế không đúng với mô tả trên website",
+        "detailedReason": "Tôi không thích ",
+        "bankName": "Vietcombank",
+        "bankAccount": "0399687484",
+        "accountHolder": "Jane Cooper",
+        "refundAmount": 236100,
+        "status": "Completed",
+        "requestedAt": "2026-10-25T18:56:37.319Z",
+        "processedAt": "2026-10-25T18:57:44.597Z",
+        "adminNote": "Shop đã nhận được kiện hàng hoàn trả, kiểm tra chất lượng đạt yêu cầu và đã hoàn tất hoàn tiền cho khách.",
+        "completedAt": "2026-10-25T18:57:55.847Z"
+      }
+    },
+    {
+      "id": "ord-1792953378642",
+      "orderNumber": "SPX-5796",
+      "dateTime": "26-10-2026 01:36",
+      "customer": {
+        "name": "Test Giam Gia",
+        "phone": "0987654321",
+        "email": "test@sportx.store",
+        "avatar": "TG",
+        "address": "H� N?i"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-P-1-BLK-42",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Football",
+          "thumbnail": "??",
+          "size": "42",
+          "color": "Den",
+          "colorHex": "#000000",
+          "qty": 1,
+          "unitPrice": 275000
+        }
+      ],
+      "subtotal": 275000,
+      "shippingFee": 0,
+      "discountAmount": 27500,
+      "couponCode": "SPORTX10",
+      "totalAmount": 247500,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Pending Approval",
+      "createdAt": "2026-10-25T18:36:18.648Z"
+    },
+    {
+      "id": "ord-1792947353187",
+      "orderNumber": "SPX-7206",
+      "dateTime": "25-10-2026 23:55",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "totalAmount": 259000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Canceled",
+      "note": "",
+      "createdAt": "2026-10-25T16:55:53.188Z",
+      "shippingCarrier": "Shopee Xpress",
+      "trackingCode": "SHOP-7206",
+      "dispatchedAt": "2026-10-25T16:57:37.959Z",
+      "cancelReason": "Giao hàng thất bại 3 lần / Khách từ chối nhận (Hoàn kho)",
+      "cancelledAt": "2026-10-25T16:58:02.147Z"
+    },
+    {
+      "id": "ord-1792947069768",
+      "orderNumber": "SPX-1950",
+      "dateTime": "25-10-2026 23:51",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 5,
+          "unitPrice": 229000
+        }
+      ],
+      "totalAmount": 1145000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Completed",
+      "note": "",
+      "createdAt": "2026-10-25T16:51:09.788Z",
+      "shippingCarrier": "GHTK",
+      "trackingCode": "GHTK-1950",
+      "dispatchedAt": "2026-10-25T16:54:21.856Z",
+      "deliveredAt": "2026-10-25T16:54:29.936Z",
+      "returnRequest": {
+        "reason": "M?c kh�ng v?a v?n, c� nhu c?u d?i sang k�ch c? kh�c",
+        "detailedReason": "M�nh m?c �o size L hoi ch?t ng?c, mu?n d?i sang size XL",
+        "bankName": "Vietcombank",
+        "bankAccount": "0398802022",
+        "accountHolder": "DINH CONG HUNG",
+        "refundAmount": 1145000,
+        "status": "Completed",
+        "requestedAt": "2026-10-25T18:52:09.751Z",
+        "processedAt": "2026-10-25T18:52:53.247Z",
+        "adminNote": "D� nh?n h�ng t?i kho v� chuy?n kho?n ho�n ti?n.",
+        "completedAt": "2026-10-25T18:52:56.568Z"
+      }
+    },
+    {
+      "id": "ord-1792940122465",
+      "orderNumber": "SPX-9515",
+      "dateTime": "25-10-2026 21:55",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-3",
+          "name": "Adidas Ultraboost Light Running Shoes",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
+          "size": "S",
+          "color": "Mặc định",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 149000
+        }
+      ],
+      "totalAmount": 179000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Shipping",
+      "note": "",
+      "createdAt": "2026-10-25T14:55:22.466Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "VNP1792940122466",
+        "timestamp": "2026-10-25T14:55:22.466Z",
+        "bankCode": "NCB / VNPAY-QR",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792940018145",
+      "orderNumber": "SPX-2343",
+      "dateTime": "25-10-2026 21:53",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-5",
+          "name": "SportX Pro Dry-Fit Training Vest",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800",
+          "size": "S",
+          "color": "Mặc định",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 35000
+        }
+      ],
+      "totalAmount": 65000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Canceled",
+      "note": "",
+      "createdAt": "2026-10-25T14:53:38.150Z",
+      "cancelReason": "Muốn thay đổi kích cỡ (size) hoặc màu sắc sản phẩm",
+      "cancelledAt": "2026-10-25T17:24:50.408Z",
+      "cancelledBy": "customer"
+    },
+    {
       "id": "ord-1",
       "orderNumber": "SPX-9821",
-      "dateTime": "22 Sep 2026 • 14:30",
+      "dateTime": "22-09-2026 21:30",
       "customer": {
         "id": "c-1",
         "name": "Jane Cooper",
@@ -368,7 +619,7 @@
           "id": "item-1",
           "name": "Nike Mercurial Superfly 9 Elite FG",
           "category": "Football",
-          "thumbnail": "⚽",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500",
           "size": "M (41 EU)",
           "color": "Red",
           "colorHex": "#DC2626",
@@ -379,7 +630,7 @@
           "id": "item-2",
           "name": "SportX Anti-Slip Football Grip Socks",
           "category": "Football",
-          "thumbnail": "🧦",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=500",
           "size": "L",
           "color": "Black",
           "colorHex": "#0F172A",
@@ -390,20 +641,22 @@
       "totalAmount": 299,
       "paymentMethod": "VNPAY",
       "paymentStatus": "Paid",
-      "fulfillmentStatus": "Processing",
+      "fulfillmentStatus": "Canceled",
       "transactionDetails": {
         "gateway": "VNPAY",
         "transactionCode": "VNP713103212333",
-        "timestamp": "22 Sep 2026 • 14:31:05",
+        "timestamp": "22-09-2026 14:31",
         "bankCode": "NCB / VNPAY-QR",
         "responseMessage": "00 (Transaction Successful)"
       },
-      "createdAt": "2026-09-22T14:30:00Z"
+      "createdAt": "2026-09-22T14:30:00Z",
+      "cancelReason": "Hủy đơn trong quá trình đóng gói",
+      "cancelledAt": "2026-10-25T19:00:17.111Z"
     },
     {
       "id": "ord-2",
       "orderNumber": "SPX-9820",
-      "dateTime": "22 Sep 2026 • 11:15",
+      "dateTime": "22-09-2026 18:15",
       "customer": {
         "id": "c-2",
         "name": "Tran Van Duc",
@@ -417,7 +670,7 @@
           "id": "item-3",
           "name": "Adidas Ultraboost Light Running Shoes",
           "category": "Running",
-          "thumbnail": "👟",
+          "thumbnail": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
           "size": "L (42.5 EU)",
           "color": "White",
           "colorHex": "#E2E8F0",
@@ -428,7 +681,7 @@
           "id": "item-4",
           "name": "SportX Pro Dry-Fit Training Vest",
           "category": "Gym",
-          "thumbnail": "🎽",
+          "thumbnail": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500",
           "size": "L",
           "color": "Olive",
           "colorHex": "#4D7C0F",
@@ -443,7 +696,7 @@
       "transactionDetails": {
         "gateway": "MoMo",
         "transactionCode": "MM220926884192",
-        "timestamp": "22 Sep 2026 • 11:16:20",
+        "timestamp": "22-09-2026 11:16",
         "bankCode": "MOMO_WALLET",
         "responseMessage": "Success"
       },
@@ -452,7 +705,7 @@
     {
       "id": "ord-3",
       "orderNumber": "SPX-9819",
-      "dateTime": "21 Sep 2026 • 16:45",
+      "dateTime": "21-09-2026 23:45",
       "customer": {
         "id": "c-3",
         "name": "Marcus Kane",
@@ -466,7 +719,7 @@
           "id": "item-5",
           "name": "SportX Pro Adjustable Dumbbell 20kg",
           "category": "Gym",
-          "thumbnail": "🏋️",
+          "thumbnail": "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500",
           "size": "20kg (Pair)",
           "color": "Black",
           "colorHex": "#0F172A",
@@ -483,7 +736,7 @@
     {
       "id": "ord-4",
       "orderNumber": "SPX-9818",
-      "dateTime": "20 Sep 2026 • 09:20",
+      "dateTime": "20-09-2026 16:20",
       "customer": {
         "id": "c-4",
         "name": "Elena Lin",
@@ -497,7 +750,7 @@
           "id": "item-6",
           "name": "SportX Anti-Slip Football Grip Socks",
           "category": "Football",
-          "thumbnail": "🧦",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=500",
           "size": "M",
           "color": "White",
           "colorHex": "#E2E8F0",
@@ -512,7 +765,7 @@
       "transactionDetails": {
         "gateway": "VNPAY",
         "transactionCode": "VNP713101994821",
-        "timestamp": "20 Sep 2026 • 09:21:40",
+        "timestamp": "20-09-2026 09:21",
         "bankCode": "TECHCOMBANK",
         "responseMessage": "00 (Transaction Successful)"
       },
@@ -528,7 +781,7 @@
       "avatar": "JC",
       "avatarBg": "bg-blue-100 text-blue-700",
       "primaryAddress": "102+ Perkcere A, District 1, Ho Chi Minh City",
-      "joinedDate": "12 Oct 2024",
+      "joinedDate": "12-10-2024 08:30",
       "totalOrders": 6,
       "lifetimeSpent": 1450,
       "tier": "VIP",
@@ -555,7 +808,7 @@
         {
           "id": "ord-1",
           "orderNumber": "SPX-9821",
-          "date": "22 Sep 2026",
+          "date": "22-09-2026 14:30",
           "itemsSummary": "Nike Mercurial Superfly 9 Elite FG (x1), Grip Socks (x2)",
           "totalAmount": 299,
           "status": "Processing"
@@ -570,7 +823,7 @@
       "avatar": "TD",
       "avatarBg": "bg-emerald-100 text-emerald-700",
       "primaryAddress": "45 Nguyen Trai, Thanh Xuan, Hanoi",
-      "joinedDate": "05 Jan 2025",
+      "joinedDate": "05-01-2025 09:15",
       "totalOrders": 4,
       "lifetimeSpent": 620,
       "tier": "Loyal",
@@ -589,7 +842,7 @@
         {
           "id": "ord-2",
           "orderNumber": "SPX-9820",
-          "date": "22 Sep 2026",
+          "date": "22-09-2026 11:15",
           "itemsSummary": "Adidas Ultraboost Light (x1), Training Vest (x1)",
           "totalAmount": 184,
           "status": "Shipping"
@@ -604,7 +857,7 @@
       "avatar": "MK",
       "avatarBg": "bg-amber-100 text-amber-700",
       "primaryAddress": "88 Song Hanh, An Phu, District 2, Thu Duc City",
-      "joinedDate": "18 Aug 2026",
+      "joinedDate": "18-08-2026 14:20",
       "totalOrders": 1,
       "lifetimeSpent": 338,
       "tier": "New",
@@ -623,7 +876,7 @@
         {
           "id": "ord-3",
           "orderNumber": "SPX-9819",
-          "date": "21 Sep 2026",
+          "date": "21-09-2026 16:45",
           "itemsSummary": "SportX Pro Adjustable Dumbbell 20kg (x2)",
           "totalAmount": 338,
           "status": "Processing"
@@ -738,7 +991,7 @@
       "answer": "SportX hỗ trợ đổi trả miễn phí trong vòng 7 ngày kể từ khi nhận hàng đối với sản phẩm còn nguyên tem mác, hộp và chưa qua sử dụng. Bạn có thể mang trực tiếp ra cửa hàng hoặc gửi chuyển phát.",
       "intent": "Return Policy",
       "confidence": 0.98,
-      "usageCount": 344,
+      "usageCount": 348,
       "keywords": [
         "đổi trả",
         "hoàn tiền",
@@ -754,7 +1007,7 @@
       "answer": "Nội thành Hà Nội & TP.HCM nhận hàng trong 24h - 48h. Các tỉnh thành khác thời gian vận chuyển từ 2 - 4 ngày làm việc. Quý khách có thể kiểm tra mã vận đơn realtime trên hệ thống.",
       "intent": "Shipping Time",
       "confidence": 0.95,
-      "usageCount": 512,
+      "usageCount": 513,
       "keywords": [
         "giao hàng",
         "ship",
@@ -770,7 +1023,7 @@
       "answer": "Bạn hãy nhập chiều cao và cân nặng vào khung chat AI, hệ thống sẽ gợi ý size chính xác (S, M, L, XL, XXL) kèm form dáng phù hợp (Slim Fit, Regular Fit hoặc Loose Fit).",
       "intent": "Size Fitting",
       "confidence": 0.96,
-      "usageCount": 690,
+      "usageCount": 691,
       "keywords": [
         "chọn size",
         "tư vấn size",
@@ -813,6 +1066,507 @@
     }
   ],
   "chatSessions": [
+    {
+      "id": "session-1792940323659",
+      "customerName": "Khách trực tuyến",
+      "customerPhone": "Website Client",
+      "avatar": "KH",
+      "timestamp": "25-10-2026 22:02",
+      "lastMessage": "Dạ SportX đã nhận thông tin chiều cao của bạn là **175cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+      "status": "Bot Resolved",
+      "unreadCount": 0,
+      "messages": [
+        {
+          "id": "m-1792940535900-user",
+          "sender": "user",
+          "text": "tư vấn áo bóng đá",
+          "timestamp": "22:02"
+        },
+        {
+          "id": "m-1792940535904-bot",
+          "sender": "bot",
+          "text": "⚽ **Bộ sưu tập Bóng Đá chuyên nghiệp tại SportX:**\nSportX mang đến cho bạn giày đinh FG bám sân cực tốt, áo đấu thoáng khí Aeroready và tất chống trượt cao cấp. Mời bạn tham khảo:\n\n1. **Nike Mercurial Superfly 9 Elite FG** - Giá ưu đãi: **229.000đ**\n2. **SportX Anti-Slip Football Grip Socks** - Giá ưu đãi: **15.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "22:02",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940554530-user",
+          "sender": "user",
+          "text": "\"thời gian giao hàng bao lâu?\"",
+          "timestamp": "22:02"
+        },
+        {
+          "id": "m-1792940554530-bot",
+          "sender": "bot",
+          "text": "Nội thành Hà Nội & TP.HCM nhận hàng trong 24h - 48h. Các tỉnh thành khác thời gian vận chuyển từ 2 - 4 ngày làm việc. Quý khách có thể kiểm tra mã vận đơn realtime trên hệ thống.",
+          "timestamp": "22:02"
+        },
+        {
+          "id": "m-1792940839077-user",
+          "sender": "user",
+          "text": "Tôi cần tư vấn",
+          "timestamp": "22:07"
+        },
+        {
+          "id": "m-1792940839078-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận được tin nhắn của bạn! ✨\n\nĐể SportX tư vấn cho bạn nhanh và chuẩn xác nhất, bạn có thể:\n1. 📐 **Chọn Size**: Gửi số đo chiều cao và cân nặng (Ví dụ: *'mình cao 1m75 nặng 70kg'*).\n2. 👟 **Tìm sản phẩm**: Nhập nhu cầu như *'áo bóng đá'*, *'giày chạy bộ'*, *'đồ gym'*, *'vợt cầu lông'*.\n3. 📦 **Đơn hàng**: Gửi mã đơn (Ví dụ: *'SPX-9820'*).\n4. 🎁 **Ưu đãi**: Nhập *'mã giảm giá'* hoặc *'khuyến mãi'*.\n\nDưới đây là một số mẫu đồ thể thao bán chạy nhất bạn có thể tham khảo ngay:",
+          "timestamp": "22:07",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940853330-user",
+          "sender": "user",
+          "text": "VNP1792940122466",
+          "timestamp": "22:07"
+        },
+        {
+          "id": "m-1792940853330-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận được tin nhắn của bạn! ✨\n\nĐể SportX tư vấn cho bạn nhanh và chuẩn xác nhất, bạn có thể:\n1. 📐 **Chọn Size**: Gửi số đo chiều cao và cân nặng (Ví dụ: *'mình cao 1m75 nặng 70kg'*).\n2. 👟 **Tìm sản phẩm**: Nhập nhu cầu như *'áo bóng đá'*, *'giày chạy bộ'*, *'đồ gym'*, *'vợt cầu lông'*.\n3. 📦 **Đơn hàng**: Gửi mã đơn (Ví dụ: *'SPX-9820'*).\n4. 🎁 **Ưu đãi**: Nhập *'mã giảm giá'* hoặc *'khuyến mãi'*.\n\nDưới đây là một số mẫu đồ thể thao bán chạy nhất bạn có thể tham khảo ngay:",
+          "timestamp": "22:07",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792943881590-user",
+          "sender": "user",
+          "text": "hello?",
+          "timestamp": "22:58"
+        },
+        {
+          "id": "m-1792943881590-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận được tin nhắn của bạn! ✨\n\nĐể SportX tư vấn cho bạn nhanh và chuẩn xác nhất, bạn có thể:\n1. 📐 **Chọn Size**: Gửi số đo chiều cao và cân nặng (Ví dụ: *'mình cao 1m75 nặng 70kg'*).\n2. 👟 **Tìm sản phẩm**: Nhập nhu cầu như *'áo bóng đá'*, *'giày chạy bộ'*, *'đồ gym'*, *'vợt cầu lông'*.\n3. 📦 **Đơn hàng**: Gửi mã đơn (Ví dụ: *'SPX-9820'*).\n4. 🎁 **Ưu đãi**: Nhập *'mã giảm giá'* hoặc *'khuyến mãi'*.\n\nDưới đây là một số mẫu đồ thể thao bán chạy nhất bạn có thể tham khảo ngay:",
+          "timestamp": "22:58",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792955583365-user",
+          "sender": "user",
+          "text": "Chính sách đổi trả 30 ngày",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955583370-bot",
+          "sender": "bot",
+          "text": "SportX hỗ trợ đổi trả miễn phí trong vòng 7 ngày kể từ khi nhận hàng đối với sản phẩm còn nguyên tem mác, hộp và chưa qua sử dụng. Bạn có thể mang trực tiếp ra cửa hàng hoặc gửi chuyển phát.",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955596698-user",
+          "sender": "user",
+          "text": "1m75",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955596699-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **175cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955608087-user",
+          "sender": "user",
+          "text": "69kg",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955608088-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **69kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955615164-user",
+          "sender": "user",
+          "text": "1m95",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955615164-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **195cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955622704-user",
+          "sender": "user",
+          "text": "80kg",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955622705-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **80kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955626764-user",
+          "sender": "user",
+          "text": "1m90",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955626764-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **190cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955637805-user",
+          "sender": "user",
+          "text": "Nặng 55kg",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955637806-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **55kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955639743-user",
+          "sender": "user",
+          "text": "Cao 1m70",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955639743-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **170cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:13"
+        },
+        {
+          "id": "m-1792955641299-user",
+          "sender": "user",
+          "text": "Nặng 80kg",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955641299-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **80kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955642240-user",
+          "sender": "user",
+          "text": "Cao 1m65",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955642240-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **165cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955642871-user",
+          "sender": "user",
+          "text": "Nặng 55kg",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955642871-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **55kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955643487-user",
+          "sender": "user",
+          "text": "Cao 1m65",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955643487-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **165cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955644436-user",
+          "sender": "user",
+          "text": "Nặng 80kg",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955644436-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **80kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955645582-user",
+          "sender": "user",
+          "text": "Cao 1m75",
+          "timestamp": "02:14"
+        },
+        {
+          "id": "m-1792955645582-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **175cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "02:14"
+        }
+      ]
+    },
+    {
+      "id": "test-session",
+      "customerName": "Khách trực tuyến",
+      "customerPhone": "Website Client",
+      "avatar": "KH",
+      "timestamp": "25/10/2026 • 21:59",
+      "lastMessage": "Dạ SportX đã nhận được tin nhắn của bạn! ✨\n\nĐể SportX tư vấn cho bạn nhanh và chuẩn xác nhất, bạn có thể:\n1. 📐 **Chọn Size**: Gửi số đo chiều cao và cân nặng (Ví dụ: *'mình cao 1m75 nặng 70kg'*).\n2. 👟 **Tìm sản phẩm**: Nhập nhu cầu như *'áo bóng đá'*, *'giày chạy bộ'*, *'đồ gym'*, *'vợt cầu lông'*.\n3. 📦 **Đơn hàng**: Gửi mã đơn (Ví dụ: *'SPX-9820'*).\n4. 🎁 **Ưu đãi**: Nhập *'mã giảm giá'* hoặc *'khuyến mãi'*.\n\nDưới đây là một số mẫu đồ thể thao bán chạy nhất bạn có thể tham khảo ngay:",
+      "status": "Product Recommended",
+      "unreadCount": 0,
+      "messages": [
+        {
+          "id": "m-1792940392781-user",
+          "sender": "user",
+          "text": "cao 1m75 nang 70kg",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392786-bot",
+          "sender": "bot",
+          "text": "Xin chào bạn! SportX AI đã phân tích thể trạng của bạn:\n\n📏 **Chiều cao:** 175cm | ⚖️ **Cân nặng:** 70kg\n📊 **Chỉ số BMI:** 22.9 (Bình thường)\n🎯 **Size đề xuất tối ưu:** **Size L** (Regular Fit)\n\nDựa trên chiều cao 175cm, cân nặng 70kg (Chỉ số BMI: 22.9 - Bình thường), SportX AI khuyên bạn nên mặc **Size L** (Regular Fit) để đạt độ thoải mái tối đa khi vận động và tập luyện thể thao.\n💡 **Gợi ý thêm:**\n• Chọn **Size XL**: Nếu bạn có bờ vai rộng hoặc thích mặc thoải mái khi chạy bộ\n• Chọn **Size M**: Nếu bạn muốn ôm cơ bắp gọn gàng\n\nDưới đây là các mẫu đồ thể thao bán chạy nhất đã có sẵn **Size L**, bạn có thể bấm xem ngay nhé:",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "sizeSuggested": "Size L (Regular Fit)",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392849-user",
+          "sender": "user",
+          "text": "cao 1m68 nang 58kg thich mac om",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392849-bot",
+          "sender": "bot",
+          "text": "Xin chào bạn! SportX AI đã phân tích thể trạng của bạn:\n\n📏 **Chiều cao:** 168cm | ⚖️ **Cân nặng:** 58kg\n📊 **Chỉ số BMI:** 20.5 (Bình thường)\n🎯 **Size đề xuất tối ưu:** **Size M** (Slim Fit)\n\nDựa trên chiều cao 168cm, cân nặng 58kg (Chỉ số BMI: 20.5 - Bình thường), SportX AI khuyên bạn nên mặc **Size M** (Slim Fit) để đạt độ thoải mái tối đa khi vận động và tập luyện thể thao.\n💡 **Gợi ý thêm:**\n• Chọn **Size L**: Nếu bạn thích mặc form rộng rãi (Oversize) hoặc có bắp tay to\n• Chọn **Size S**: Nếu bạn muốn mặc ôm sát cơ thể (Slim Body Fit)\n\nDưới đây là các mẫu đồ thể thao bán chạy nhất đã có sẵn **Size M**, bạn có thể bấm xem ngay nhé:",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "sizeSuggested": "Size M (Slim Fit)",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392858-user",
+          "sender": "user",
+          "text": "mình cao 1m80",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392858-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin chiều cao của bạn là **180cm**! 📏\n\nĐể AI tính toán chính xác chỉ số thể trạng (BMI) và đề xuất size chuẩn nhất (S, M, L, XL, XXL), bạn cho SportX biết thêm **cân nặng (kg)** của bạn nhé!\n\n*(Ví dụ: 'mình nặng 65kg' hoặc '68 ký thích mặc rộng')*",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392866-user",
+          "sender": "user",
+          "text": "mình nặng 75kg",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392866-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận thông tin cân nặng của bạn là **75kg**! ⚖️\n\nBạn cho SportX biết thêm **chiều cao (cm hoặc mét)** của bạn nhé để AI gợi ý size vừa vặn và tôn dáng nhất!\n\n*(Ví dụ: 'mình cao 1m72' hoặc 'cao 175cm')*",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392872-user",
+          "sender": "user",
+          "text": "tư vấn áo bóng đá",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392873-bot",
+          "sender": "bot",
+          "text": "⚽ **Bộ sưu tập Bóng Đá chuyên nghiệp tại SportX:**\nSportX mang đến cho bạn giày đinh FG bám sân cực tốt, áo đấu thoáng khí Aeroready và tất chống trượt cao cấp. Mời bạn tham khảo:\n\n1. **Nike Mercurial Superfly 9 Elite FG** - Giá ưu đãi: **229.000đ**\n2. **SportX Anti-Slip Football Grip Socks** - Giá ưu đãi: **15.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392879-user",
+          "sender": "user",
+          "text": "có giày chạy bộ nào tốt không",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392880-bot",
+          "sender": "bot",
+          "text": "🏃‍♂️ **Dòng sản phẩm Chạy Bộ chuyên dụng tại SportX:**\nTrang bị công nghệ đệm hạt Boost siêu nhẹ, hấp thụ phản lực tối đa và áo Singlet thoáng khí chống ma sát giúp bạn bứt phá mọi cự ly:\n\n1. **Adidas Ultraboost Light Running Shoes** - Giá ưu đãi: **149.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-3",
+            "name": "Adidas Ultraboost Light Running Shoes",
+            "category": "Running",
+            "price": "149.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392909-user",
+          "sender": "user",
+          "text": "đồ tập gym",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392909-bot",
+          "sender": "bot",
+          "text": "💪 **Trang thiết bị & Đồ tập Gym SportX Pro:**\nChất liệu co giãn 4 chiều Dry-Fit kháng khuẩn, thoát mồ hôi 3D cực nhanh kết hợp cùng phụ kiện tập luyện bền bỉ:\n\n1. **SportX Pro Adjustable Dumbbell 20kg** - Giá ưu đãi: **169.000đ**\n2. **SportX Pro Dry-Fit Training Vest** - Giá ưu đãi: **35.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-2",
+            "name": "SportX Pro Adjustable Dumbbell 20kg",
+            "category": "Gym",
+            "price": "169.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392925-user",
+          "sender": "user",
+          "text": "sản phẩm nào đang giảm giá",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392925-bot",
+          "sender": "bot",
+          "text": "🔥 **Sản phẩm đang Giảm Giá & Ưu Đãi Cực Sốc tại SportX:**\nĐừng quên nhập thêm mã voucher **SPORTX10** để được giảm thêm 10% cho đơn hàng nhé!\n\n1. **Nike Mercurial Superfly 9 Elite FG** - Giá ưu đãi: **229.000đ**\n2. **SportX Pro Adjustable Dumbbell 20kg** - Giá ưu đãi: **169.000đ**\n3. **Adidas Ultraboost Light Running Shoes** - Giá ưu đãi: **149.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392941-user",
+          "sender": "user",
+          "text": "mã giảm giá",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392942-bot",
+          "sender": "bot",
+          "text": "🔥 **Sản phẩm đang Giảm Giá & Ưu Đãi Cực Sốc tại SportX:**\nĐừng quên nhập thêm mã voucher **SPORTX10** để được giảm thêm 10% cho đơn hàng nhé!\n\n1. **Nike Mercurial Superfly 9 Elite FG** - Giá ưu đãi: **229.000đ**\n2. **SportX Pro Adjustable Dumbbell 20kg** - Giá ưu đãi: **169.000đ**\n3. **Adidas Ultraboost Light Running Shoes** - Giá ưu đãi: **149.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792940392981-user",
+          "sender": "user",
+          "text": "chính sách đổi trả",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392982-bot",
+          "sender": "bot",
+          "text": "SportX hỗ trợ đổi trả miễn phí trong vòng 7 ngày kể từ khi nhận hàng đối với sản phẩm còn nguyên tem mác, hộp và chưa qua sử dụng. Bạn có thể mang trực tiếp ra cửa hàng hoặc gửi chuyển phát.",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392998-user",
+          "sender": "user",
+          "text": "tra cứu đơn hàng SPX-9820",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940392998-bot",
+          "sender": "bot",
+          "text": "📦 **Thông tin đơn hàng SPX-9820:**\n\n• **Trạng thái:** 🚚 Đang vận chuyển giao hàng\n• **Khách hàng:** Tran Van Duc (+84 987 654 321)\n• **Địa chỉ nhận:** 45 Nguyen Trai, Thanh Xuan, Hanoi\n• **Thanh toán:** MoMo (Đã thanh toán)\n• **Tổng tiền:** **184.000đ**\n\n**Sản phẩm trong đơn:**\n• **Adidas Ultraboost Light Running Shoes** (x1) - Size L (42.5 EU)\n• **SportX Pro Dry-Fit Training Vest** (x1) - Size L\n\nNếu bạn cần hỗ trợ thay đổi địa chỉ hoặc hủy đơn, vui lòng liên hệ hotline: **0912.888.999** nhé!",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940393028-user",
+          "sender": "user",
+          "text": "chào shop",
+          "timestamp": "21:59"
+        },
+        {
+          "id": "m-1792940393028-bot",
+          "sender": "bot",
+          "text": "Dưới đây là các sản phẩm thể thao nổi bật tại SportX được khách hàng đánh giá cao nhất:\n\n1. **Nike Mercurial Superfly 9 Elite FG** - Giá ưu đãi: **229.000đ**\n2. **SportX Pro Adjustable Dumbbell 20kg** - Giá ưu đãi: **169.000đ**\n3. **Adidas Ultraboost Light Running Shoes** - Giá ưu đãi: **149.000đ**\n\nBạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết ảnh thật và chọn màu, hoặc nhắn chiều cao/cân nặng để mình tư vấn size vừa khít nhé!",
+          "timestamp": "21:59",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        },
+        {
+          "id": "m-1792943919521-user",
+          "sender": "user",
+          "text": "Hello?",
+          "timestamp": "22:58"
+        },
+        {
+          "id": "m-1792943919521-bot",
+          "sender": "bot",
+          "text": "Dạ SportX đã nhận được tin nhắn của bạn! ✨\n\nĐể SportX tư vấn cho bạn nhanh và chuẩn xác nhất, bạn có thể:\n1. 📐 **Chọn Size**: Gửi số đo chiều cao và cân nặng (Ví dụ: *'mình cao 1m75 nặng 70kg'*).\n2. 👟 **Tìm sản phẩm**: Nhập nhu cầu như *'áo bóng đá'*, *'giày chạy bộ'*, *'đồ gym'*, *'vợt cầu lông'*.\n3. 📦 **Đơn hàng**: Gửi mã đơn (Ví dụ: *'SPX-9820'*).\n4. 🎁 **Ưu đãi**: Nhập *'mã giảm giá'* hoặc *'khuyến mãi'*.\n\nDưới đây là một số mẫu đồ thể thao bán chạy nhất bạn có thể tham khảo ngay:",
+          "timestamp": "22:58",
+          "productCard": {
+            "id": "p-1",
+            "name": "Nike Mercurial Superfly 9 Elite FG",
+            "category": "Football",
+            "price": "229.000đ",
+            "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800"
+          }
+        }
+      ]
+    },
     {
       "id": "chat-1",
       "customerName": "Nguyễn Minh Tuấn",
@@ -880,41 +1634,70 @@
     {
       "id": "cp-1",
       "code": "SPORTX10",
-      "description": "Giảm 10% cho tất cả đơn hàng từ $50",
+      "description": "Giảm 10% cho tất cả đơn hàng từ 200.000đ (tối đa 50.000đ)",
       "discountType": "percentage",
       "discountValue": 10,
-      "minOrderValue": 50,
-      "maxDiscount": 30,
+      "minOrderValue": 200000,
+      "maxDiscount": 50000,
       "usageLimit": 500,
-      "usedCount": 142,
-      "startDate": "2026-09-01",
-      "endDate": "2026-10-31",
+      "usedCount": 144,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
       "status": "Active"
     },
     {
       "id": "cp-2",
-      "code": "FREESHIP",
-      "description": "Miễn phí vận chuyển toàn quốc cho đơn từ $100",
+      "code": "SUMMER50K",
+      "description": "Giảm ngay 50.000đ cho đơn từ 300.000đ",
       "discountType": "fixed",
-      "discountValue": 15,
-      "minOrderValue": 100,
-      "usageLimit": 1000,
-      "usedCount": 388,
-      "startDate": "2026-09-01",
+      "discountValue": 50000,
+      "minOrderValue": 300000,
+      "maxDiscount": 50000,
+      "usageLimit": 200,
+      "usedCount": 68,
+      "startDate": "2026-01-01",
       "endDate": "2026-12-31",
       "status": "Active"
     },
     {
       "id": "cp-3",
+      "code": "FREESHIP",
+      "description": "Miễn phí vận chuyển toàn quốc (tiết kiệm 30.000đ phí giao hàng)",
+      "discountType": "free_shipping",
+      "discountValue": 30000,
+      "minOrderValue": 0,
+      "usageLimit": 1000,
+      "usedCount": 388,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "status": "Active"
+    },
+    {
+      "id": "cp-4",
       "code": "VIPMEMBER20",
-      "description": "Giảm $20 cho khách hàng thành viên VIP",
-      "discountType": "fixed",
+      "description": "Ưu đãi độc quyền 20% cho khách hàng VIP từ 500.000đ (tối đa 150.000đ)",
+      "discountType": "percentage",
       "discountValue": 20,
-      "minOrderValue": 150,
+      "minOrderValue": 500000,
+      "maxDiscount": 150000,
       "usageLimit": 100,
       "usedCount": 45,
-      "startDate": "2026-09-15",
-      "endDate": "2026-10-15",
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "status": "Active"
+    },
+    {
+      "id": "cp-5",
+      "code": "FLASH30",
+      "description": "Xả kho giảm sốc 30% cho đơn thể thao từ 400.000đ (tối đa 120.000đ)",
+      "discountType": "percentage",
+      "discountValue": 30,
+      "minOrderValue": 400000,
+      "maxDiscount": 120000,
+      "usageLimit": 150,
+      "usedCount": 82,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
       "status": "Active"
     }
   ],
@@ -923,9 +1706,9 @@
     "storeEmail": "contact@sportx.store",
     "storePhone": "+84 24 3988 2022",
     "storeAddress": "102+ Perkcere A, District 1, Ho Chi Minh City, Vietnam",
-    "currency": "USD ($)",
-    "shippingFeeDefault": 5,
-    "freeShippingThreshold": 100,
+    "currency": "VNĐ",
+    "shippingFeeDefault": 30000,
+    "freeShippingThreshold": 500000,
     "vnpayEnabled": true,
     "vnpayTmnCode": "SPORTX01",
     "vnpayHashSecret": "ABCXYZ1234567890SPORTXSECRETKEY",
@@ -937,6 +1720,17 @@
     "defaultConfidenceThreshold": 0.75
   },
   "users": [
+    {
+      "id": "usr-9a5a117b",
+      "email": "nguyenvana@gmail.com",
+      "passwordHash": "$2b$10$cpNVU42rA3ymzoYqkapSF.8E3M/R8Q05GYWiBO19/RDTFlxn8RRhq",
+      "fullName": "Nguyễn Văn A",
+      "phone": "0333333333",
+      "role": "STAFF",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Nguy%E1%BB%85n%20V%C4%83n%20A",
+      "status": "Active",
+      "createdAt": "2026-10-25T14:46:53.842Z"
+    },
     {
       "id": "usr-d020fdb8",
       "email": "dinhot@gmail.com",
@@ -1013,7 +1807,7 @@
       "status": "Active",
       "createdAt": "2026-09-01T00:00:00Z",
       "passwordHash": "$2b$10$FYwL1rYC9j76v4.vnkqG9umMkWS6ACDHC8gThu8QlyZ0/45F90BiW",
-      "lastLoginAt": "2026-09-22T20:43:39.235Z"
+      "lastLoginAt": "2026-10-25T16:56:56.786Z"
     },
     {
       "id": "usr-staff-01",
@@ -1024,7 +1818,8 @@
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
       "status": "Active",
       "createdAt": "2026-09-05T00:00:00Z",
-      "passwordHash": "$2b$10$E0nteGEPA93gX6wYgq2bbe7UcNjkb0VuvUjYW2tU0yM0Xu.vmZedO"
+      "passwordHash": "$2b$10$E0nteGEPA93gX6wYgq2bbe7UcNjkb0VuvUjYW2tU0yM0Xu.vmZedO",
+      "lastLoginAt": "2026-10-25T16:55:03.214Z"
     },
     {
       "id": "usr-cust-01",
@@ -1036,7 +1831,7 @@
       "status": "Active",
       "createdAt": "2026-09-10T00:00:00Z",
       "passwordHash": "$2b$10$tzxBK6l8iILsa9MV8E522.lCKDegoGfciIVVBBmIH1Obpz6Px1/9G",
-      "lastLoginAt": "2026-09-22T20:44:02.022Z"
+      "lastLoginAt": "2026-10-25T18:49:39.880Z"
     }
   ]
 }

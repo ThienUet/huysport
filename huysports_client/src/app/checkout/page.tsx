@@ -15,19 +15,64 @@ import {
   FaWallet,
   FaBuildingColumns,
   FaBoxOpen,
+  FaTicket,
+  FaTrashCan,
 } from "react-icons/fa6";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { orderService } from "@/services/orderService";
+import { couponService } from "@/services/couponService";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, coupon, discountAmount, clearCart, getSubtotal, getShippingFee, getTotal } = useCartStore();
+  const {
+    items,
+    coupon,
+    discountAmount,
+    setCoupon,
+    removeCoupon,
+    clearCart,
+    getSubtotal,
+    getShippingFee,
+    getTotal,
+  } = useCartStore();
   const { user } = useAuthStore();
 
   const subtotal = getSubtotal();
   const shippingFee = getShippingFee();
   const total = getTotal();
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const handleApplyCoupon = async (codeToApply?: string) => {
+    const code = (codeToApply || couponInput).trim();
+    if (!code) return;
+
+    setIsApplyingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+
+    const res = await couponService.validateCoupon(code, subtotal);
+    setIsApplyingCoupon(false);
+
+    if (res.success && res.coupon) {
+      setCoupon(res.coupon, res.discountAmount);
+      setCouponSuccess(res.message);
+      setCouponInput("");
+    } else {
+      setCouponError(res.message);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponSuccess("");
+    setCouponError("");
+  };
 
   // Form State
   const [fullName, setFullName] = useState(user?.fullName || "");
@@ -43,6 +88,8 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !phone || !email || !addressLine) {
@@ -52,6 +99,11 @@ export default function CheckoutPage() {
 
     if (items.length === 0) {
       setErrorMessage("Giỏ hàng của bạn đang trống!");
+      return;
+    }
+
+    if (hasOutOfStockItems) {
+      setErrorMessage("Trong đơn hàng có sản phẩm hiện đã tạm hết hàng. Vui lòng quay lại giỏ hàng để cập nhật!");
       return;
     }
 
@@ -139,6 +191,18 @@ export default function CheckoutPage() {
           Thông Tin Thanh Toán & Giao Hàng
         </h1>
       </div>
+
+      {hasOutOfStockItems && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FaCircleExclamation className="w-4 h-4 text-rose-600 flex-shrink-0" />
+            <span>Có sản phẩm trong giỏ hàng đã tạm hết hàng trong kho. Vui lòng quay lại giỏ hàng để cập nhật!</span>
+          </div>
+          <Button as={Link} href="/cart" size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs whitespace-nowrap self-start sm:self-center">
+            Quay lại giỏ hàng
+          </Button>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="p-4 rounded-xl bg-red-50 text-red-700 text-xs font-semibold flex items-center gap-2 border border-red-200">
@@ -362,22 +426,124 @@ export default function CheckoutPage() {
             <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-gray-100 pr-1">
               {items.map((item) => (
                 <div key={item.sku} className="pt-2 first:pt-0 flex items-center gap-3 text-xs">
-                  <img
-                    src={item.productImage || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"}
-                    alt={item.productName}
-                    className="w-12 h-12 rounded-lg object-cover bg-gray-100 flex-shrink-0 border border-gray-200"
-                  />
+                  <div className="relative w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-200 overflow-hidden">
+                    <img
+                      src={
+                        item.productImage && (item.productImage.startsWith("http") || item.productImage.startsWith("/"))
+                          ? item.productImage
+                          : "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"
+                      }
+                      alt={item.productName}
+                      className={`w-full h-full object-cover ${item.maxStock <= 0 ? "grayscale-[30%]" : ""}`}
+                    />
+                    {item.maxStock <= 0 && (
+                      <span className="absolute inset-0 bg-slate-900/60 text-white text-[8px] font-bold flex items-center justify-center text-center p-0.5">
+                        Hết
+                      </span>
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <h5 className="font-bold text-gray-900 truncate">{item.productName}</h5>
                     <div className="text-[11px] text-gray-400">
                       {item.size} • {item.color} • x{item.quantity}
                     </div>
+                    {item.maxStock <= 0 && (
+                      <span className="text-[10px] text-rose-600 font-bold">
+                        Đã tạm hết hàng
+                      </span>
+                    )}
                   </div>
                   <div className="font-bold text-gray-900">
                     {(item.price * item.quantity).toLocaleString("vi-VN")}đ
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Coupon Code Section */}
+            <div className="pt-4 border-t border-gray-200 space-y-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                <FaTicket className="w-3.5 h-3.5 text-emerald-600" /> Mã Giảm Giá / Voucher Ưu Đãi
+              </label>
+
+              {coupon ? (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-black text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                        {coupon.code}
+                      </span>
+                      <span className="font-bold text-emerald-700">
+                        -{(discountAmount || 0).toLocaleString("vi-VN")}đ
+                      </span>
+                    </div>
+                    {coupon.description && (
+                      <p className="text-[11px] text-emerald-600 mt-1">{coupon.description}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                    title="Gỡ mã giảm giá"
+                  >
+                    <FaTrashCan className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nhập mã ưu đãi (VD: SPORTX10, SUMMER50K...)"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono uppercase focus:outline-none focus:border-emerald-500"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      isLoading={isApplyingCoupon}
+                      onClick={() => handleApplyCoupon()}
+                      className="bg-emerald-600 text-white font-bold text-xs rounded-lg px-4 cursor-pointer hover:bg-emerald-700"
+                    >
+                      Áp Dụng
+                    </Button>
+                  </div>
+
+                  {/* Quick Coupon Suggestions */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] text-gray-400">Gợi ý mã:</span>
+                    {["SPORTX10", "SUMMER50K", "FREESHIP"].map((code) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => handleApplyCoupon(code)}
+                        className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded transition cursor-pointer"
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {couponError && (
+                <p className="text-[11px] font-medium text-rose-600 flex items-center gap-1">
+                  <FaCircleExclamation className="w-3 h-3 shrink-0" /> {couponError}
+                </p>
+              )}
+              {couponSuccess && (
+                <p className="text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+                  <FaCircleCheck className="w-3 h-3 shrink-0" /> {couponSuccess}
+                </p>
+              )}
             </div>
 
             {/* Price Calculations */}
@@ -409,11 +575,16 @@ export default function CheckoutPage() {
               type="submit"
               color="primary"
               size="lg"
-              className="w-full font-bold text-xs h-12 rounded-full shadow-md bg-emerald-600 hover:bg-emerald-700 text-white"
+              isDisabled={isLoading || hasOutOfStockItems}
+              className={`w-full font-bold text-xs h-12 rounded-full shadow-md transition ${
+                hasOutOfStockItems
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              }`}
               endContent={<FaArrowRight className="w-3.5 h-3.5" />}
               isLoading={isLoading}
             >
-              Đặt Hàng ({total.toLocaleString("vi-VN")}đ)
+              {hasOutOfStockItems ? "Vui lòng xóa sản phẩm hết hàng" : `Đặt Hàng (${total.toLocaleString("vi-VN")}đ)`}
             </Button>
 
             <div className="p-3 rounded-xl bg-white border border-gray-200 text-[11px] text-gray-500 space-y-1">

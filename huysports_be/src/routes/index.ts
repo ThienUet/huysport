@@ -9,6 +9,7 @@ import analyticsRoutes from "./analyticsRoutes.js";
 import settingsRoutes from "./settingsRoutes.js";
 import paymentRoutes from "./paymentRoutes.js";
 import authRoutes from "./authRoutes.js";
+import searchRoutes from "./searchRoutes.js";
 
 const apiRouter = Router();
 
@@ -23,6 +24,7 @@ apiRouter.use("/coupons", marketingRoutes);
 apiRouter.use("/analytics", analyticsRoutes);
 apiRouter.use("/settings", settingsRoutes);
 apiRouter.use("/payment", paymentRoutes);
+apiRouter.use("/search", searchRoutes);
 
 // Health check endpoint
 apiRouter.get("/health", (req, res) => {

@@ -32,6 +32,7 @@ export interface Product {
 
 export interface OrderItem {
   id: string;
+  sku?: string;
   name: string;
   category: string;
   thumbnail: string;
@@ -40,6 +41,20 @@ export interface OrderItem {
   colorHex: string;
   qty: number;
   unitPrice: number;
+}
+
+export interface ReturnRequest {
+  reason: string;
+  detailedReason?: string;
+  bankName?: string;
+  bankAccount?: string;
+  accountHolder?: string;
+  refundAmount: number;
+  status: "Pending" | "Approved" | "Rejected" | "Completed";
+  adminNote?: string;
+  requestedAt: string;
+  processedAt?: string;
+  completedAt?: string;
 }
 
 export interface Order {
@@ -55,10 +70,23 @@ export interface Order {
     address: string;
   };
   items: OrderItem[];
+  subtotal?: number;
+  shippingFee?: number;
+  discountAmount?: number;
+  couponCode?: string;
   totalAmount: number;
   paymentMethod: "VNPAY" | "MoMo" | "COD";
   paymentStatus: "Paid" | "Unpaid";
   fulfillmentStatus: "Pending Approval" | "Processing" | "Shipping" | "Completed" | "Canceled";
+  shippingCarrier?: "GHTK" | "ViettelPost" | "J&T Express" | "Shopee Xpress" | string;
+  trackingCode?: string;
+  cancelReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: "customer" | "admin" | "system";
+  failedDeliveryAttempts?: number;
+  dispatchedAt?: string;
+  deliveredAt?: string;
+  returnRequest?: ReturnRequest;
   transactionDetails?: {
     gateway: "VNPAY" | "MoMo" | "COD";
     transactionCode: string;
@@ -162,7 +190,7 @@ export interface Coupon {
   id: string;
   code: string;
   description: string;
-  discountType: "percentage" | "fixed";
+  discountType: "percentage" | "fixed" | "free_shipping";
   discountValue: number;
   minOrderValue: number;
   maxDiscount?: number;
@@ -170,7 +198,7 @@ export interface Coupon {
   usedCount: number;
   startDate: string;
   endDate: string;
-  status: "Active" | "Expired" | "Disabled";
+  status: "Active" | "Expired" | "Disabled" | "Inactive" | "Upcoming";
 }
 
 export interface SystemSettings {

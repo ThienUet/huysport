@@ -29,16 +29,30 @@ export const useCartStore = create<CartState>()(
       isCartDrawerOpen: false,
 
       addItem: (item, quantity = 1) => {
+        const availableStock = typeof item.maxStock === "number" ? item.maxStock : 99;
+        if (availableStock <= 0) {
+          return;
+        }
+
         set((state) => {
           const existingIndex = state.items.findIndex((i) => i.sku === item.sku);
           if (existingIndex > -1) {
             const updatedItems = [...state.items];
-            const newQty = Math.min(updatedItems[existingIndex].quantity + quantity, item.maxStock || 99);
+            const currentQty = updatedItems[existingIndex].quantity;
+            const newQty = Math.min(currentQty + quantity, availableStock);
             updatedItems[existingIndex].quantity = newQty;
+            updatedItems[existingIndex].maxStock = availableStock;
             return { items: updatedItems, isCartDrawerOpen: true };
           } else {
             return {
-              items: [...state.items, { ...item, quantity: Math.min(quantity, item.maxStock || 99) }],
+              items: [
+                ...state.items,
+                {
+                  ...item,
+                  maxStock: availableStock,
+                  quantity: Math.min(quantity, availableStock),
+                },
+              ],
               isCartDrawerOpen: true,
             };
           }
@@ -57,7 +71,14 @@ export const useCartStore = create<CartState>()(
           return;
         }
         set((state) => ({
-          items: state.items.map((i) => (i.sku === sku ? { ...i, quantity: Math.min(quantity, i.maxStock || 99) } : i)),
+          items: state.items.map((i) => {
+            if (i.sku !== sku) return i;
+            const limit = typeof i.maxStock === "number" ? i.maxStock : 99;
+            return {
+              ...i,
+              quantity: Math.min(quantity, Math.max(1, limit)),
+            };
+          }),
         }));
       },
 

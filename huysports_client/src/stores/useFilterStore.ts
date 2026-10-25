@@ -10,6 +10,7 @@ interface FilterState {
   maxPrice: number;
   search: string;
   sort: string;
+  inStockOnly: boolean;
   setCategory: (category: string) => void;
   setSport: (sport: string) => void;
   setGender: (gender: string) => void;
@@ -18,6 +19,7 @@ interface FilterState {
   setPriceRange: (min: number, max: number) => void;
   setSearch: (search: string) => void;
   setSort: (sort: string) => void;
+  setInStockOnly: (inStockOnly: boolean) => void;
   resetFilters: () => void;
 }
 
@@ -31,6 +33,7 @@ const INITIAL_FILTERS = {
   maxPrice: 3000000,
   search: "",
   sort: "featured",
+  inStockOnly: false,
 };
 
 export const useFilterStore = create<FilterState>()((set) => ({
@@ -44,5 +47,6 @@ export const useFilterStore = create<FilterState>()((set) => ({
   setPriceRange: (minPrice, maxPrice) => set({ minPrice, maxPrice }),
   setSearch: (search) => set({ search }),
   setSort: (sort) => set({ sort }),
+  setInStockOnly: (inStockOnly) => set({ inStockOnly }),
   resetFilters: () => set({ ...INITIAL_FILTERS }),
 }));

@@ -42,6 +42,8 @@ interface FilterSidebarProps {
   minPrice: number;
   maxPrice: number;
   setPriceRange: (min: number, max: number) => void;
+  inStockOnly: boolean;
+  setInStockOnly: (val: boolean) => void;
   resetFilters: () => void;
   onOpenSizeAdvisor: () => void;
   onCloseMobileDrawer?: () => void;
@@ -60,6 +62,8 @@ const FilterSidebar = memo(function FilterSidebar({
   minPrice,
   maxPrice,
   setPriceRange,
+  inStockOnly,
+  setInStockOnly,
   resetFilters,
   onOpenSizeAdvisor,
   onCloseMobileDrawer,
@@ -245,6 +249,35 @@ const FilterSidebar = memo(function FilterSidebar({
           ))}
         </div>
       </div>
+
+      {/* Stock Status Filter */}
+      <div className="space-y-2 pt-2 border-t border-gray-100">
+        <label className="font-bold text-gray-900 block text-xs">Tình Trạng Kho Hàng:</label>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={() => setInStockOnly(false)}
+            className={`text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
+              !inStockOnly
+                ? "bg-emerald-50 text-emerald-700 font-bold border border-emerald-200"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <span>Tất cả sản phẩm</span>
+            {!inStockOnly && <FaCheck className="w-3 h-3 text-emerald-600" />}
+          </button>
+          <button
+            onClick={() => setInStockOnly(true)}
+            className={`text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
+              inStockOnly
+                ? "bg-emerald-50 text-emerald-700 font-bold border border-emerald-200"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <span>Chỉ xem còn hàng</span>
+            {inStockOnly && <FaCheck className="w-3 h-3 text-emerald-600" />}
+          </button>
+        </div>
+      </div>
     </div>
   );
 });
@@ -261,6 +294,7 @@ function ProductsContent() {
     maxPrice,
     search,
     sort,
+    inStockOnly,
     setCategory,
     setSport,
     setGender,
@@ -269,6 +303,7 @@ function ProductsContent() {
     setPriceRange,
     setSearch,
     setSort,
+    setInStockOnly,
     resetFilters,
   } = useFilterStore();
 
@@ -306,6 +341,12 @@ function ProductsContent() {
           const hasSize = p.variants?.some((v) => v.size.toUpperCase() === size.toUpperCase() && v.stock > 0);
           if (!hasSize) return false;
         }
+        if (inStockOnly) {
+          const isOutOfStock =
+            (p.stock ?? 0) <= 0 ||
+            (Boolean(p.variants && p.variants.length > 0 && p.variants.every((v) => (v.stock ?? 0) <= 0)));
+          if (isOutOfStock) return false;
+        }
         if (p.price < minPrice || p.price > maxPrice) return false;
         if (search.trim()) {
           const q = search.toLowerCase().trim();
@@ -323,7 +364,7 @@ function ProductsContent() {
         if (sort === "discount") return (b.discountPercent || 0) - (a.discountPercent || 0);
         return 0;
       });
-  }, [products, sport, gender, brand, size, minPrice, maxPrice, search, sort]);
+  }, [products, sport, gender, brand, size, minPrice, maxPrice, search, sort, inStockOnly]);
 
   const handleOpenSizeAdvisor = () => {
     setSelectedProductForSize(products[0] || null);
@@ -407,6 +448,8 @@ function ProductsContent() {
             minPrice={minPrice}
             maxPrice={maxPrice}
             setPriceRange={setPriceRange}
+            inStockOnly={inStockOnly}
+            setInStockOnly={setInStockOnly}
             resetFilters={resetFilters}
             onOpenSizeAdvisor={handleOpenSizeAdvisor}
           />
@@ -480,6 +523,8 @@ function ProductsContent() {
                   minPrice={minPrice}
                   maxPrice={maxPrice}
                   setPriceRange={setPriceRange}
+                  inStockOnly={inStockOnly}
+                  setInStockOnly={setInStockOnly}
                   resetFilters={resetFilters}
                   onOpenSizeAdvisor={handleOpenSizeAdvisor}
                   onCloseMobileDrawer={() => setIsMobileFilterOpen(false)}

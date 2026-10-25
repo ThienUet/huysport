@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Avatar, Button, Chip, Tabs, Tab, Input } from "@heroui/react";
+import { Avatar, Button, Chip, Tabs, Tab, Input, Tooltip } from "@heroui/react";
 import {
   FaUser,
   FaEnvelope,
@@ -16,17 +16,38 @@ import {
   FaChevronRight,
   FaBagShopping,
   FaLock,
+  FaXmark,
+  FaCircleCheck,
+  FaCircleExclamation,
 } from "react-icons/fa6";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { orderService } from "@/services/orderService";
 import { authService } from "@/services/authService";
 import { Order } from "@/types";
+import { formatDateTime } from "@/utils/formatUtils";
+
+const CANCEL_REASONS = [
+  "Sai thông tin nhận hàng (địa chỉ, số điện thoại)",
+  "Muốn thay đổi kích cỡ (size) hoặc màu sắc sản phẩm",
+  "Đổi ý, không muốn mua nữa",
+  "Tìm thấy giá tốt hơn ở nơi khác",
+  "Đặt trùng đơn hàng",
+  "Khác...",
+];
 
 export default function AccountPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, token, isAuthenticated, isHydrated, setAuth, logout } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Cancellation modal state
+  const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
+  const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
+  const [customReasonText, setCustomReasonText] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     const localToken = typeof window !== "undefined" ? localStorage.getItem("sportx_client_token") : null;
@@ -56,13 +77,38 @@ export default function AccountPage() {
     }
   }, [isAuthenticated, isHydrated, user, token, router, setAuth]);
 
-  const { data: ordersData, isLoading: isOrdersLoading } = useQuery({
+  const { data: ordersData, isLoading: isOrdersLoading, refetch: refetchOrders } = useQuery({
     queryKey: ["orders", "user", user?.email || "customer"],
     queryFn: () => orderService.trackOrderByCode(user?.email || user?.phone || "customer@sportx.store"),
     enabled: !!user?.email || !!user?.phone,
   });
 
   const orders: Order[] = ordersData?.data || [];
+
+  const handleConfirmCancelOrder = async () => {
+    if (!cancelModalOrder) return;
+    const finalReason = selectedReason === "Khác..." ? (customReasonText.trim() || "Khách yêu cầu hủy đơn") : selectedReason;
+
+    setIsCancelling(true);
+    setCancelMessage(null);
+    try {
+      await orderService.cancelOrder(cancelModalOrder.id, finalReason);
+      setCancelMessage({
+        type: "success",
+        text: `Đã hủy đơn hàng #${cancelModalOrder.orderNumber} thành công và hoàn trả lại số lượng tồn kho.`,
+      });
+      setCancelModalOrder(null);
+      refetchOrders();
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    } catch (err: any) {
+      setCancelMessage({
+        type: "error",
+        text: err.message || "Không thể hủy đơn hàng lúc này. Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   if (isCheckingAuth || (!user && (isAuthenticated || (typeof window !== "undefined" && localStorage.getItem("sportx_client_token"))))) {
     return (
@@ -213,6 +259,31 @@ export default function AccountPage() {
                 </span>
               </div>
 
+              {cancelMessage && (
+                <div
+                  className={`p-3.5 rounded-xl text-xs font-medium flex items-center justify-between ${
+                    cancelMessage.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {cancelMessage.type === "success" ? (
+                      <FaCircleCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{cancelMessage.text}</span>
+                  </div>
+                  <button
+                    onClick={() => setCancelMessage(null)}
+                    className="text-gray-400 hover:text-gray-600 p-1"
+                  >
+                    <FaXmark className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               {isOrdersLoading ? (
                 <div className="py-12 text-center text-sm text-gray-400">Đang tải lịch sử đơn hàng...</div>
               ) : orders.length === 0 ? (
@@ -225,44 +296,95 @@ export default function AccountPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((ord) => (
-                    <div
-                      key={ord.id || ord.orderNumber}
-                      className="p-4 rounded-xl border border-gray-200 hover:border-emerald-300 transition space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 font-mono font-bold text-gray-900">
-                          <span>{ord.orderNumber}</span>
-                          <Chip size="sm" color={getStatusColor(ord.fulfillmentStatus) as any} variant="flat" className="font-sans font-bold">
-                            {ord.fulfillmentStatus}
-                          </Chip>
+                  {orders.map((ord) => {
+                    const normStatus = (ord.fulfillmentStatus || "").toUpperCase();
+                    const canCancel = normStatus === "PENDING" || normStatus === "PROCESSING";
+                    const isShipping = normStatus === "SHIPPING";
+
+                    return (
+                      <div
+                        key={ord.id || ord.orderNumber}
+                        className="p-4 rounded-xl border border-gray-200 hover:border-emerald-300 transition space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 font-mono font-bold text-gray-900">
+                            <span>{ord.orderNumber}</span>
+                            <Chip size="sm" color={getStatusColor(ord.fulfillmentStatus) as any} variant="flat" className="font-sans font-bold">
+                              {ord.fulfillmentStatus}
+                            </Chip>
+                          </div>
+                          <span className="font-extrabold text-emerald-600 text-base">
+                            {ord.totalAmount?.toLocaleString("vi-VN")}đ
+                          </span>
                         </div>
-                        <span className="font-extrabold text-emerald-600 text-base">
-                          {ord.totalAmount?.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
 
-                      <div className="text-sm text-gray-500 flex flex-wrap items-center gap-3">
-                        <span className="flex items-center gap-1.5">
-                          <FaCalendarDays className="w-3.5 h-3.5" />
-                          {new Date(ord.createdAt).toLocaleDateString("vi-VN")}
-                        </span>
-                        <span>•</span>
-                        <span>{ord.items?.length || 1} sản phẩm</span>
-                        <span>•</span>
-                        <span>Thanh toán: {ord.paymentMethod}</span>
-                      </div>
+                        <div className="text-sm text-gray-500 flex flex-wrap items-center gap-3">
+                          <span className="flex items-center gap-1.5">
+                            <FaCalendarDays className="w-3.5 h-3.5" />
+                            {formatDateTime(ord.createdAt || ord.dateTime)}
+                          </span>
+                          <span>•</span>
+                          <span>{ord.items?.length || 1} sản phẩm</span>
+                          <span>•</span>
+                          <span>Thanh toán: {ord.paymentMethod}</span>
+                        </div>
 
-                      <div className="flex justify-end pt-2">
-                        <Link
-                          href={`/orders?search=${encodeURIComponent(ord.orderNumber)}`}
-                          className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
-                        >
-                          Xem chi tiết <FaChevronRight className="w-3 h-3" />
-                        </Link>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                          {canCancel ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCancelModalOrder(ord);
+                                setSelectedReason(CANCEL_REASONS[0]);
+                                setCustomReasonText("");
+                              }}
+                              className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <FaXmark className="w-3.5 h-3.5" />
+                              Hủy đơn này
+                            </button>
+                          ) : isShipping ? (
+                            <Tooltip
+                              content="Đang giao hàng, bạn không được hủy đơn hàng."
+                              placement="top"
+                              classNames={{
+                                content: "text-xs py-1.5 px-3 font-semibold bg-gray-900 text-white rounded-lg shadow-xl",
+                              }}
+                            >
+                              <div
+                                className="inline-block cursor-not-allowed"
+                                title="Đang giao hàng, bạn không được hủy đơn hàng."
+                              >
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="text-xs font-medium text-gray-400 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center gap-1.5 cursor-not-allowed opacity-80 pointer-events-none"
+                                >
+                                  <FaXmark className="w-3.5 h-3.5" />
+                                  Hủy đơn này
+                                </button>
+                              </div>
+                            </Tooltip>
+                          ) : ord.fulfillmentStatus === "CANCELLED" ? (
+                            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md">
+                              Đơn đã hủy & hoàn kho
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">
+                              Đã giao thành công
+                            </span>
+                          )}
+
+                          <Link
+                            href={`/orders?search=${encodeURIComponent(ord.orderNumber)}`}
+                            className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
+                          >
+                            Xem chi tiết <FaChevronRight className="w-3 h-3" />
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -307,6 +429,83 @@ export default function AccountPage() {
             </div>
           </Tab>
         </Tabs>
+
+        {/* Cancel Order Modal */}
+        {cancelModalOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 space-y-4">
+              <div>
+                <h3 className="text-base font-extrabold text-gray-900">
+                  Xác nhận hủy đơn hàng #{cancelModalOrder.orderNumber}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Đơn hàng đang ở trạng thái <strong>{cancelModalOrder.fulfillmentStatus === "PROCESSING" ? "Đang đóng gói" : "Chờ xác nhận"}</strong>. Sau khi hủy, hệ thống sẽ tự động hoàn lại số lượng tồn kho cho các sản phẩm.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-gray-700">
+                  Chọn lý do bạn muốn hủy đơn:
+                </label>
+                <div className="space-y-2">
+                  {CANCEL_REASONS.map((reason) => (
+                    <label
+                      key={reason}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition ${
+                        selectedReason === reason
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold"
+                          : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="cancel_reason_account"
+                        value={reason}
+                        checked={selectedReason === reason}
+                        onChange={() => setSelectedReason(reason)}
+                        className="text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span>{reason}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {selectedReason === "Khác..." && (
+                  <div className="mt-2">
+                    <textarea
+                      rows={2}
+                      placeholder="Nhập lý do cụ thể của bạn..."
+                      value={customReasonText}
+                      onChange={(e) => setCustomReasonText(e.target.value)}
+                      className="w-full p-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  variant="light"
+                  className="font-bold text-xs"
+                  onClick={() => setCancelModalOrder(null)}
+                  isDisabled={isCancelling}
+                >
+                  Giữ đơn hàng
+                </Button>
+                <Button
+                  size="sm"
+                  color="danger"
+                  className="font-bold text-xs bg-rose-600 text-white rounded-full shadow-xs cursor-pointer"
+                  onClick={handleConfirmCancelOrder}
+                  isLoading={isCancelling}
+                >
+                  Xác nhận hủy đơn
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

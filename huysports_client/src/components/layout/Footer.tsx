@@ -105,7 +105,7 @@ export default function Footer() {
             <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Về SportX</h4>
             <ul className="space-y-3">
               <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors text-sm">Giới thiệu</Link></li>
-              <li><Link href="/blog" className="text-gray-400 hover:text-white transition-colors text-sm">Blog</Link></li>
+              <li><Link href="/orders" className="text-gray-400 hover:text-white transition-colors text-sm">Tra cứu đơn hàng</Link></li>
               <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors text-sm">Liên hệ</Link></li>
             </ul>
           </div>

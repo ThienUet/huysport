@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button, Card, CardBody } from "@heroui/react";
@@ -13,8 +13,20 @@ import {
   FaBoxOpen,
   FaTruckFast,
   FaCircleCheck,
+  FaXmark,
+  FaCircleExclamation,
 } from "react-icons/fa6";
 import confetti from "canvas-confetti";
+import { orderService } from "@/services/orderService";
+
+const CANCEL_REASONS = [
+  "Sai thông tin nhận hàng (địa chỉ, số điện thoại)",
+  "Muốn thay đổi kích cỡ (size) hoặc màu sắc sản phẩm",
+  "Đổi ý, không muốn mua nữa",
+  "Tìm thấy giá tốt hơn ở nơi khác",
+  "Đặt trùng đơn hàng",
+  "Khác...",
+];
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -33,6 +45,28 @@ function OrderSuccessContent() {
   }, []);
 
   const [copied, setCopied] = React.useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
+  const [customReasonText, setCustomReasonText] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+
+  const handleCancelOrder = async () => {
+    setIsCancelling(true);
+    setCancelError("");
+    const finalReason = selectedReason === "Khác..." ? (customReasonText.trim() || "Khách yêu cầu hủy đơn") : selectedReason;
+
+    try {
+      await orderService.cancelOrder(orderNumber, finalReason);
+      setIsCancelled(true);
+      setIsCancelModalOpen(false);
+    } catch (err: any) {
+      setCancelError(err.message || "Không thể hủy đơn hàng lúc này. Vui lòng thử lại!");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -159,6 +193,14 @@ function OrderSuccessContent() {
         </div>
       </div>
 
+      {/* Cancelled Banner if user just cancelled */}
+      {isCancelled && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+          <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>Đơn hàng <strong>{orderNumber}</strong> đã được hủy thành công và hoàn lại số lượng tồn kho.</span>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
         <Button
@@ -182,6 +224,103 @@ function OrderSuccessContent() {
           Trở Về Trang Chủ
         </Button>
       </div>
+
+      {/* Quick Cancel link on success page */}
+      {!isCancelled && (
+        <div className="text-center pt-2">
+          <button
+            type="button"
+            onClick={() => setIsCancelModalOpen(true)}
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <FaXmark className="w-3.5 h-3.5" />
+            Bạn đặt nhầm thông tin hoặc muốn hủy đơn hàng này? Nhấn vào đây
+          </button>
+        </div>
+      )}
+
+      {/* Cancel Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 space-y-4">
+            <div>
+              <h3 className="text-base font-extrabold text-gray-900">
+                Xác nhận hủy đơn hàng #{orderNumber}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Đơn hàng vừa đặt đang ở trạng thái <strong>Chờ xác nhận</strong>. Sau khi hủy, hệ thống sẽ tự động hoàn lại số lượng tồn kho cho các sản phẩm.
+              </p>
+            </div>
+
+            {cancelError && (
+              <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs font-semibold border border-red-200">
+                {cancelError}
+              </div>
+            )}
+
+            <div className="space-y-2.5">
+              <label className="block text-xs font-bold text-gray-700">
+                Chọn lý do bạn muốn hủy đơn:
+              </label>
+              <div className="space-y-2">
+                {CANCEL_REASONS.map((reason) => (
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition ${
+                      selectedReason === reason
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold"
+                        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="cancel_reason"
+                      value={reason}
+                      checked={selectedReason === reason}
+                      onChange={() => setSelectedReason(reason)}
+                      className="text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {selectedReason === "Khác..." && (
+                <div className="mt-2">
+                  <textarea
+                    rows={2}
+                    placeholder="Nhập lý do cụ thể của bạn..."
+                    value={customReasonText}
+                    onChange={(e) => setCustomReasonText(e.target.value)}
+                    className="w-full p-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+              <Button
+                size="sm"
+                variant="light"
+                className="font-bold text-xs"
+                onClick={() => setIsCancelModalOpen(false)}
+                isDisabled={isCancelling}
+              >
+                Giữ đơn hàng
+              </Button>
+              <Button
+                size="sm"
+                color="danger"
+                className="font-bold text-xs bg-rose-600 text-white rounded-full shadow-xs cursor-pointer"
+                onClick={handleCancelOrder}
+                isLoading={isCancelling}
+              >
+                Xác nhận hủy đơn
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

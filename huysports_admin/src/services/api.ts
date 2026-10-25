@@ -54,8 +54,27 @@ export const orderService = {
     const res = await apiClient.post("/orders", payload);
     return res.data.data;
   },
-  updateStatus: async (id: string, payload: { fulfillmentStatus?: string; paymentStatus?: string; transactionDetails?: any }) => {
+  updateStatus: async (
+    id: string,
+    payload: {
+      fulfillmentStatus?: string;
+      paymentStatus?: string;
+      shippingCarrier?: string;
+      trackingCode?: string;
+      cancelReason?: string;
+      failedDeliveryAttempts?: number;
+      transactionDetails?: any;
+    }
+  ) => {
     const res = await apiClient.put(`/orders/${id}/status`, payload);
+    return res.data.data;
+  },
+  cancel: async (id: string, payload: { reason?: string; cancelledBy?: string }) => {
+    const res = await apiClient.post(`/orders/${id}/cancel`, payload);
+    return res.data.data;
+  },
+  processReturn: async (id: string, payload: { action: "approve" | "reject" | "complete"; adminNote?: string }) => {
+    const res = await apiClient.put(`/orders/${id}/return-process`, payload);
     return res.data.data;
   },
 };
@@ -211,4 +230,26 @@ export const authService = {
     return res.data.data;
   },
 };
+
+// --- Global Search Service ---
+export interface GlobalSearchResult {
+  query: string;
+  counts: {
+    products: number;
+    orders: number;
+    customers: number;
+    total: number;
+  };
+  products: any[];
+  orders: any[];
+  customers: any[];
+}
+
+export const searchService = {
+  search: async (query: string): Promise<GlobalSearchResult> => {
+    const res = await apiClient.get("/search", { params: { q: query } });
+    return res.data.data;
+  },
+};
+
 

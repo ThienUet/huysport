@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import AdminLayout from "@/layouts/admin-layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Search,
   Plus,
@@ -14,7 +16,12 @@ import {
   Sparkles,
   Package,
   Boxes,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
+import { exportToCSV, exportToExcel, ReportSection } from "@/utils/exportUtils";
+import { HeroSelect } from "@/components/ui/HeroSelect";
+import { HeroDropdown } from "@/components/ui/HeroDropdown";
 
 interface VariantItem {
   id: string;
@@ -46,19 +53,49 @@ interface Product {
 
 const AVAILABLE_SIZES = ["S", "M", "L", "XL", "XXL"];
 const AVAILABLE_COLORS = [
-  { name: "Black", hex: "#0F172A" },
-  { name: "Navy", hex: "#1E3A8A" },
-  { name: "Red", hex: "#DC2626" },
-  { name: "White", hex: "#E2E8F0" },
-  { name: "Olive", hex: "#4D7C0F" },
-  { name: "Royal Blue", hex: "#2563EB" },
+  { name: "Đen", hex: "#0F172A" },
+  { name: "Xanh Navy", hex: "#1E3A8A" },
+  { name: "Đỏ", hex: "#DC2626" },
+  { name: "Trắng", hex: "#E2E8F0" },
+  { name: "Xanh Rêu", hex: "#4D7C0F" },
+  { name: "Xanh Dương", hex: "#2563EB" },
 ];
+
+// Helper to format currency nicely (VND)
+const formatCurrency = (val: number) => {
+  if (!val || val <= 0) return "0đ";
+  let num = val;
+  if (num < 1000) num = num * 1000;
+  return `${Math.round(num).toLocaleString("vi-VN")}đ`;
+};
+
+const removeVietnameseTones = (str: string) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+};
 
 export default function ProductsPage() {
   const queryClient = useQueryClient();
   const toast = useToastStore();
+  const [searchParams] = useSearchParams();
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const urlSearch = searchParams.get("search") || "";
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
+
+  useEffect(() => {
+    if (urlSearch) {
+      setSearchTerm(urlSearch);
+    }
+  }, [urlSearch]);
+
+  const debouncedSearch = useDebounce(searchTerm, 250);
+
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -67,7 +104,8 @@ export default function ProductsPage() {
   // React Query Fetch Products
   const { data: products = [] } = useQuery({
     queryKey: ["products", categoryFilter],
-    queryFn: () => productService.getAll({ category: categoryFilter !== "all" ? categoryFilter : undefined }),
+    queryFn: () =>
+      productService.getAll({ category: categoryFilter !== "all" ? categoryFilter : undefined }),
   });
 
   // Create Product Mutation
@@ -119,7 +157,7 @@ export default function ProductsPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formCategory, setFormCategory] = useState<"Football" | "Running" | "Gym" | "Badminton">("Football");
   const [formBrand, setFormBrand] = useState("");
-  const [formBasePrice, setFormBasePrice] = useState<number>(100);
+  const [formBasePrice, setFormBasePrice] = useState<number>(250000);
   const [formDiscountPrice, setFormDiscountPrice] = useState<number>(0);
   const [formSelectedSizes, setFormSelectedSizes] = useState<string[]>(["M", "L"]);
   const [formSelectedColors, setFormSelectedColors] = useState<{ name: string; hex: string }[]>([
@@ -155,24 +193,22 @@ export default function ProductsPage() {
     return list;
   };
 
-  // Open Drawer for Add New
   const handleOpenAddDrawer = () => {
     setEditingProductId(null);
     setFormName("");
     setFormDescription("");
     setFormCategory("Football");
-    setFormBrand("Nike");
-    setFormBasePrice(120);
-    setFormDiscountPrice(99);
-    const initialSizes = ["S", "M", "L"];
+    setFormBrand("SportX Pro");
+    setFormBasePrice(250000);
+    setFormDiscountPrice(0);
+    const initialSizes = ["M", "L"];
     const initialColors = [AVAILABLE_COLORS[0], AVAILABLE_COLORS[2]];
     setFormSelectedSizes(initialSizes);
     setFormSelectedColors(initialColors);
-    setMatrixVariants(generateMatrix(initialSizes, initialColors, "SPX-NEW", 99));
+    setMatrixVariants(generateMatrix(initialSizes, initialColors, "SPX-NEW", 250000));
     setIsDrawerOpen(true);
   };
 
-  // Open Drawer for Edit
   const handleOpenEditDrawer = (product: Product) => {
     setEditingProductId(product.id);
     setFormName(product.title);
@@ -183,128 +219,113 @@ export default function ProductsPage() {
     setFormDiscountPrice(product.discountPrice || 0);
     setFormSelectedSizes(product.sizes);
     setFormSelectedColors(product.colors);
-    setMatrixVariants(product.variants);
+    setMatrixVariants(product.variants || []);
     setIsDrawerOpen(true);
   };
 
-  // Update matrix variant cell
-  const handleUpdateMatrixCell = (id: string, field: keyof VariantItem, value: any) => {
-    setMatrixVariants((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
-    );
-  };
-
-  // Toggle size selection in variant generator
-  const handleToggleSize = (size: string) => {
-    const updated = formSelectedSizes.includes(size)
-      ? formSelectedSizes.filter((s) => s !== size)
-      : [...formSelectedSizes, size];
-    setFormSelectedSizes(updated);
-    setMatrixVariants(
-      generateMatrix(
-        updated,
-        formSelectedColors,
-        formName ? `SPX-${formName.slice(0, 3).toUpperCase()}` : "SPX-PRD",
-        formDiscountPrice || formBasePrice,
-        matrixVariants
-      )
-    );
-  };
-
-  // Toggle color selection in variant generator
   const handleToggleColor = (color: { name: string; hex: string }) => {
-    const exists = formSelectedColors.some((c) => c.name === color.name);
-    const updated = exists
-      ? formSelectedColors.filter((c) => c.name !== color.name)
-      : [...formSelectedColors, color];
+    let updated: { name: string; hex: string }[];
+    if (formSelectedColors.some((c) => c.name === color.name)) {
+      if (formSelectedColors.length <= 1) {
+        toast.warning("Thông báo", "Sản phẩm cần có ít nhất 1 màu");
+        return;
+      }
+      updated = formSelectedColors.filter((c) => c.name !== color.name);
+    } else {
+      updated = [...formSelectedColors, color];
+    }
     setFormSelectedColors(updated);
-    setMatrixVariants(
-      generateMatrix(
-        formSelectedSizes,
-        updated,
-        formName ? `SPX-${formName.slice(0, 3).toUpperCase()}` : "SPX-PRD",
-        formDiscountPrice || formBasePrice,
-        matrixVariants
-      )
+    const baseSku = editingProductId
+      ? products.find((p: Product) => p.id === editingProductId)?.sku || "SPX-ITEM"
+      : "SPX-NEW";
+    setMatrixVariants((prev) =>
+      generateMatrix(formSelectedSizes, updated, baseSku, formBasePrice, prev)
     );
   };
 
-  // Save product from Drawer
+  const handleToggleSize = (size: string) => {
+    let updated: string[];
+    if (formSelectedSizes.includes(size)) {
+      if (formSelectedSizes.length <= 1) {
+        toast.warning("Thông báo", "Sản phẩm cần có ít nhất 1 size");
+        return;
+      }
+      updated = formSelectedSizes.filter((s) => s !== size);
+    } else {
+      updated = [...formSelectedSizes, size];
+    }
+    setFormSelectedSizes(updated);
+    const baseSku = editingProductId
+      ? products.find((p: Product) => p.id === editingProductId)?.sku || "SPX-ITEM"
+      : "SPX-NEW";
+    setMatrixVariants((prev) =>
+      generateMatrix(updated, formSelectedColors, baseSku, formBasePrice, prev)
+    );
+  };
+
+  const handleUpdateMatrixCell = (id: string, field: "sku" | "price" | "stock", value: any) => {
+    setMatrixVariants((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim()) return;
+    if (!formName.trim()) {
+      toast.error("Lỗi", "Vui lòng nhập tên sản phẩm");
+      return;
+    }
 
-    const totalStock = matrixVariants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+    const totalStock = matrixVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+
+    const payload = {
+      title: formName,
+      description: formDescription,
+      category: formCategory,
+      brand: formBrand || "SportX Pro",
+      basePrice: Number(formBasePrice),
+      discountPrice: formDiscountPrice ? Number(formDiscountPrice) : undefined,
+      sizes: formSelectedSizes,
+      colors: formSelectedColors,
+      totalStock,
+      variants: matrixVariants,
+      status: "Active",
+    };
 
     if (editingProductId) {
-      // Update existing product
-      updateMutation.mutate({
-        id: editingProductId,
-        data: {
-          title: formName,
-          description: formDescription,
-          category: formCategory,
-          brand: formBrand,
-          basePrice: Number(formBasePrice),
-          discountPrice: formDiscountPrice ? Number(formDiscountPrice) : undefined,
-          sizes: formSelectedSizes,
-          colors: formSelectedColors,
-          variants: matrixVariants,
-          totalStock,
-        },
-      });
+      updateMutation.mutate({ id: editingProductId, data: payload });
     } else {
-      // Add new product
-      createMutation.mutate({
-        title: formName,
-        sku: `SPX-${formCategory.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
-        category: formCategory,
-        brand: formBrand,
-        basePrice: Number(formBasePrice),
-        discountPrice: formDiscountPrice ? Number(formDiscountPrice) : undefined,
-        thumbnail:
-          formCategory === "Football"
-            ? "⚽"
-            : formCategory === "Running"
-            ? "🏃"
-            : formCategory === "Gym"
-            ? "🏋️"
-            : "🏸",
-        icon: "⚡",
-        sizes: formSelectedSizes,
-        colors: formSelectedColors,
-        totalStock,
-        status: "Active",
-        variants: matrixVariants,
-        description: formDescription,
-      });
+      createMutation.mutate(payload);
     }
   };
 
-  // Delete product
   const handleDeleteProduct = (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) {
+    if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi hệ thống?")) {
       deleteMutation.mutate(id);
-      setSelectedProductIds((prev) => prev.filter((item) => item !== id));
     }
   };
 
-  // Toggle product status (Active / Draft)
   const handleToggleStatus = (product: Product) => {
-    const newStatus = product.status === "Active" ? "Draft" : "Active";
+    const nextStatus = product.status === "Active" ? "Draft" : "Active";
     updateMutation.mutate({
       id: product.id,
-      data: { status: newStatus },
+      data: { status: nextStatus },
     });
   };
 
   // Filtering products
   const filteredProducts = useMemo(() => {
+    const normSearch = removeVietnameseTones(debouncedSearch);
+    const lowerSearch = debouncedSearch.toLowerCase();
+
     return products.filter((p: Product) => {
       const matchesSearch =
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.brand.toLowerCase().includes(searchTerm.toLowerCase());
+        !normSearch ||
+        removeVietnameseTones(p.title).includes(normSearch) ||
+        p.title.toLowerCase().includes(lowerSearch) ||
+        (p.sku || "").toLowerCase().includes(lowerSearch) ||
+        removeVietnameseTones(p.brand).includes(normSearch) ||
+        removeVietnameseTones(p.category).includes(normSearch);
 
       const matchesCategory =
         categoryFilter === "all" || p.category.toLowerCase() === categoryFilter.toLowerCase();
@@ -317,7 +338,7 @@ export default function ProductsPage() {
 
       return matchesSearch && matchesCategory && matchesStock;
     });
-  }, [products, searchTerm, categoryFilter, stockFilter]);
+  }, [products, debouncedSearch, categoryFilter, stockFilter]);
 
   // Checkbox selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -336,6 +357,58 @@ export default function ProductsPage() {
     }
   };
 
+  const handleExportProducts = (format: "excel" | "csv") => {
+    if (filteredProducts.length === 0) {
+      toast.error("Không có sản phẩm", "Không có sản phẩm nào phù hợp để xuất báo cáo.");
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const headers = [
+      "Mã SKU",
+      "Tên sản phẩm",
+      "Môn thể thao",
+      "Giá bán (VNĐ)",
+      "Giá gốc (VNĐ)",
+      "Tổng tồn kho",
+      "Số biến thể",
+      "Tình trạng kho",
+    ];
+
+    const rows = filteredProducts.map((p: any) => {
+      let statusStr = "Còn hàng";
+      if (p.totalStock === 0) statusStr = "Hết hàng";
+      else if (p.totalStock < 20) statusStr = "Sắp hết hàng";
+
+      return [
+        p.sku,
+        p.title,
+        p.category,
+        `${p.price?.toLocaleString("vi-VN")}đ`,
+        `${p.originalPrice?.toLocaleString("vi-VN")}đ`,
+        p.totalStock,
+        p.variants?.length || 0,
+        statusStr,
+      ];
+    });
+
+    if (format === "excel") {
+      const sections: ReportSection[] = [
+        {
+          title: `Danh Sách Tồn Kho Sản Phẩm (${filteredProducts.length} sản phẩm)`,
+          description: `Bộ lọc môn: ${categoryFilter} | Kho: ${stockFilter}`,
+          headers,
+          rows,
+        },
+      ];
+      exportToExcel(`TonKho_SanPham_SportX_${todayStr}`, "BÁO CÁO TỒN KHO SẢN PHẨM SPORTX", sections, todayStr);
+      toast.success("Xuất file Excel thành công", `File TonKho_SanPham_SportX_${todayStr}.xls đã tải xuống.`);
+    } else {
+      exportToCSV(`TonKho_SanPham_SportX_${todayStr}`, headers, rows);
+      toast.success("Xuất file CSV thành công", `File TonKho_SanPham_SportX_${todayStr}.csv đã tải xuống.`);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -344,24 +417,51 @@ export default function ProductsPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Products & Inventory
+                Sản phẩm & Kho hàng
               </h1>
               <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-200/50">
-                {products.length} Items Total
+                Tổng cộng {products.length} sản phẩm
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Manage your athletic catalog, multi-attribute variants, pricing, and live warehouse inventory.
+              Quản lý danh mục đồ thể thao, phân loại biến thể kích cỡ/màu sắc, giá bán và tồn kho theo thời gian thực.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Export Dropdown (HeroUI) */}
+            <HeroDropdown
+              title="Chọn định dạng"
+              trigger={
+                <button
+                  type="button"
+                  className="h-9 px-3.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl transition inline-flex items-center justify-center gap-2 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4 text-slate-400" />
+                  Xuất file tồn kho
+                </button>
+              }
+              items={[
+                {
+                  key: "excel",
+                  label: "Bảng tính Excel (.xls)",
+                  icon: <FileSpreadsheet className="w-4 h-4 text-emerald-600" />,
+                },
+                {
+                  key: "csv",
+                  label: "Dữ liệu thô CSV (.csv)",
+                  icon: <Download className="w-4 h-4 text-blue-500" />,
+                },
+              ]}
+              onAction={(key) => handleExportProducts(key as "excel" | "csv")}
+            />
+
             <button
               onClick={handleOpenAddDrawer}
-              className="px-4 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95"
+              className="h-9 px-4 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition inline-flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
-              Add New Product
+              Thêm sản phẩm mới
             </button>
           </div>
         </div>
@@ -373,38 +473,52 @@ export default function ProductsPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search product name, SKU code, or brand..."
+              placeholder="Tìm tên sản phẩm, mã SKU, thương hiệu..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium transition"
+              className="w-full pl-10 pr-9 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium transition"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded transition"
+                title="Xóa tìm kiếm"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Category Filter */}
-            <select
+            {/* Category Filter (HeroUI) */}
+            <HeroSelect
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 text-xs font-bold text-slate-700 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-            >
-              <option value="all">All Sports Categories</option>
-              <option value="Football">⚽ Football</option>
-              <option value="Running">🏃 Running</option>
-              <option value="Gym">💪 Gym & Fitness</option>
-              <option value="Badminton">🏸 Badminton</option>
-            </select>
+              onChange={setCategoryFilter}
+              size="sm"
+              options={[
+                { key: "all", label: "Tất cả môn thể thao" },
+                { key: "Football", label: "⚽ Bóng đá" },
+                { key: "Running", label: "🏃 Chạy bộ" },
+                { key: "Gym", label: "💪 Gym & Thể hình" },
+                { key: "Badminton", label: "🏸 Cầu lông" },
+              ]}
+              aria-label="Lọc theo môn thể thao"
+            />
 
-            {/* Stock status filter */}
-            <select
+            {/* Stock status filter (HeroUI) */}
+            <HeroSelect
               value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 text-xs font-bold text-slate-700 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-            >
-              <option value="all">All Stock Statuses</option>
-              <option value="in_stock">In Stock (20+)</option>
-              <option value="low_stock">⚠️ Low Stock (&lt;20)</option>
-              <option value="out_of_stock">❌ Out of Stock (0)</option>
-            </select>
+              onChange={setStockFilter}
+              size="sm"
+              options={[
+                { key: "all", label: "Tất cả trạng thái kho" },
+                { key: "in_stock", label: "Còn hàng (20+)" },
+                { key: "low_stock", label: "⚠️ Sắp hết (<20)" },
+                { key: "out_of_stock", label: "❌ Hết hàng (0)" },
+              ]}
+              aria-label="Lọc theo trạng thái kho"
+            />
           </div>
         </div>
 
@@ -412,7 +526,7 @@ export default function ProductsPage() {
         {selectedProductIds.length > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex items-center justify-between animate-in fade-in duration-150">
             <span className="text-xs font-bold text-blue-900">
-              Selected {selectedProductIds.length} products
+              Đã chọn {selectedProductIds.length} sản phẩm
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -422,15 +536,15 @@ export default function ProductsPage() {
                     setSelectedProductIds([]);
                   }
                 }}
-                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition"
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
               >
-                Delete Selected
+                Xóa các mục đã chọn
               </button>
               <button
                 onClick={() => setSelectedProductIds([])}
-                className="px-3 py-1.5 bg-white border border-blue-200 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition"
+                className="px-3 py-1.5 bg-white border border-blue-200 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition cursor-pointer"
               >
-                Clear Selection
+                Bỏ chọn
               </button>
             </div>
           </div>
@@ -453,13 +567,13 @@ export default function ProductsPage() {
                       className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                   </th>
-                  <th className="py-3.5 px-4">Product Info & SKU</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Price (Base / Discount)</th>
-                  <th className="py-3.5 px-4">Available Variants</th>
-                  <th className="py-3.5 px-4">Total Stock</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[240px]">Thông tin sản phẩm & SKU</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Danh mục</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Giá niêm yết / Giảm</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Biến thể sẵn có</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Tổng tồn kho</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap text-center">Trạng thái</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -486,18 +600,39 @@ export default function ProductsPage() {
                         {/* Thumbnail + Title + SKU */}
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-2xl shadow-xs">
-                              {product.thumbnail}
+                            <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                              {product.thumbnail && (product.thumbnail.startsWith("http") || product.thumbnail.startsWith("/")) ? (
+                                <img
+                                  src={product.thumbnail}
+                                  alt={product.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-2xl">{product.thumbnail || "👟"}</span>
+                              )}
                             </div>
-                            <div className="min-w-0 max-w-xs">
-                              <div className="font-bold text-slate-900 text-sm truncate">
+                            <div className="min-w-0 max-w-[260px]">
+                              <div
+                                className="font-bold text-slate-900 text-sm truncate cursor-pointer hover:text-blue-600 transition"
+                                title={product.title}
+                                onClick={() => setViewProduct(product)}
+                              >
                                 {product.title}
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="font-mono text-[11px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">
+                                <span
+                                  className="font-mono text-[11px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded whitespace-nowrap"
+                                  title={`Mã SKU: ${product.sku}`}
+                                >
                                   {product.sku}
                                 </span>
-                                <span className="text-[11px] text-slate-400 font-medium">
+                                <span
+                                  className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]"
+                                  title={`Thương hiệu: ${product.brand}`}
+                                >
                                   {product.brand}
                                 </span>
                               </div>
@@ -506,40 +641,49 @@ export default function ProductsPage() {
                         </td>
 
                         {/* Category & Sport Type */}
-                        <td className="py-4 px-4">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-800">
-                            {product.category === "Football" && "⚽ Football"}
-                            {product.category === "Running" && "🏃 Running"}
-                            {product.category === "Gym" && "💪 Gym & Fitness"}
-                            {product.category === "Badminton" && "🏸 Badminton"}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span
+                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 whitespace-nowrap"
+                            title={`Môn thể thao: ${product.category}`}
+                          >
+                            {product.category === "Football" && "⚽ Bóng đá"}
+                            {product.category === "Running" && "🏃 Chạy bộ"}
+                            {product.category === "Gym" && "💪 Gym & Thể hình"}
+                            {product.category === "Badminton" && "🏸 Cầu lông"}
                           </span>
                         </td>
 
                         {/* Price (Base & Discount) */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-baseline gap-2">
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <div
+                            className="flex items-baseline gap-1.5"
+                            title={`Giá bán: ${formatCurrency(product.discountPrice || product.basePrice)}`}
+                          >
                             {product.discountPrice ? (
                               <>
                                 <span className="font-extrabold text-sm text-slate-900">
-                                  ${product.discountPrice.toFixed(2)}
+                                  {formatCurrency(product.discountPrice)}
                                 </span>
                                 <span className="text-xs text-slate-400 line-through">
-                                  ${product.basePrice.toFixed(2)}
+                                  {formatCurrency(product.basePrice)}
                                 </span>
                               </>
                             ) : (
                               <span className="font-extrabold text-sm text-slate-900">
-                                ${product.basePrice.toFixed(2)}
+                                {formatCurrency(product.basePrice)}
                               </span>
                             )}
                           </div>
                         </td>
 
                         {/* Available Variants (Sizes + Color Dots) */}
-                        <td className="py-4 px-4">
-                          <div className="space-y-1.5">
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <div className="space-y-1">
                             {/* Size Badges */}
-                            <div className="flex items-center gap-1 flex-wrap">
+                            <div
+                              className="flex items-center gap-1 flex-nowrap"
+                              title={`Kích cỡ sẵn có: ${product.sizes.join(", ")}`}
+                            >
                               <span className="text-[10px] text-slate-400 font-bold uppercase mr-0.5">
                                 Size:
                               </span>
@@ -553,9 +697,12 @@ export default function ProductsPage() {
                               ))}
                             </div>
                             {/* Color Dots */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <div
+                              className="flex items-center gap-1.5 flex-nowrap"
+                              title={`Màu sắc: ${product.colors.map((c) => c.name).join(", ")}`}
+                            >
                               <span className="text-[10px] text-slate-400 font-bold uppercase mr-0.5">
-                                Color:
+                                Màu:
                               </span>
                               {product.colors.map((c: { name: string; hex: string }) => (
                                 <span
@@ -566,39 +713,47 @@ export default function ProductsPage() {
                                 />
                               ))}
                               <span className="text-[10px] text-slate-400 ml-1 font-semibold">
-                                ({product.variants.length} SKU vars)
+                                ({product.variants.length} SKU)
                               </span>
                             </div>
                           </div>
                         </td>
 
                         {/* Total Stock Quantity */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <div
+                            className="flex items-center gap-2"
+                            title={`Tồn kho thực tế: ${product.totalStock} sản phẩm`}
+                          >
                             <span className="font-extrabold text-sm text-slate-900">
                               {product.totalStock}
                             </span>
                             {product.totalStock >= 20 ? (
-                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                                In Stock
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 whitespace-nowrap">
+                                Còn hàng
                               </span>
                             ) : product.totalStock > 0 ? (
-                              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60 animate-pulse">
-                                Low Stock
+                              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60 whitespace-nowrap animate-pulse">
+                                Sắp hết
                               </span>
                             ) : (
-                              <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/60">
-                                Out of Stock
+                              <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/60 whitespace-nowrap">
+                                Hết hàng
                               </span>
                             )}
                           </div>
                         </td>
 
                         {/* Status (Active / Draft) Toggle */}
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-4 whitespace-nowrap text-center">
                           <button
                             onClick={() => handleToggleStatus(product)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition ${
+                            title={`Trạng thái: ${
+                              product.status === "Active"
+                                ? "Đang mở bán trên cửa hàng"
+                                : "Lưu dạng bản nháp"
+                            } (Bấm để đổi)`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                               product.status === "Active"
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-100"
                                 : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
@@ -609,7 +764,7 @@ export default function ProductsPage() {
                                 product.status === "Active" ? "bg-emerald-500" : "bg-slate-400"
                               }`}
                             />
-                            {product.status}
+                            {product.status === "Active" ? "Đang bán" : "Bản nháp"}
                           </button>
                         </td>
 
@@ -618,22 +773,22 @@ export default function ProductsPage() {
                           <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition">
                             <button
                               onClick={() => setViewProduct(product)}
-                              title="Quick View"
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                              title="Xem nhanh"
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleOpenEditDrawer(product)}
-                              title="Edit Product & Variants"
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                              title="Sửa sản phẩm & Biến thể"
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(product.id)}
-                              title="Delete Product"
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                              title="Xóa sản phẩm"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -646,7 +801,7 @@ export default function ProductsPage() {
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-400">
                       <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                      No products match your search or filters.
+                      Không tìm thấy sản phẩm nào phù hợp với tìm kiếm hoặc bộ lọc.
                     </td>
                   </tr>
                 )}
@@ -657,17 +812,17 @@ export default function ProductsPage() {
           {/* Table Footer */}
           <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>
-              Showing {filteredProducts.length} of {products.length} products
+              Hiển thị {filteredProducts.length} trên {products.length} sản phẩm
             </span>
             <div className="flex items-center gap-2">
               <button
-                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold transition disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold transition disabled:opacity-50 cursor-pointer"
                 disabled
               >
-                Previous
+                Trước
               </button>
-              <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold transition">
-                Next
+              <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold transition cursor-pointer">
+                Sau
               </button>
             </div>
           </div>
@@ -693,16 +848,16 @@ export default function ProductsPage() {
                     </div>
                     <div>
                       <h2 className="text-lg font-black text-slate-900">
-                        {editingProductId ? "Edit Product & Variants" : "Add New Product"}
+                        {editingProductId ? "Chỉnh sửa Sản phẩm & Biến thể" : "Thêm Sản phẩm Mới"}
                       </h2>
                       <p className="text-xs text-slate-400 font-medium">
-                        Configure general info and multi-SKU variant stock matrix
+                        Thiết lập thông tin chung và ma trận tồn kho biến thể SKU
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsDrawerOpen(false)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                    className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -713,18 +868,18 @@ export default function ProductsPage() {
                   {/* General Info Section */}
                   <div className="space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                      <Layers className="w-3.5 h-3.5" /> 1. General Information
+                      <Layers className="w-3.5 h-3.5" /> 1. Thông tin chung
                     </h3>
 
                     {/* Product Name */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Product Name *
+                        Tên sản phẩm *
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Nike Mercurial Superfly 9 Elite FG"
+                        placeholder="VD: Áo đấu bóng đá tuyển Việt Nam 2026"
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
@@ -734,11 +889,11 @@ export default function ProductsPage() {
                     {/* Description */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Description
+                        Mô tả sản phẩm
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="Enter sports gear technical details and specifications..."
+                        placeholder="Nhập chi tiết chất liệu, công nghệ thoáng khí, hướng dẫn sử dụng..."
                         value={formDescription}
                         onChange={(e) => setFormDescription(e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
@@ -749,27 +904,30 @@ export default function ProductsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Category *
+                          Môn thể thao *
                         </label>
-                        <select
+                        <HeroSelect
                           value={formCategory}
-                          onChange={(e: any) => setFormCategory(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold text-slate-700 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                        >
-                          <option value="Football">⚽ Football</option>
-                          <option value="Running">🏃 Running</option>
-                          <option value="Gym">💪 Gym & Fitness</option>
-                          <option value="Badminton">🏸 Badminton</option>
-                        </select>
+                          onChange={(val) => setFormCategory(val as any)}
+                          options={[
+                            { key: "Football", label: "⚽ Bóng đá" },
+                            { key: "Running", label: "🏃 Chạy bộ" },
+                            { key: "Gym", label: "💪 Gym & Thể hình" },
+                            { key: "Badminton", label: "🏸 Cầu lông" },
+                          ]}
+                          className="w-full"
+                          triggerClassName="w-full bg-slate-50 py-2.5"
+                          aria-label="Chọn môn thể thao"
+                        />
                       </div>
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Brand
+                          Thương hiệu
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Nike, Adidas, Yonex"
+                          placeholder="VD: Nike, Adidas, Yonex, SportX Pro"
                           value={formBrand}
                           onChange={(e) => setFormBrand(e.target.value)}
                           className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
@@ -781,11 +939,11 @@ export default function ProductsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Base Price ($) *
+                          Giá niêm yết gốc (đ) *
                         </label>
                         <input
                           type="number"
-                          step="0.01"
+                          step="1000"
                           required
                           value={formBasePrice}
                           onChange={(e) => setFormBasePrice(Number(e.target.value))}
@@ -795,12 +953,12 @@ export default function ProductsPage() {
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Discount / Sale Price ($)
+                          Giá khuyến mãi / Sale (đ)
                         </label>
                         <input
                           type="number"
-                          step="0.01"
-                          placeholder="Optional"
+                          step="1000"
+                          placeholder="Không bắt buộc"
                           value={formDiscountPrice || ""}
                           onChange={(e) => setFormDiscountPrice(Number(e.target.value))}
                           className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
@@ -809,23 +967,23 @@ export default function ProductsPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-100 my-4"></div>
+                  <div className="border-t border-slate-100 my-4" />
 
                   {/* Variant Generator Section */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-600" /> 2. Variant Generator
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" /> 2. Bộ sinh biến thể (Size & Màu sắc)
                       </h3>
                       <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                        {matrixVariants.length} Combinations
+                        {matrixVariants.length} Biến thể phối
                       </span>
                     </div>
 
                     {/* Color Multi-select */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-2">
-                        Select Available Colors:
+                        Chọn các màu sẵn có:
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {AVAILABLE_COLORS.map((c) => {
@@ -835,7 +993,7 @@ export default function ProductsPage() {
                               type="button"
                               key={c.name}
                               onClick={() => handleToggleColor(c)}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                                 isSelected
                                   ? "bg-blue-50 border-blue-400 text-blue-900 shadow-xs"
                                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -855,7 +1013,7 @@ export default function ProductsPage() {
                     {/* Size Multi-select */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-2">
-                        Select Available Sizes:
+                        Chọn các size sẵn có:
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {AVAILABLE_SIZES.map((size) => {
@@ -865,7 +1023,7 @@ export default function ProductsPage() {
                               type="button"
                               key={size}
                               onClick={() => handleToggleSize(size)}
-                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
                                 isSelected
                                   ? "bg-blue-600 border-blue-600 text-white shadow-xs"
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -881,28 +1039,28 @@ export default function ProductsPage() {
                     {/* Variant Matrix Table */}
                     <div className="mt-4">
                       <label className="block text-xs font-bold text-slate-700 mb-2">
-                        SKU, Price & Stock Matrix:
+                        Ma trận SKU, Giá bán & Tồn kho từng biến thể:
                       </label>
                       <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
                             <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
-                              <th className="py-2.5 px-3">Variant (Color × Size)</th>
-                              <th className="py-2.5 px-3">SKU</th>
-                              <th className="py-2.5 px-3 w-24">Price ($)</th>
-                              <th className="py-2.5 px-3 w-24">Stock Qty</th>
+                              <th className="py-2.5 px-3 whitespace-nowrap">Biến thể (Màu × Size)</th>
+                              <th className="py-2.5 px-3 whitespace-nowrap">Mã SKU</th>
+                              <th className="py-2.5 px-3 w-32 whitespace-nowrap">Giá bán (đ)</th>
+                              <th className="py-2.5 px-3 w-28 whitespace-nowrap">Tồn kho</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 font-medium">
                             {matrixVariants.map((item) => (
                               <tr key={item.id} className="hover:bg-slate-50/70">
-                                <td className="py-2.5 px-3 flex items-center gap-2">
+                                <td className="py-2.5 px-3 flex items-center gap-2 whitespace-nowrap">
                                   <span
-                                    className="w-2.5 h-2.5 rounded-full border border-white shadow-xs inline-block"
+                                    className="w-2.5 h-2.5 rounded-full border border-white shadow-xs inline-block shrink-0"
                                     style={{ backgroundColor: item.colorHex }}
                                   />
-                                  <span className="font-bold text-slate-900">{item.color}</span>
-                                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                  <span className="font-bold text-slate-900 truncate max-w-[100px]" title={item.color}>{item.color}</span>
+                                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0">
                                     {item.size}
                                   </span>
                                 </td>
@@ -919,6 +1077,7 @@ export default function ProductsPage() {
                                 <td className="py-2.5 px-3">
                                   <input
                                     type="number"
+                                    step="1000"
                                     value={item.price}
                                     onChange={(e) =>
                                       handleUpdateMatrixCell(item.id, "price", Number(e.target.value))
@@ -950,16 +1109,16 @@ export default function ProductsPage() {
                   <button
                     type="button"
                     onClick={() => setIsDrawerOpen(false)}
-                    className="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs transition"
+                    className="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
                   >
-                    Cancel
+                    Hủy bỏ
                   </button>
                   <button
                     type="submit"
                     form="product-form"
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-blue-500/20 active:scale-95"
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer"
                   >
-                    {editingProductId ? "Update Product & Matrix" : "Save Product"}
+                    {editingProductId ? "Cập nhật sản phẩm & Ma trận" : "Lưu sản phẩm"}
                   </button>
                 </div>
               </div>
@@ -973,8 +1132,12 @@ export default function ProductsPage() {
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-3xl">
-                    {viewProduct.thumbnail}
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {viewProduct.thumbnail && (viewProduct.thumbnail.startsWith("http") || viewProduct.thumbnail.startsWith("/")) ? (
+                      <img src={viewProduct.thumbnail} alt={viewProduct.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl">{viewProduct.thumbnail || "👟"}</span>
+                    )}
                   </div>
                   <div>
                     <h3 className="font-extrabold text-base text-slate-900">{viewProduct.title}</h3>
@@ -983,7 +1146,7 @@ export default function ProductsPage() {
                 </div>
                 <button
                   onClick={() => setViewProduct(null)}
-                  className="text-slate-400 hover:text-slate-600 font-bold text-lg p-1"
+                  className="text-slate-400 hover:text-slate-600 font-bold text-lg p-1 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -993,27 +1156,27 @@ export default function ProductsPage() {
                 <p className="text-slate-600">{viewProduct.description}</p>
                 <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl">
                   <div>
-                    <span className="text-slate-400 font-medium">Category:</span>
+                    <span className="text-slate-400 font-medium">Danh mục:</span>
                     <p className="font-bold text-slate-900">{viewProduct.category}</p>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-medium">Brand:</span>
+                    <span className="text-slate-400 font-medium">Thương hiệu:</span>
                     <p className="font-bold text-slate-900">{viewProduct.brand}</p>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-medium">Total Stock:</span>
-                    <p className="font-bold text-slate-900">{viewProduct.totalStock} units</p>
+                    <span className="text-slate-400 font-medium">Tổng tồn kho:</span>
+                    <p className="font-bold text-slate-900">{viewProduct.totalStock} sản phẩm</p>
                   </div>
                   <div>
-                    <span className="text-slate-400 font-medium">Price:</span>
+                    <span className="text-slate-400 font-medium">Giá bán:</span>
                     <p className="font-bold text-emerald-600">
-                      ${(viewProduct.discountPrice || viewProduct.basePrice).toFixed(2)}
+                      {formatCurrency(viewProduct.discountPrice || viewProduct.basePrice)}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-slate-800 mb-2">Variant Stock Breakdown:</h4>
+                  <h4 className="font-bold text-slate-800 mb-2">Chi tiết tồn kho từng biến thể:</h4>
                   <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
                     {viewProduct.variants.map((v) => (
                       <div
@@ -1031,7 +1194,7 @@ export default function ProductsPage() {
                           </span>
                           <span className="font-mono text-slate-400">{v.sku}</span>
                         </div>
-                        <span className="font-bold text-slate-900">{v.stock} in stock</span>
+                        <span className="font-bold text-slate-900">{v.stock} trong kho</span>
                       </div>
                     ))}
                   </div>
@@ -1041,9 +1204,9 @@ export default function ProductsPage() {
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   onClick={() => setViewProduct(null)}
-                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
                 >
-                  Close
+                  Đóng
                 </button>
               </div>
             </div>

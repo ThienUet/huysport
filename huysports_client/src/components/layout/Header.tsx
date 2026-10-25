@@ -27,9 +27,10 @@ import {
   FaUserCheck,
   FaChevronDown,
   FaTag,
-  FaNewspaper,
-  FaCircleInfo,
+  FaFire,
+  FaTruckFast,
   FaHeadset,
+  FaArrowRight,
 } from "react-icons/fa6";
 import { GiShuttlecock } from "react-icons/gi";
 import { useCartStore } from "@/stores/useCartStore";
@@ -42,7 +43,7 @@ export default function Header() {
   const { getItemCount, setIsCartDrawerOpen } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { search, setSearch, setSport } = useFilterStore();
-  
+
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(search);
@@ -50,6 +51,11 @@ export default function Header() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Sync local search when store changes
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,138 +72,329 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleAllProducts = () => {
+    setSport("all");
+    router.push("/products");
+    setIsMobileMenuOpen(false);
+  };
+
   const cartCount = isMounted ? getItemCount() : 0;
   const isUserAuth = isMounted && isAuthenticated && user;
 
-  const navLinks = [
-    { label: "Trang Chủ", href: "/" },
-    { label: "Bóng Đá", action: () => navigateToSport("Bóng đá") },
-    { label: "Chạy Bộ", action: () => navigateToSport("Chạy bộ") },
-    { label: "Gym & Fitness", action: () => navigateToSport("Gym / Fitness") },
-    { label: "Cầu Lông", action: () => navigateToSport("Cầu lông") },
-    { label: "Sản Phẩm", href: "/products" },
-    { label: "Cẩm Nang", href: "/blog" },
+  const sportsList = [
+    {
+      name: "Bóng đá",
+      label: "Bóng Đá",
+      desc: "Giày đinh sân cỏ, áo thi đấu, tất vớ",
+      icon: FaFutbol,
+      bgColor: "bg-emerald-50 text-emerald-600",
+    },
+    {
+      name: "Chạy bộ",
+      label: "Chạy Bộ",
+      desc: "Giày running êm ái, áo quần thoáng khí",
+      icon: FaPersonRunning,
+      bgColor: "bg-blue-50 text-blue-600",
+    },
+    {
+      name: "Gym / Fitness",
+      label: "Gym & Fitness",
+      desc: "Đồ tập co giãn 4 chiều, găng tay, tạ tay",
+      icon: FaDumbbell,
+      bgColor: "bg-amber-50 text-amber-600",
+    },
+    {
+      name: "Cầu lông",
+      label: "Cầu Lông",
+      desc: "Vợt chuyên nghiệp, giày bám thảm, balo",
+      icon: GiShuttlecock,
+      bgColor: "bg-purple-50 text-purple-600",
+    },
   ];
 
   return (
     <>
-      {/* Top Banner Bar */}
-      <div className="bg-emerald-600 text-white text-xs py-2 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[11px] sm:text-xs">
-            <span>Giảm 10% đơn đầu tiên với mã <strong className="font-bold">SPORTX10</strong> | Freeship từ 500K</span>
+      {/* 1. Top Utility Banner Bar */}
+      <div className="bg-slate-900 text-slate-300 text-xs py-2 px-4 border-b border-slate-800 select-none">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Left Promo Badges */}
+          <div className="flex items-center gap-3 text-[11px] sm:text-xs">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <FaTruckFast className="w-3.5 h-3.5" />
+              <span>Freeship đơn từ 500K</span>
+            </span>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <span className="hidden sm:inline text-slate-300">
+              Giảm 10% đơn đầu tiên với mã <strong className="text-white font-bold">SPORTX10</strong>
+            </span>
+            <span className="text-slate-700 hidden md:inline">•</span>
+            <span className="hidden md:inline text-slate-400">Đổi trả linh hoạt trong 7 ngày</span>
           </div>
-          <div className="hidden md:flex items-center gap-4 text-[11px]">
-            <Link href="/orders" className="hover:text-gray-200 transition-colors flex items-center gap-1.5">
-              <FaBox className="w-3 h-3" /> Tra cứu đơn hàng
-            </Link>
-            <span className="text-emerald-400">|</span>
-            <div className="flex items-center gap-1.5">
-              <FaPhone className="w-3 h-3" /> Hotline: <span className="font-semibold">0398.802.022</span>
+
+          {/* Right Quick Support Contact */}
+          <div className="flex items-center gap-4 text-[11px]">
+            <a
+              href="tel:0398802022"
+              className="hover:text-white transition-colors flex items-center gap-1.5 text-slate-300 font-medium"
+              title="Gọi hotline hỗ trợ"
+            >
+              <FaPhone className="w-3 h-3 text-emerald-400" />
+              <span>Hotline: <strong className="text-white font-semibold">0398.802.022</strong></span>
+            </a>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <div className="hidden sm:flex items-center gap-1.5 text-slate-400">
+              <FaHeadset className="w-3 h-3 text-emerald-400" />
+              <span>Hỗ trợ 24/7</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-xs">
+      {/* 2. Main Sticky Navbar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-xs transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-4 sm:gap-8">
+          <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
             
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
               <img
                 src="/logo-256.png"
                 alt="HuySport Logo"
-                className="w-10 h-10 object-contain rounded-full group-hover:scale-105 transition-transform"
+                className="w-10 h-10 object-contain rounded-full shadow-xs group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
                 <div className="flex items-baseline leading-none">
                   <span className="text-lg font-black tracking-tight text-gray-900">HUY</span>
                   <span className="text-lg font-black tracking-tight text-emerald-600">SPORT</span>
                 </div>
-                <span className="text-[9px] font-bold text-gray-400 tracking-widest uppercase mt-0.5">Đồ Thể Thao</span>
+                <span className="text-[9px] font-bold text-gray-400 tracking-wider uppercase mt-0.5">
+                  Đồ Thể Thao
+                </span>
               </div>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-[14px] font-semibold text-gray-600">
-              {navLinks.map((item, idx) => {
-                if (item.href) {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      className={`py-1 transition-colors ${
-                        isActive
-                          ? "text-emerald-600 font-bold border-b-2 border-emerald-600"
-                          : "hover:text-emerald-600 border-b-2 border-transparent"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                }
-                return (
+            {/* Desktop Navigation Links (Scientific & Clean) */}
+            <nav className="hidden lg:flex items-center gap-1 text-[13.5px] font-semibold text-gray-700">
+              {/* Trang Chủ */}
+              <Link
+                href="/"
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  pathname === "/"
+                    ? "text-emerald-600 font-bold bg-emerald-50/70"
+                    : "hover:text-emerald-600 hover:bg-gray-50"
+                }`}
+              >
+                Trang Chủ
+              </Link>
+
+              {/* Dropdown Môn Thể Thao (Grouped cleanly) */}
+              <Dropdown placement="bottom-start" className="min-w-[300px]">
+                <DropdownTrigger>
                   <button
-                    key={idx}
-                    onClick={item.action}
-                    className="py-1 transition-colors cursor-pointer text-gray-600 font-semibold hover:text-emerald-600 border-b-2 border-transparent"
+                    type="button"
+                    aria-label="Danh mục môn thể thao"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-700 hover:text-emerald-600 hover:bg-gray-50 transition-colors cursor-pointer group focus:outline-none"
                   >
-                    {item.label}
+                    <span>Môn Thể Thao</span>
+                    <FaChevronDown className="w-2.5 h-2.5 text-gray-400 group-hover:text-emerald-600 transition-transform group-aria-expanded:rotate-180" />
                   </button>
-                );
-              })}
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Danh sách môn thể thao"
+                  onAction={(key) => {
+                    if (key === "all") {
+                      handleAllProducts();
+                    } else {
+                      navigateToSport(key as string);
+                    }
+                  }}
+                  className="p-1.5"
+                >
+                  <DropdownItem
+                    key="Bóng đá"
+                    textValue="Bóng Đá"
+                    startContent={
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-600">
+                        <FaFutbol className="w-4 h-4" />
+                      </div>
+                    }
+                    description="Giày đinh sân cỏ, áo thi đấu, tất vớ"
+                    className="py-2"
+                  >
+                    <span className="font-bold text-gray-800 text-xs">Bóng Đá</span>
+                  </DropdownItem>
+
+                  <DropdownItem
+                    key="Chạy bộ"
+                    textValue="Chạy Bộ"
+                    startContent={
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-50 text-blue-600">
+                        <FaPersonRunning className="w-4 h-4" />
+                      </div>
+                    }
+                    description="Giày running êm ái, áo quần thoáng khí"
+                    className="py-2"
+                  >
+                    <span className="font-bold text-gray-800 text-xs">Chạy Bộ</span>
+                  </DropdownItem>
+
+                  <DropdownItem
+                    key="Gym / Fitness"
+                    textValue="Gym & Fitness"
+                    startContent={
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-50 text-amber-600">
+                        <FaDumbbell className="w-4 h-4" />
+                      </div>
+                    }
+                    description="Đồ tập co giãn 4 chiều, găng tay, tạ tay"
+                    className="py-2"
+                  >
+                    <span className="font-bold text-gray-800 text-xs">Gym & Fitness</span>
+                  </DropdownItem>
+
+                  <DropdownItem
+                    key="Cầu lông"
+                    textValue="Cầu Lông"
+                    startContent={
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-purple-50 text-purple-600">
+                        <GiShuttlecock className="w-4 h-4" />
+                      </div>
+                    }
+                    description="Vợt chuyên nghiệp, giày bám thảm, balo"
+                    className="py-2"
+                  >
+                    <span className="font-bold text-gray-800 text-xs">Cầu Lông</span>
+                  </DropdownItem>
+
+                  <DropdownItem
+                    key="all"
+                    textValue="Xem tất cả môn thể thao"
+                    className="border-t border-gray-100 mt-1 pt-2.5"
+                    startContent={
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                        <FaTag className="w-3.5 h-3.5" />
+                      </div>
+                    }
+                    description="Xem tất cả trang phục & dụng cụ thể thao"
+                  >
+                    <span className="font-bold text-emerald-600 text-xs flex items-center gap-1.5">
+                      Xem tất cả môn thể thao <FaArrowRight className="w-2.5 h-2.5" />
+                    </span>
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+
+              {/* Tất Cả Sản Phẩm */}
+              <Link
+                href="/products"
+                onClick={() => setSport("all")}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  pathname === "/products"
+                    ? "text-emerald-600 font-bold bg-emerald-50/70"
+                    : "hover:text-emerald-600 hover:bg-gray-50"
+                }`}
+              >
+                Sản Phẩm
+              </Link>
+
+              {/* Khuyến Mãi Hot */}
+              <Link
+                href="/products"
+                onClick={() => setSport("all")}
+                className="px-3 py-1.5 rounded-lg transition-colors hover:bg-rose-50 flex items-center gap-1.5 group"
+              >
+                <FaFire className="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 transition-transform" />
+                <span className="text-gray-700 group-hover:text-rose-600">Ưu Đãi Hot</span>
+                <span className="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                  Sale
+                </span>
+              </Link>
+
+              {/* Tra Cứu Đơn Hàng */}
+              <Link
+                href="/orders"
+                className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                  pathname === "/orders"
+                    ? "text-emerald-600 font-bold bg-emerald-50/70"
+                    : "hover:text-emerald-600 hover:bg-gray-50"
+                }`}
+              >
+                <FaBox className="w-3 h-3 text-gray-400" />
+                <span>Tra Cứu Đơn</span>
+              </Link>
             </nav>
 
-            {/* Desktop Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-xs relative">
+            {/* Desktop Balanced Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-xs lg:max-w-sm relative">
               <Input
+                aria-label="Tìm kiếm sản phẩm"
                 type="text"
-                placeholder="Tìm kiếm sản phẩm..."
+                placeholder="Tìm giày, quần áo, phụ kiện..."
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
-                startContent={<FaMagnifyingGlass className="w-3.5 h-3.5 text-gray-400" />}
+                startContent={<FaMagnifyingGlass className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+                endContent={
+                  localSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocalSearch("");
+                        setSearch("");
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      title="Xóa tìm kiếm"
+                    >
+                      <FaXmark className="w-3 h-3" />
+                    </button>
+                  ) : null
+                }
                 size="sm"
                 radius="full"
                 classNames={{
-                  inputWrapper: "bg-gray-100 hover:bg-gray-200 focus-within:!bg-white focus-within:ring-2 focus-within:ring-emerald-500 border-none shadow-none transition-all",
+                  inputWrapper:
+                    "bg-gray-100/90 hover:bg-gray-100 focus-within:!bg-white focus-within:ring-2 focus-within:ring-emerald-500 border border-transparent focus-within:border-emerald-500 shadow-none transition-all h-9",
                   input: "text-xs",
                 }}
               />
             </form>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Cart Button */}
+            {/* Right Action Icons (Cart & Account) */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              
+              {/* Cart Drawer Trigger */}
               <button
+                type="button"
                 onClick={() => setIsCartDrawerOpen(true)}
-                className="relative p-2.5 rounded-full hover:bg-gray-100 transition text-gray-800 flex items-center justify-center cursor-pointer"
-                aria-label="Giỏ hàng"
+                className="relative p-2 sm:p-2.5 rounded-full hover:bg-gray-100 text-gray-700 hover:text-emerald-600 transition flex items-center justify-center cursor-pointer group"
+                aria-label="Giỏ hàng của bạn"
+                title="Giỏ hàng"
               >
-                <FaBagShopping className="w-4.5 h-4.5" />
+                <FaBagShopping className="w-5 h-5 transition-transform group-hover:scale-105" />
                 {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold rounded-full h-4.5 min-w-[18px] px-1 flex items-center justify-center shadow-xs">
-                    {cartCount}
+                  <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-black rounded-full h-4.5 min-w-[18px] px-1 flex items-center justify-center ring-2 ring-white shadow-xs animate-in zoom-in-75 duration-150">
+                    {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
               </button>
 
-              {/* User Dropdown / Login */}
+              {/* User Dropdown / Login Button */}
               {isUserAuth ? (
                 <Dropdown placement="bottom-end">
                   <DropdownTrigger>
-                    <button className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition cursor-pointer focus:outline-none">
+                    <button
+                      type="button"
+                      aria-label="Menu tài khoản cá nhân"
+                      className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 transition cursor-pointer focus:outline-none"
+                    >
                       <Avatar
                         size="sm"
                         name={user?.fullName || "User"}
-                        className="bg-emerald-600 text-white font-bold text-xs w-8 h-8"
+                        className="bg-emerald-600 text-white font-bold text-xs w-7 h-7 shrink-0"
                       />
-                      <span className="hidden sm:inline text-xs font-semibold text-gray-800 max-w-[100px] truncate">
+                      <span className="hidden sm:inline text-xs font-semibold text-gray-800 max-w-[105px] truncate">
                         {user?.fullName?.split(" ").slice(-1)[0] || user?.fullName}
                       </span>
-                      <FaChevronDown className="w-3 h-3 text-gray-400 hidden sm:inline" />
+                      <FaChevronDown className="w-2.5 h-2.5 text-gray-400 hidden sm:inline" />
                     </button>
                   </DropdownTrigger>
                   <DropdownMenu
@@ -213,10 +410,18 @@ export default function Header() {
                       <p className="font-bold text-xs text-gray-900">{user?.fullName}</p>
                       <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
                     </DropdownItem>
-                    <DropdownItem key="account" textValue="Tài khoản cá nhân" startContent={<FaUserCheck className="w-3.5 h-3.5 text-gray-700" />}>
+                    <DropdownItem
+                      key="account"
+                      textValue="Tài khoản cá nhân"
+                      startContent={<FaUserCheck className="w-3.5 h-3.5 text-emerald-600" />}
+                    >
                       Tài khoản & Đơn mua
                     </DropdownItem>
-                    <DropdownItem key="track" textValue="Tra cứu đơn hàng" startContent={<FaBox className="w-3.5 h-3.5 text-gray-700" />}>
+                    <DropdownItem
+                      key="track"
+                      textValue="Tra cứu đơn hàng"
+                      startContent={<FaBox className="w-3.5 h-3.5 text-blue-600" />}
+                    >
                       Tra cứu đơn hàng
                     </DropdownItem>
                     <DropdownItem
@@ -234,7 +439,7 @@ export default function Header() {
                 <Link href="/auth/login">
                   <Button
                     size="sm"
-                    className="font-semibold text-xs px-4 h-8.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700"
+                    className="font-semibold text-xs px-3.5 h-8.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors flex items-center gap-1.5"
                     startContent={<FaUser className="w-3 h-3" />}
                   >
                     Đăng Nhập
@@ -242,11 +447,12 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* Mobile Menu Trigger */}
+              {/* Mobile Hamburger Toggle */}
               <button
+                type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 rounded-xl text-gray-700 hover:bg-gray-100 cursor-pointer"
-                aria-label="Toggle Menu"
+                className="lg:hidden p-2 rounded-xl text-gray-700 hover:bg-gray-100 cursor-pointer transition focus:outline-none"
+                aria-label="Menu"
               >
                 {isMobileMenuOpen ? <FaXmark className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
               </button>
@@ -254,101 +460,116 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* 3. Mobile Navigation Drawer (Structured & Scientific) */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg animate-fade-in">
-            {/* Mobile Search */}
+          <div className="lg:hidden border-t border-gray-100 bg-white px-4 pt-3.5 pb-6 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-150">
+            {/* Mobile Search Bar */}
             <form onSubmit={handleSearchSubmit}>
               <Input
+                aria-label="Tìm kiếm sản phẩm thể thao"
                 type="text"
-                placeholder="Tìm kiếm sản phẩm..."
+                placeholder="Tìm sản phẩm thể thao..."
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
                 startContent={<FaMagnifyingGlass className="w-3.5 h-3.5 text-gray-400" />}
+                endContent={
+                  localSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setLocalSearch("")}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                    >
+                      <FaXmark className="w-3 h-3" />
+                    </button>
+                  ) : null
+                }
                 size="sm"
                 radius="lg"
                 classNames={{
-                  inputWrapper: "bg-gray-100 border-none",
+                  inputWrapper: "bg-gray-100 border-none h-10",
+                  input: "text-xs",
                 }}
               />
             </form>
 
-            {/* Sport Categories - Simple List */}
-            <div className="flex flex-col gap-1 text-xs font-medium mt-4">
-              <button
-                onClick={() => navigateToSport("Bóng đá")}
-                className="py-2.5 px-3 rounded-lg text-left hover:bg-gray-50 text-gray-700 transition flex items-center gap-3"
-              >
-                <FaFutbol className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Bóng Đá</span>
-              </button>
-              <button
-                onClick={() => navigateToSport("Chạy bộ")}
-                className="py-2.5 px-3 rounded-lg text-left hover:bg-gray-50 text-gray-700 transition flex items-center gap-3"
-              >
-                <FaPersonRunning className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Chạy Bộ</span>
-              </button>
-              <button
-                onClick={() => navigateToSport("Gym / Fitness")}
-                className="py-2.5 px-3 rounded-lg text-left hover:bg-gray-50 text-gray-700 transition flex items-center gap-3"
-              >
-                <FaDumbbell className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Gym & Fitness</span>
-              </button>
-              <button
-                onClick={() => navigateToSport("Cầu lông")}
-                className="py-2.5 px-3 rounded-lg text-left hover:bg-gray-50 text-gray-700 transition flex items-center gap-3"
-              >
-                <GiShuttlecock className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Cầu Lông</span>
-              </button>
+            {/* Sport Categories Grid (Touch-friendly 2 columns) */}
+            <div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Môn Thể Thao
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {sportsList.map((sport) => {
+                  const SportIcon = sport.icon;
+                  return (
+                    <button
+                      key={sport.name}
+                      onClick={() => navigateToSport(sport.name)}
+                      className="p-2.5 rounded-xl border border-gray-100 bg-gray-50/60 hover:bg-emerald-50 hover:border-emerald-200 text-left transition flex items-center gap-2.5 cursor-pointer"
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${sport.bgColor}`}>
+                        <SportIcon className="w-4 h-4" />
+                      </div>
+                      <span className="font-bold text-xs text-gray-800">{sport.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Navigation links */}
-            <div className="pt-2 border-t border-gray-100 flex flex-col gap-1 text-xs font-medium">
-              <Link
-                href="/products"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2.5 px-3 rounded-lg text-emerald-600 font-bold hover:bg-gray-50 flex items-center gap-3"
+            {/* Core Navigation Links */}
+            <div className="pt-2 border-t border-gray-100 flex flex-col gap-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={handleAllProducts}
+                className="py-2.5 px-3 rounded-lg text-emerald-600 font-bold hover:bg-emerald-50 flex items-center justify-between text-left cursor-pointer"
               >
-                <FaTag className="w-4 h-4" />
-                <span>Tất Cả Sản Phẩm</span>
-              </Link>
+                <div className="flex items-center gap-3">
+                  <FaTag className="w-4 h-4" />
+                  <span>Tất Cả Sản Phẩm</span>
+                </div>
+                <FaArrowRight className="w-3 h-3" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSport("all");
+                  router.push("/products");
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 px-3 rounded-lg text-rose-600 hover:bg-rose-50 flex items-center justify-between text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <FaFire className="w-4 h-4 text-rose-500" />
+                  <span>Ưu Đãi / Khuyến Mãi Hot</span>
+                </div>
+                <span className="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">
+                  Sale
+                </span>
+              </button>
+
               <Link
                 href="/orders"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-2.5 px-3 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-3"
               >
-                <FaBox className="w-4 h-4 text-gray-400" /> Tra cứu đơn hàng
+                <FaBox className="w-4 h-4 text-gray-400" />
+                <span>Tra cứu đơn hàng</span>
               </Link>
-              <Link
-                href="/blog"
-                onClick={() => setIsMobileMenuOpen(false)}
+
+              <a
+                href="tel:0398802022"
                 className="py-2.5 px-3 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-3"
               >
-                <FaNewspaper className="w-4 h-4 text-gray-400" /> Cẩm nang thể thao
-              </Link>
-              <Link
-                href="/about"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2.5 px-3 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-              >
-                <FaCircleInfo className="w-4 h-4 text-gray-400" /> Về chúng tôi
-              </Link>
-              <Link
-                href="/contact"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2.5 px-3 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-              >
-                <FaHeadset className="w-4 h-4 text-gray-400" /> Liên hệ hỗ trợ
-              </Link>
+                <FaPhone className="w-4 h-4 text-emerald-500" />
+                <span>Hotline: 0398.802.022</span>
+              </a>
             </div>
 
-            {/* Mobile Auth Button */}
+            {/* User Account / Auth Section */}
             <div className="pt-2 border-t border-gray-100">
               {isUserAuth ? (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
                   <div className="flex items-center gap-2.5">
                     <Avatar size="sm" name={user?.fullName || "User"} className="bg-emerald-600 text-white" />
                     <div>
@@ -370,14 +591,14 @@ export default function Header() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button fullWidth size="sm" className="bg-emerald-600 text-white font-semibold text-xs rounded-full">
+                    <Button fullWidth size="sm" className="bg-emerald-600 text-white font-semibold text-xs rounded-xl h-9">
                       Đăng Nhập
                     </Button>
                   </Link>
                   <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button fullWidth size="sm" variant="flat" className="font-semibold text-xs rounded-full">
+                    <Button fullWidth size="sm" variant="bordered" className="font-semibold text-xs rounded-xl h-9 border-gray-300">
                       Đăng Ký
                     </Button>
                   </Link>

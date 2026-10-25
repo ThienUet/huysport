@@ -43,6 +43,7 @@ export default function CartPage() {
   const total = getTotal();
   const freeShipThreshold = 500000;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShipThreshold) * 100));
+  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,18 +138,34 @@ export default function CartPage() {
             </div>
           </div>
 
+          {hasOutOfStockItems && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+              <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>Trong giỏ hàng có sản phẩm hiện đã hết hàng trong kho. Vui lòng xóa các sản phẩm hết hàng để tiến hành thanh toán.</span>
+            </div>
+          )}
+
           {/* Table of Items */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-100">
               {items.map((item) => (
                 <div key={item.sku} className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                    <div className="relative w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
                       <img
-                        src={item.productImage || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"}
+                        src={
+                          item.productImage && (item.productImage.startsWith("http") || item.productImage.startsWith("/"))
+                            ? item.productImage
+                            : "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500"
+                        }
                         alt={item.productName}
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full object-cover ${item.maxStock <= 0 ? "grayscale-[30%]" : ""}`}
                       />
+                      {item.maxStock <= 0 && (
+                        <span className="absolute inset-0 bg-slate-900/50 text-white text-[9px] font-bold flex items-center justify-center text-center p-1 leading-tight">
+                          Hết hàng
+                        </span>
+                      )}
                     </div>
 
                     <div className="min-w-0 space-y-1">
@@ -179,20 +196,34 @@ export default function CartPage() {
                     </div>
 
                     {/* Quantity Control */}
-                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:border-emerald-500 transition-colors">
-                      <button
-                        onClick={() => updateQuantity(item.sku, item.quantity - 1)}
-                        className="p-2 hover:bg-gray-200 transition text-gray-700 cursor-pointer hover:text-emerald-600"
-                      >
-                        <FaMinus className="w-2.5 h-2.5" />
-                      </button>
-                      <span className="px-3 text-xs font-bold text-gray-900">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.sku, item.quantity + 1)}
-                        className="p-2 hover:bg-gray-200 transition text-gray-700 cursor-pointer hover:text-emerald-600"
-                      >
-                        <FaPlus className="w-2.5 h-2.5" />
-                      </button>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:border-emerald-500 transition-colors">
+                        <button
+                          onClick={() => updateQuantity(item.sku, item.quantity - 1)}
+                          className="p-2 hover:bg-gray-200 transition text-gray-700 cursor-pointer hover:text-emerald-600"
+                          title="Giảm số lượng"
+                        >
+                          <FaMinus className="w-2.5 h-2.5" />
+                        </button>
+                        <span className="px-3 text-xs font-bold text-gray-900">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.sku, item.quantity + 1)}
+                          disabled={item.quantity >= item.maxStock || item.maxStock <= 0}
+                          className="p-2 hover:bg-gray-200 transition text-gray-700 cursor-pointer hover:text-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title={item.maxStock <= 0 ? "Sản phẩm tạm hết hàng" : item.quantity >= item.maxStock ? "Đã đạt số lượng tồn kho tối đa" : "Tăng số lượng"}
+                        >
+                          <FaPlus className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                      {item.maxStock <= 0 ? (
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                          Tạm hết hàng
+                        </span>
+                      ) : item.quantity >= item.maxStock ? (
+                        <span className="text-[10px] font-bold text-amber-600">
+                          Tối đa: {item.maxStock} cái
+                        </span>
+                      ) : null}
                     </div>
 
                     {/* Remove Button */}
@@ -302,12 +333,17 @@ export default function CartPage() {
             <Button
               color="primary"
               size="lg"
-              className="w-full font-bold text-xs h-12 rounded-full shadow-md bg-emerald-600 hover:bg-emerald-700 text-white"
+              isDisabled={hasOutOfStockItems}
+              className={`w-full font-bold text-xs h-12 rounded-full shadow-md transition ${
+                hasOutOfStockItems
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              }`}
               endContent={<FaArrowRight className="w-3.5 h-3.5" />}
               as={Link}
-              href="/checkout"
+              href={hasOutOfStockItems ? "#" : "/checkout"}
             >
-              Tiến hành thanh toán
+              {hasOutOfStockItems ? "Có Sản Phẩm Hết Hàng Trong Giỏ" : "Tiến hành thanh toán"}
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500">

@@ -3,6 +3,8 @@ import AdminLayout from "@/layouts/admin-layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatbotService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
+import { HeroSelect } from "@/components/ui/HeroSelect";
+import { formatDateTime } from "@/utils/formatUtils";
 import {
   Bot,
   Ruler,
@@ -359,15 +361,15 @@ export default function ChatbotPage() {
                 <Bot className="w-5 h-5" />
               </div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                AI Chatbot Assistant Management
+                Quản lý Trợ lý AI Chatbot
               </h1>
               <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-indigo-200/60 flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-indigo-600" />
-                Gemini 3.7 Engine
+                Công nghệ Gemini 3.7 Engine
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Configure automated size recommendation heuristics, domain knowledge base, and inspect real-time customer dialogues.
+              Cấu hình quy tắc tư vấn kích cỡ tự động, cơ sở tri thức (FAQ) và theo dõi hội thoại khách hàng theo thời gian thực.
             </p>
           </div>
 
@@ -379,7 +381,7 @@ export default function ChatbotPage() {
                   isAiFittingEnabled ? "bg-emerald-500 animate-pulse" : "bg-slate-300"
                 }`}
               />
-              <span className="text-xs font-bold text-slate-700">AI Auto Size Fitting:</span>
+              <span className="text-xs font-bold text-slate-700">Tự động tư vấn size:</span>
             </div>
             <button
               onClick={() => setIsAiFittingEnabled(!isAiFittingEnabled)}
@@ -398,7 +400,7 @@ export default function ChatbotPage() {
                 isAiFittingEnabled ? "text-blue-600" : "text-slate-400"
               }`}
             >
-              {isAiFittingEnabled ? "Enabled" : "Disabled"}
+              {isAiFittingEnabled ? "Đang bật" : "Đang tắt"}
             </span>
           </div>
         </div>
@@ -414,7 +416,7 @@ export default function ChatbotPage() {
             }`}
           >
             <Ruler className="w-4 h-4" />
-            Size Recommendation Rules
+            Quy tắc tư vấn kích cỡ (Size Rules)
             <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
               {sizeRules.length}
             </span>
@@ -429,7 +431,7 @@ export default function ChatbotPage() {
             }`}
           >
             <HelpCircle className="w-4 h-4" />
-            FAQ & Knowledge Base
+            Câu hỏi thường gặp & Tri thức (FAQ)
             <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
               {faqs.length}
             </span>
@@ -444,9 +446,9 @@ export default function ChatbotPage() {
             }`}
           >
             <MessageSquare className="w-4 h-4" />
-            Conversation Logs
+            Nhật ký hội thoại
             <span className="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-              {sessions.length} Live
+              {sessions.length} Trực tiếp
             </span>
           </button>
         </div>
@@ -462,7 +464,7 @@ export default function ChatbotPage() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search rules by code, size, category..."
+                  placeholder="Tìm kiếm quy tắc theo mã, kích cỡ, danh mục..."
                   value={ruleSearch}
                   onChange={(e) => setRuleSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -472,10 +474,10 @@ export default function ChatbotPage() {
               <div className="flex items-center gap-2.5">
                 <button
                   onClick={() => setIsAddRuleModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-md shadow-blue-500/20"
+                  className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition inline-flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Size Rule
+                  Thêm quy tắc kích cỡ
                 </button>
               </div>
             </div>
@@ -486,66 +488,87 @@ export default function ChatbotPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80">
-                      <th className="py-3.5 px-5">Rule ID</th>
-                      <th className="py-3.5 px-5">Height Range (cm)</th>
-                      <th className="py-3.5 px-5">Weight Range (kg)</th>
-                      <th className="py-3.5 px-5">Product Category</th>
-                      <th className="py-3.5 px-5">Suggested Size</th>
-                      <th className="py-3.5 px-5">Gender & Fit</th>
-                      <th className="py-3.5 px-5">Status</th>
-                      <th className="py-3.5 px-5 text-right">Actions</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Mã quy tắc</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Khoảng chiều cao (cm)</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Khoảng cân nặng (kg)</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Danh mục</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Kích cỡ gợi ý</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Giới tính & Phom dáng</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Trạng thái</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap text-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                    {filteredRules.map((rule: SizeRule) => (
-                      <tr key={rule.id} className="hover:bg-slate-50/70 transition group">
-                        <td className="py-4 px-5">
-                          <span className="font-mono font-bold text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                            {rule.ruleCode}
-                          </span>
-                        </td>
-                        <td className="py-4 px-5 font-bold text-slate-900">
-                          {rule.heightMin} cm – {rule.heightMax} cm
-                        </td>
-                        <td className="py-4 px-5 font-bold text-slate-900">
-                          {rule.weightMin} kg – {rule.weightMax} kg
-                        </td>
-                        <td className="py-4 px-5">
-                          <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold text-[11px]">
-                            {rule.category}
-                          </span>
-                        </td>
-                        <td className="py-4 px-5">
-                          <span className="inline-flex items-center gap-1 font-extrabold text-sm text-blue-600 bg-blue-50/80 px-2.5 py-1 rounded-xl border border-blue-200/50">
-                            {rule.suggestedSize}
-                          </span>
-                        </td>
-                        <td className="py-4 px-5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-slate-600 font-bold">{rule.gender}</span>
-                            <span className="text-[11px] text-slate-400">({rule.fitType})</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-5">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/50">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Active
-                          </span>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition">
-                            <button
-                              onClick={() => {
-                                deleteRuleMutation.mutate(rule.id);
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    {filteredRules.map((rule: SizeRule) => {
+                      const categoryLabel =
+                        rule.category === "Apparel"
+                          ? "Quần áo"
+                          : rule.category === "Shoes"
+                          ? "Giày dép"
+                          : "Dụng cụ";
+                      const genderLabel =
+                        rule.gender === "Male"
+                          ? "Nam"
+                          : rule.gender === "Female"
+                          ? "Nữ"
+                          : "Unisex";
+                      return (
+                        <tr key={rule.id} className="hover:bg-slate-50/70 transition group">
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <span
+                              className="font-mono font-bold text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-lg"
+                              title={`Mã quy tắc AI: ${rule.ruleCode}`}
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {rule.ruleCode}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 font-bold text-slate-900 whitespace-nowrap">
+                            {rule.heightMin} cm – {rule.heightMax} cm
+                          </td>
+                          <td className="py-4 px-5 font-bold text-slate-900 whitespace-nowrap">
+                            {rule.weightMin} kg – {rule.weightMax} kg
+                          </td>
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                              {categoryLabel}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <span
+                              className="inline-flex items-center gap-1 font-extrabold text-sm text-blue-600 bg-blue-50/80 px-2.5 py-1 rounded-xl border border-blue-200/50"
+                              title={`AI gợi ý size: ${rule.suggestedSize}`}
+                            >
+                              {rule.suggestedSize}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-slate-600 font-bold">{genderLabel}</span>
+                              <span className="text-[11px] text-slate-400">({rule.fitType})</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/50">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Hoạt động
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 whitespace-nowrap text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition">
+                              <button
+                                onClick={() => {
+                                  deleteRuleMutation.mutate(rule.id);
+                                }}
+                                title="Xóa quy tắc"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -564,7 +587,7 @@ export default function ChatbotPage() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search questions or keywords..."
+                  placeholder="Tìm kiếm câu hỏi hoặc từ khóa..."
                   value={faqSearch}
                   onChange={(e) => setFaqSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -573,78 +596,93 @@ export default function ChatbotPage() {
 
               {/* Intent Filter */}
               <div className="flex flex-wrap items-center gap-2">
-                <select
+                <HeroSelect
                   value={selectedIntent}
-                  onChange={(e) => setSelectedIntent(e.target.value)}
-                  className="bg-slate-50 text-xs font-bold text-slate-700 px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                >
-                  <option value="all">All Intent Topics</option>
-                  <option value="Return Policy">Return Policy</option>
-                  <option value="Shipping Time">Shipping Time</option>
-                  <option value="Product Care">Product Care</option>
-                  <option value="Size Fitting">Size Fitting</option>
-                  <option value="Payment & Warranty">Payment & Warranty</option>
-                </select>
+                  onChange={setSelectedIntent}
+                  size="sm"
+                  options={[
+                    { key: "all", label: "Tất cả chủ đề" },
+                    { key: "Return Policy", label: "Chính sách đổi trả" },
+                    { key: "Shipping Time", label: "Thời gian giao hàng" },
+                    { key: "Product Care", label: "Bảo quản sản phẩm" },
+                    { key: "Size Fitting", label: "Tư vấn chọn size" },
+                    { key: "Payment & Warranty", label: "Thanh toán & Bảo hành" },
+                  ]}
+                  aria-label="Lọc theo chủ đề"
+                />
 
                 <button
                   onClick={() => setIsAddFaqOpen(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-md shadow-blue-500/20"
+                  className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition inline-flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" />
-                  Add FAQ Entry
+                  Thêm câu hỏi FAQ
                 </button>
               </div>
             </div>
 
             {/* Q&A Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredFaqs.map((faq: FAQItem) => (
-                <div
-                  key={faq.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                          faq.intent === "Return Policy"
-                            ? "bg-rose-50 text-rose-700 border border-rose-200/60"
-                            : faq.intent === "Shipping Time"
-                            ? "bg-blue-50 text-blue-700 border border-blue-200/60"
-                            : faq.intent === "Size Fitting"
-                            ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
-                            : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                        }`}
-                      >
-                        🏷️ {faq.intent}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-400">
-                        {faq.usageCount} bot hits
-                      </span>
+              {filteredFaqs.map((faq: FAQItem) => {
+                const intentLabel =
+                  faq.intent === "Return Policy"
+                    ? "Chính sách đổi trả"
+                    : faq.intent === "Shipping Time"
+                    ? "Thời gian giao hàng"
+                    : faq.intent === "Size Fitting"
+                    ? "Tư vấn chọn size"
+                    : faq.intent === "Product Care"
+                    ? "Bảo quản sản phẩm"
+                    : "Thanh toán & Bảo hành";
+                return (
+                  <div
+                    key={faq.id}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition space-y-3 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                            faq.intent === "Return Policy"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200/60"
+                              : faq.intent === "Shipping Time"
+                              ? "bg-blue-50 text-blue-700 border border-blue-200/60"
+                              : faq.intent === "Size Fitting"
+                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
+                              : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                          }`}
+                        >
+                          🏷️ {intentLabel}
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-400">
+                          {faq.usageCount} lượt kích hoạt
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-sm text-slate-900 leading-snug">
+                        {faq.question}
+                      </h3>
+
+                      <p className="text-xs text-slate-600 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        {faq.answer}
+                      </p>
                     </div>
 
-                    <h3 className="font-bold text-sm text-slate-900 leading-snug">
-                      {faq.question}
-                    </h3>
-
-                    <p className="text-xs text-slate-600 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      {faq.answer}
-                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                      <span className="text-slate-400 font-medium">
+                        Độ chính xác: <strong className="text-emerald-600">{faq.confidence * (faq.confidence <= 1 ? 100 : 1)}%</strong>
+                      </span>
+                      <button
+                        onClick={() => deleteFaqMutation.mutate(faq.id)}
+                        title="Xóa câu hỏi FAQ"
+                        className="text-slate-400 hover:text-rose-600 p-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                    <span className="text-slate-400 font-medium">
-                      Match Accuracy: <strong className="text-emerald-600">{faq.confidence}%</strong>
-                    </span>
-                    <button
-                      onClick={() => deleteFaqMutation.mutate(faq.id)}
-                      className="text-slate-400 hover:text-rose-600 p-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -658,8 +696,8 @@ export default function ChatbotPage() {
             <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[650px] overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900">Recent Customer Sessions</h3>
-                  <p className="text-[11px] text-slate-400 font-medium">Auto-recorded AI interactions</p>
+                  <h3 className="font-bold text-sm text-slate-900">Cuộc trò chuyện gần đây</h3>
+                  <p className="text-[11px] text-slate-400 font-medium">Ghi nhận tương tác AI tự động</p>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
               </div>
@@ -685,7 +723,7 @@ export default function ChatbotPage() {
                             {session.customerName}
                           </h4>
                           <span className="text-[10px] text-slate-400 font-medium">
-                            {session.timestamp}
+                            {formatDateTime(session.timestamp)}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 truncate mt-0.5">
@@ -694,17 +732,17 @@ export default function ChatbotPage() {
                         <div className="mt-1.5 flex items-center gap-1.5">
                           {session.status === "Product Recommended" && (
                             <span className="text-[10px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
-                              🛒 Product Recommended
+                              🛒 Đã gợi ý sản phẩm
                             </span>
                           )}
                           {session.status === "Bot Resolved" && (
                             <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                              🤖 Bot Resolved
+                              🤖 Bot đã giải quyết
                             </span>
                           )}
                           {session.status === "Human Escalated" && (
                             <span className="text-[10px] font-bold bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full">
-                              🙋‍♂️ Escalated to Human
+                              🙋‍♂️ Chuyển tư vấn viên
                             </span>
                           )}
                         </div>
@@ -734,14 +772,18 @@ export default function ChatbotPage() {
                     </div>
                     <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      SportX AI Bot Connected (Session #{activeSession.id})
+                      Trợ lý AI SportX đã kết nối (Phiên #{activeSession.id})
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-xl">
-                    {activeSession.status}
+                    {activeSession.status === "Product Recommended"
+                      ? "Đã gợi ý sản phẩm"
+                      : activeSession.status === "Bot Resolved"
+                      ? "Bot đã xử lý xong"
+                      : "Cần tư vấn viên"}
                   </span>
                 </div>
               </div>
@@ -779,8 +821,8 @@ export default function ChatbotPage() {
                           }`}
                         >
                           <div className="font-bold text-[10px] mb-1 opacity-75">
-                            {isUser ? "Customer" : isBot ? "SportX AI Assistant" : "Live Agent"} •{" "}
-                            {msg.timestamp}
+                            {isUser ? "Khách hàng" : isBot ? "Trợ lý AI SportX" : "Tư vấn viên"} •{" "}
+                            {formatDateTime(msg.timestamp)}
                           </div>
                           <div className="whitespace-pre-line">{msg.text}</div>
                         </div>
@@ -788,8 +830,16 @@ export default function ChatbotPage() {
                         {/* Product Recommendation Card Embed */}
                         {msg.productCard && (
                           <div className="p-3.5 bg-white border border-blue-200 rounded-2xl shadow-sm flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-2xl shrink-0">
-                              {msg.productCard.thumbnail}
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                              {msg.productCard.thumbnail && (msg.productCard.thumbnail.startsWith("http") || msg.productCard.thumbnail.startsWith("/")) ? (
+                                <img
+                                  src={msg.productCard.thumbnail}
+                                  alt={msg.productCard.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-2xl">{msg.productCard.thumbnail || "👟"}</span>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0 text-xs">
                               <h5 className="font-bold text-slate-900 truncate">
@@ -822,7 +872,7 @@ export default function ChatbotPage() {
               >
                 <input
                   type="text"
-                  placeholder="Take over or whisper a response as Human Agent..."
+                  placeholder="Tiếp quản cuộc trò chuyện hoặc gửi phản hồi với vai trò Tư vấn viên..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   className="flex-1 px-4 py-2.5 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -844,7 +894,7 @@ export default function ChatbotPage() {
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <Ruler className="w-4 h-4 text-blue-600" /> Add Size Recommendation Rule
+                  <Ruler className="w-4 h-4 text-blue-600" /> Thêm quy tắc tư vấn kích cỡ
                 </h3>
                 <button
                   onClick={() => setIsAddRuleModalOpen(false)}
@@ -857,41 +907,47 @@ export default function ChatbotPage() {
               <form onSubmit={handleAddSizeRule} className="space-y-4 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Category</label>
-                    <select
+                    <label className="block font-bold text-slate-700 mb-1">Danh mục</label>
+                    <HeroSelect
                       value={newRuleCategory}
-                      onChange={(e: any) => setNewRuleCategory(e.target.value)}
-                      className="w-full p-2 bg-slate-50 rounded-xl border border-slate-200 font-bold"
-                    >
-                      <option value="Apparel">Apparel</option>
-                      <option value="Shoes">Shoes</option>
-                      <option value="Training Gear">Training Gear</option>
-                    </select>
+                      onChange={(val) => setNewRuleCategory(val as any)}
+                      options={[
+                        { key: "Apparel", label: "Quần áo" },
+                        { key: "Shoes", label: "Giày dép" },
+                        { key: "Training Gear", label: "Dụng cụ tập" },
+                      ]}
+                      className="w-full"
+                      triggerClassName="w-full bg-slate-50"
+                      aria-label="Chọn danh mục"
+                    />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Gender</label>
-                    <select
+                    <label className="block font-bold text-slate-700 mb-1">Giới tính</label>
+                    <HeroSelect
                       value={newRuleGender}
-                      onChange={(e: any) => setNewRuleGender(e.target.value)}
-                      className="w-full p-2 bg-slate-50 rounded-xl border border-slate-200 font-bold"
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Unisex">Unisex</option>
-                    </select>
+                      onChange={(val) => setNewRuleGender(val as any)}
+                      options={[
+                        { key: "Male", label: "Nam" },
+                        { key: "Female", label: "Nữ" },
+                        { key: "Unisex", label: "Unisex" },
+                      ]}
+                      className="w-full"
+                      triggerClassName="w-full bg-slate-50"
+                      aria-label="Chọn giới tính"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Height Range (cm)</label>
+                    <label className="block font-bold text-slate-700 mb-1">Khoảng chiều cao (cm)</label>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
                         value={newRuleHeightMin}
                         onChange={(e) => setNewRuleHeightMin(Number(e.target.value))}
                         className="w-1/2 p-2 bg-slate-50 rounded-xl border border-slate-200"
-                        placeholder="Min"
+                        placeholder="Từ"
                       />
                       <span>-</span>
                       <input
@@ -899,20 +955,20 @@ export default function ChatbotPage() {
                         value={newRuleHeightMax}
                         onChange={(e) => setNewRuleHeightMax(Number(e.target.value))}
                         className="w-1/2 p-2 bg-slate-50 rounded-xl border border-slate-200"
-                        placeholder="Max"
+                        placeholder="Đến"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Weight Range (kg)</label>
+                    <label className="block font-bold text-slate-700 mb-1">Khoảng cân nặng (kg)</label>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
                         value={newRuleWeightMin}
                         onChange={(e) => setNewRuleWeightMin(Number(e.target.value))}
                         className="w-1/2 p-2 bg-slate-50 rounded-xl border border-slate-200"
-                        placeholder="Min"
+                        placeholder="Từ"
                       />
                       <span>-</span>
                       <input
@@ -920,7 +976,7 @@ export default function ChatbotPage() {
                         value={newRuleWeightMax}
                         onChange={(e) => setNewRuleWeightMax(Number(e.target.value))}
                         className="w-1/2 p-2 bg-slate-50 rounded-xl border border-slate-200"
-                        placeholder="Max"
+                        placeholder="Đến"
                       />
                     </div>
                   </div>
@@ -928,27 +984,30 @@ export default function ChatbotPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Suggested Size</label>
+                    <label className="block font-bold text-slate-700 mb-1">Kích cỡ gợi ý</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Size M or EU 41"
+                      placeholder="Ví dụ: Size M hoặc Size 41"
                       value={newRuleSize}
                       onChange={(e) => setNewRuleSize(e.target.value)}
                       className="w-full p-2 bg-slate-50 rounded-xl border border-slate-200 font-bold text-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Fit Preference</label>
-                    <select
+                    <label className="block font-bold text-slate-700 mb-1">Phom dáng (Fit)</label>
+                    <HeroSelect
                       value={newRuleFit}
-                      onChange={(e: any) => setNewRuleFit(e.target.value)}
-                      className="w-full p-2 bg-slate-50 rounded-xl border border-slate-200 font-bold"
-                    >
-                      <option value="Slim Fit">Slim Fit</option>
-                      <option value="Regular Fit">Regular Fit</option>
-                      <option value="Loose Fit">Loose Fit</option>
-                    </select>
+                      onChange={(val) => setNewRuleFit(val as any)}
+                      options={[
+                        { key: "Slim Fit", label: "Ôm sát (Slim Fit)" },
+                        { key: "Regular Fit", label: "Vừa vặn (Regular Fit)" },
+                        { key: "Loose Fit", label: "Rộng rãi (Loose Fit)" },
+                      ]}
+                      className="w-full"
+                      triggerClassName="w-full bg-slate-50"
+                      aria-label="Chọn phom dáng"
+                    />
                   </div>
                 </div>
 
@@ -958,13 +1017,13 @@ export default function ChatbotPage() {
                     onClick={() => setIsAddRuleModalOpen(false)}
                     className="px-4 py-2 bg-slate-100 rounded-xl text-slate-700 font-bold"
                   >
-                    Cancel
+                    Hủy
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm"
                   >
-                    Save Rule
+                    Lưu quy tắc
                   </button>
                 </div>
               </form>
@@ -978,7 +1037,7 @@ export default function ChatbotPage() {
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-blue-600" /> Add FAQ & Knowledge Entry
+                  <HelpCircle className="w-4 h-4 text-blue-600" /> Thêm câu hỏi & Tri thức cho Bot
                 </h3>
                 <button
                   onClick={() => setIsAddFaqOpen(false)}
@@ -990,26 +1049,29 @@ export default function ChatbotPage() {
 
               <form onSubmit={handleAddFaq} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Intent Category</label>
-                  <select
+                  <label className="block font-bold text-slate-700 mb-1">Chủ đề / Ý định (Intent)</label>
+                  <HeroSelect
                     value={newFaqIntent}
-                    onChange={(e: any) => setNewFaqIntent(e.target.value)}
-                    className="w-full p-2 bg-slate-50 rounded-xl border border-slate-200 font-bold"
-                  >
-                    <option value="Return Policy">Return Policy</option>
-                    <option value="Shipping Time">Shipping Time</option>
-                    <option value="Product Care">Product Care</option>
-                    <option value="Size Fitting">Size Fitting</option>
-                    <option value="Payment & Warranty">Payment & Warranty</option>
-                  </select>
+                    onChange={(val) => setNewFaqIntent(val as any)}
+                    options={[
+                      { key: "Return Policy", label: "Chính sách đổi trả" },
+                      { key: "Shipping Time", label: "Thời gian giao hàng" },
+                      { key: "Product Care", label: "Bảo quản sản phẩm" },
+                      { key: "Size Fitting", label: "Tư vấn chọn size" },
+                      { key: "Payment & Warranty", label: "Thanh toán & Bảo hành" },
+                    ]}
+                    className="w-full"
+                    triggerClassName="w-full bg-slate-50"
+                    aria-label="Chọn chủ đề"
+                  />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Question / User Query</label>
+                  <label className="block font-bold text-slate-700 mb-1">Câu hỏi / Mẫu truy vấn</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Can I return football boots if the size is tight?"
+                    placeholder="Ví dụ: Giày đá bóng không vừa có được đổi size không?"
                     value={newFaqQuestion}
                     onChange={(e) => setNewFaqQuestion(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 font-bold"
@@ -1017,11 +1079,11 @@ export default function ChatbotPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Automated Bot Answer</label>
+                  <label className="block font-bold text-slate-700 mb-1">Câu trả lời tự động của Bot</label>
                   <textarea
                     rows={3}
                     required
-                    placeholder="Provide the exact guidance response the AI chatbot should respond with..."
+                    placeholder="Nhập nội dung phản hồi chính xác mà trợ lý AI sẽ trả lời khách..."
                     value={newFaqAnswer}
                     onChange={(e) => setNewFaqAnswer(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200"
@@ -1034,13 +1096,13 @@ export default function ChatbotPage() {
                     onClick={() => setIsAddFaqOpen(false)}
                     className="px-4 py-2 bg-slate-100 rounded-xl text-slate-700 font-bold"
                   >
-                    Cancel
+                    Hủy
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-sm"
                   >
-                    Add Knowledge
+                    Thêm tri thức
                   </button>
                 </div>
               </form>

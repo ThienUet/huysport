@@ -58,16 +58,24 @@ const normalizeOrder = (raw: any): Order => {
       note: raw.note || raw.notes || "",
     },
     items: Array.isArray(raw.items)
-      ? raw.items.map((i: any) => ({
-          productId: i.productId || i.id || "p-1",
-          productName: i.productName || i.name || "Sản phẩm SportX",
-          productImage: i.productImage || i.thumbnail || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500",
-          sku: i.sku || "SPX-001",
-          size: i.size || "L",
-          color: i.color || "Mặc định",
-          price: Number(i.price || i.unitPrice || 250000),
-          quantity: Number(i.quantity || i.qty || 1),
-        }))
+      ? raw.items.map((i: any) => {
+          const isValidUrl = (url: any) => typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/"));
+          const resolvedImage = isValidUrl(i.productImage)
+            ? i.productImage
+            : isValidUrl(i.thumbnail)
+            ? i.thumbnail
+            : "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500";
+          return {
+            productId: i.productId || i.id || "p-1",
+            productName: i.productName || i.name || "Sản phẩm SportX",
+            productImage: resolvedImage,
+            sku: i.sku || "SPX-001",
+            size: i.size || "L",
+            color: i.color || "Mặc định",
+            price: Number(i.price || i.unitPrice || 250000),
+            quantity: Number(i.quantity || i.qty || 1),
+          };
+        })
       : [],
     subtotal: Number(raw.subtotal || raw.totalAmount || 0),
     shippingFee: Number(raw.shippingFee || 0),
@@ -87,6 +95,12 @@ const normalizeOrder = (raw: any): Order => {
         ? "CANCELLED"
         : "PENDING",
     transactionId: raw.transactionDetails?.transactionCode,
+    shippingCarrier: raw.shippingCarrier,
+    trackingCode: raw.trackingCode,
+    cancelReason: raw.cancelReason,
+    cancelledAt: raw.cancelledAt,
+    cancelledBy: raw.cancelledBy,
+    returnRequest: raw.returnRequest,
     notes: raw.note || raw.notes,
     createdAt: raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updatedAt || new Date().toISOString(),
@@ -106,6 +120,7 @@ export const orderService = {
       },
       items: payload.items.map((item) => ({
         id: item.productId,
+        sku: item.sku,
         name: item.productName,
         category: "Sportswear",
         thumbnail: item.productImage,
@@ -115,6 +130,10 @@ export const orderService = {
         qty: item.quantity,
         unitPrice: item.price,
       })),
+      subtotal: payload.subtotal,
+      shippingFee: payload.shippingFee,
+      discountAmount: payload.discountAmount,
+      couponCode: payload.couponCode,
       totalAmount: payload.totalAmount,
       paymentMethod: payload.paymentMethod === "BANK_TRANSFER" ? "COD" : payload.paymentMethod,
       note: payload.notes,
@@ -136,37 +155,46 @@ export const orderService = {
         data: normalized,
         paymentUrl: res.data?.paymentUrl,
       };
-    } catch {
-      // Local fallback creation
-      const localOrderNumber = `SPX-${Math.floor(1000 + Math.random() * 9000)}`;
-      const fallbackOrder: Order = {
-        id: `ord-${Date.now()}`,
-        orderNumber: localOrderNumber,
-        customer: payload.customer,
-        shippingAddress: payload.shippingAddress,
-        items: payload.items,
-        subtotal: payload.subtotal,
-        shippingFee: payload.shippingFee,
-        discountAmount: payload.discountAmount,
-        couponCode: payload.couponCode,
-        totalAmount: payload.totalAmount,
-        paymentMethod: payload.paymentMethod,
-        paymentStatus: payload.paymentMethod === "COD" ? "PENDING" : "PAID",
-        fulfillmentStatus: "PROCESSING",
-        notes: payload.notes,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      if (typeof window !== "undefined") {
-        const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        localStorage.setItem("sportx_local_orders", JSON.stringify([fallbackOrder, ...existing]));
+    } catch (err: any) {
+      // If backend responded with validation/stock error, bubble it up to UI!
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
       }
 
-      return {
-        success: true,
-        data: fallbackOrder,
-      };
+      // If genuine network failure and no response
+      if (!err.response) {
+        const localOrderNumber = `SPX-${Math.floor(1000 + Math.random() * 9000)}`;
+        const fallbackOrder: Order = {
+          id: `ord-${Date.now()}`,
+          orderNumber: localOrderNumber,
+          customer: payload.customer,
+          shippingAddress: payload.shippingAddress,
+          items: payload.items,
+          subtotal: payload.subtotal,
+          shippingFee: payload.shippingFee,
+          discountAmount: payload.discountAmount,
+          couponCode: payload.couponCode,
+          totalAmount: payload.totalAmount,
+          paymentMethod: payload.paymentMethod,
+          paymentStatus: payload.paymentMethod === "COD" ? "PENDING" : "PAID",
+          fulfillmentStatus: "PROCESSING",
+          notes: payload.notes,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (typeof window !== "undefined") {
+          const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
+          localStorage.setItem("sportx_local_orders", JSON.stringify([fallbackOrder, ...existing]));
+        }
+
+        return {
+          success: true,
+          data: fallbackOrder,
+        };
+      }
+
+      throw new Error(err.message || "Đã xảy ra lỗi khi tạo đơn hàng!");
     }
   },
 
@@ -186,8 +214,9 @@ export const orderService = {
 
   trackOrderByCode: async (orderNumberOrPhone: string): Promise<{ success: boolean; data: Order[] }> => {
     try {
+      const q = orderNumberOrPhone.trim();
       const res = await api.get("/orders", {
-        params: { search: orderNumberOrPhone },
+        params: q ? { search: q } : {},
       });
       const rawList = res.data?.data || res.data || [];
       if (Array.isArray(rawList) && rawList.length > 0) {
@@ -196,12 +225,15 @@ export const orderService = {
       // Check local storage
       if (typeof window !== "undefined") {
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        const q = orderNumberOrPhone.toLowerCase().trim();
+        if (!q) {
+          return { success: true, data: existing };
+        }
+        const lowerQ = q.toLowerCase();
         const found = existing.filter(
           (o) =>
-            o.orderNumber.toLowerCase().includes(q) ||
-            o.shippingAddress?.phone.includes(q) ||
-            o.customer?.email?.toLowerCase().includes(q)
+            o.orderNumber.toLowerCase().includes(lowerQ) ||
+            o.shippingAddress?.phone.includes(lowerQ) ||
+            o.customer?.email?.toLowerCase().includes(lowerQ)
         );
         return { success: true, data: found };
       }
@@ -209,12 +241,16 @@ export const orderService = {
     } catch {
       if (typeof window !== "undefined") {
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        const q = orderNumberOrPhone.toLowerCase().trim();
+        const q = orderNumberOrPhone.trim();
+        if (!q) {
+          return { success: true, data: existing };
+        }
+        const lowerQ = q.toLowerCase();
         const found = existing.filter(
           (o) =>
-            o.orderNumber.toLowerCase().includes(q) ||
-            o.shippingAddress?.phone.includes(q) ||
-            o.customer?.email?.toLowerCase().includes(q)
+            o.orderNumber.toLowerCase().includes(lowerQ) ||
+            o.shippingAddress?.phone.includes(lowerQ) ||
+            o.customer?.email?.toLowerCase().includes(lowerQ)
         );
         return { success: true, data: found };
       }
@@ -229,5 +265,78 @@ export const orderService = {
       orderInfo,
     });
     return res.data;
+  },
+
+  cancelOrder: async (id: string, reason: string): Promise<{ success: boolean; message: string; data?: Order }> => {
+    try {
+      const res = await api.post(`/orders/${id}/cancel`, {
+        reason,
+        cancelledBy: "customer",
+      });
+
+      // Update local storage if present
+      if (typeof window !== "undefined") {
+        const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
+        const updated = existing.map((o) =>
+          o.id === id || o.orderNumber === id
+            ? { ...o, fulfillmentStatus: "CANCELLED" as const, cancelReason: reason }
+            : o
+        );
+        localStorage.setItem("sportx_local_orders", JSON.stringify(updated));
+      }
+
+      return {
+        success: true,
+        message: res.data?.message || "Đã hủy đơn hàng thành công.",
+        data: res.data?.data ? normalizeOrder(res.data.data) : undefined,
+      };
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || "Không thể hủy đơn hàng");
+    }
+  },
+
+  requestReturn: async (payload: {
+    orderNumber: string;
+    reason: string;
+    detailedReason?: string;
+    bankName?: string;
+    bankAccount?: string;
+    accountHolder?: string;
+    refundAmount?: number;
+  }): Promise<{ success: boolean; message: string; data?: Order }> => {
+    try {
+      const res = await api.post(`/orders/${payload.orderNumber}/return-request`, payload);
+
+      // Update local storage if present
+      if (typeof window !== "undefined") {
+        const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
+        const updated = existing.map((o) =>
+          o.orderNumber === payload.orderNumber || o.id === payload.orderNumber
+            ? {
+                ...o,
+                returnRequest: {
+                  reason: payload.reason,
+                  detailedReason: payload.detailedReason,
+                  bankName: payload.bankName,
+                  bankAccount: payload.bankAccount,
+                  accountHolder: payload.accountHolder,
+                  refundAmount: payload.refundAmount || o.totalAmount,
+                  status: "Pending" as const,
+                  requestedAt: new Date().toISOString(),
+                },
+              }
+            : o
+        );
+        localStorage.setItem("sportx_local_orders", JSON.stringify(updated));
+      }
+
+      return {
+        success: true,
+        message: res.data?.message || "Đã gửi yêu cầu đổi trả / hoàn hàng thành công.",
+        data: res.data?.data ? normalizeOrder(res.data.data) : undefined,
+      };
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || "Không thể gửi yêu cầu hoàn hàng");
+    }
   },
 };

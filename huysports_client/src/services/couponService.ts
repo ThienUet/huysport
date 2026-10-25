@@ -6,82 +6,85 @@ export const couponService = {
     code: string,
     orderValue: number
   ): Promise<{ success: boolean; coupon?: Coupon; discountAmount: number; message: string }> => {
+    const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) {
+      return { success: false, discountAmount: 0, message: "Vui lòng nhập mã ưu đãi!" };
+    }
+
     try {
-      const res = await api.get("/marketing/coupons");
-      const coupons: Coupon[] = res.data?.data || res.data || [];
-      const found = coupons.find((c) => c.code.toUpperCase() === code.toUpperCase() && c.isActive);
+      // Call backend apply endpoint
+      const res = await api.post("/coupons/apply", {
+        code: cleanCode,
+        orderTotal: orderValue,
+      });
 
-      if (!found) {
-        // Mock validate if backend empty
-        if (code.toUpperCase() === "SPORTX10") {
-          const discountAmount = Math.round((orderValue * 10) / 100);
-          return {
-            success: true,
-            coupon: {
-              id: "cp-sportx10",
-              code: "SPORTX10",
-              discountType: "PERCENT",
-              discountValue: 10,
-              minOrderValue: 0,
-              startDate: new Date().toISOString(),
-              endDate: new Date(Date.now() + 86400000 * 30).toISOString(),
-              usageCount: 1,
-              isActive: true,
-              description: "Giảm 10% đơn hàng đầu tiên",
-            },
-            discountAmount,
-            message: `Áp dụng thành công mã SPORTX10! Giảm ${discountAmount.toLocaleString("vi-VN")}đ`,
-          };
-        }
-        return { success: false, discountAmount: 0, message: "Mã giảm giá không tồn tại hoặc đã hết hạn!" };
-      }
+      if (res.data?.success && res.data?.data) {
+        const data = res.data.data;
+        const couponData: Coupon = data.coupon || {
+          id: `cp-${cleanCode.toLowerCase()}`,
+          code: cleanCode,
+          discountType: data.discountType || "percentage",
+          discountValue: data.discountValue || 10,
+          minOrderValue: data.minOrderValue || 0,
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 86400000 * 30).toISOString(),
+          usedCount: 1,
+          status: "Active",
+          description: data.description || `Mã giảm giá ${cleanCode}`,
+        };
 
-      if (orderValue < found.minOrderValue) {
         return {
-          success: false,
-          discountAmount: 0,
-          message: `Đơn hàng phải đạt tối thiểu ${found.minOrderValue.toLocaleString("vi-VN")}đ để sử dụng mã này!`,
+          success: true,
+          coupon: couponData,
+          discountAmount: Number(data.discountAmount || 0),
+          message:
+            res.data.message ||
+            `Áp dụng thành công mã ${cleanCode}! Giảm ${Number(data.discountAmount || 0).toLocaleString("vi-VN")}đ`,
         };
       }
 
-      let discountAmount = 0;
-      if (found.discountType === "PERCENT") {
-        discountAmount = (orderValue * found.discountValue) / 100;
-        if (found.maxDiscountAmount && discountAmount > found.maxDiscountAmount) {
-          discountAmount = found.maxDiscountAmount;
-        }
-      } else {
-        discountAmount = found.discountValue;
+      return {
+        success: false,
+        discountAmount: 0,
+        message: res.data?.message || "Mã giảm giá không hợp lệ!",
+      };
+    } catch (err: any) {
+      // If backend gave an explicit validation error message
+      if (err.response?.data?.message) {
+        return {
+          success: false,
+          discountAmount: 0,
+          message: err.response.data.message,
+        };
       }
 
-      return {
-        success: true,
-        coupon: found,
-        discountAmount,
-        message: `Áp dụng thành công mã ${found.code}! Giảm ${discountAmount.toLocaleString("vi-VN")}đ`,
-      };
-    } catch {
-      // Fallback if network issue
-      if (code.toUpperCase() === "SPORTX10") {
+      // Offline fallback for demo code SPORTX10
+      if (cleanCode === "SPORTX10") {
         const discountAmount = Math.round((orderValue * 10) / 100);
         return {
           success: true,
           coupon: {
             id: "cp-sportx10",
             code: "SPORTX10",
-            discountType: "PERCENT",
+            discountType: "percentage",
             discountValue: 10,
-            minOrderValue: 0,
+            minOrderValue: 200000,
             startDate: new Date().toISOString(),
             endDate: new Date(Date.now() + 86400000 * 30).toISOString(),
-            usageCount: 1,
-            isActive: true,
+            usedCount: 1,
+            status: "Active",
+            description: "Giảm 10% đơn hàng từ 200.000đ",
           },
           discountAmount,
           message: `Áp dụng thành công mã SPORTX10! Giảm ${discountAmount.toLocaleString("vi-VN")}đ`,
         };
       }
-      return { success: false, discountAmount: 0, message: "Không thể kết nối máy chủ kiểm tra mã!" };
+
+      return {
+        success: false,
+        discountAmount: 0,
+        message: "Không thể kết nối máy chủ để kiểm tra mã giảm giá!",
+      };
     }
   },
 };

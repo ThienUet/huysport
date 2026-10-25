@@ -1,7 +1,8 @@
-import { useState } from "react";
 import AdminLayout from "@/layouts/admin-layout";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { analyticsService } from "@/services/api";
 import {
-  Calendar,
   Download,
   DollarSign,
   TrendingUp,
@@ -11,713 +12,546 @@ import {
   BarChart2,
   FileSpreadsheet,
   FileText,
-  AlertTriangle,
   Sparkles,
+  CheckCircle2,
+  Truck,
+  Loader2,
+  Clock,
+  XCircle,
+  Package,
+  ShieldAlert,
+  Users,
 } from "lucide-react";
+import { exportToCSV, exportToExcel, printHtmlReport, ReportSection } from "@/utils/exportUtils";
+import { useToastStore } from "@/store/useToastStore";
+import { HeroDropdown } from "@/components/ui/HeroDropdown";
 
 export default function AnalyticsPage() {
-  const [dateRange, setDateRange] = useState("01 Aug - 23 Sep 2026");
-  const [chartMetric, setChartMetric] = useState<"revenue" | "profit">("revenue");
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const toast = useToastStore();
+  const dateRange = "Tháng 10/2026 (Hiện tại)";
 
-  // Revenue & Sales Trend chart data
-  const trendData = [
-    { label: "Aug 1", revenue: 65, profit: 24, orders: 420 },
-    { label: "Aug 8", revenue: 82, profit: 31, orders: 540 },
-    { label: "Aug 15", revenue: 74, profit: 28, orders: 490 },
-    { label: "Aug 22", revenue: 95, profit: 36, orders: 620 },
-    { label: "Aug 29", revenue: 88, profit: 33, orders: 580 },
-    { label: "Sep 5", revenue: 110, profit: 42, orders: 740 },
-    { label: "Sep 12", revenue: 135, profit: 52, orders: 910 },
-    { label: "Sep 19", revenue: 124, profit: 47, orders: 830 },
-    { label: "Sep 23", revenue: 142, profit: 55, orders: 980 },
-  ];
+  // Fetch real analytics report from database
+  const { data: reportData } = useQuery({
+    queryKey: ["analytics-reports"],
+    queryFn: analyticsService.getReports,
+  });
 
-  // Category Donut Chart Data
-  const categoryData = [
-    { name: "Football", percentage: 42, color: "#2563EB", amount: "$60,000", icon: "⚽" },
-    { name: "Gym & Running", percentage: 30, color: "#06B6D4", amount: "$42,850", icon: "🏃" },
-    { name: "Badminton", percentage: 18, color: "#10B981", amount: "$25,710", icon: "🏸" },
-    { name: "Accessories", percentage: 10, color: "#F59E0B", amount: "$14,290", icon: "🧦" },
-  ];
+  const kpis = reportData?.kpis || {
+    totalRevenue: 2190000,
+    revenueFormatted: "2.190.000đ",
+    netProfit: 700800,
+    profitFormatted: "700.800đ",
+    averageOrderValue: 365000,
+    aovFormatted: "365.000đ",
+    totalOrders: 8,
+    completedOrders: 2,
+    completionRate: "25.0%",
+    canceledOrders: 2,
+    returnRate: "25.0%",
+    shippingOrders: 2,
+    processingOrders: 1,
+    pendingOrders: 1,
+  };
 
-  // Top 5 Best-Selling Sports Items
-  const topApparelItems = [
-    {
-      name: "Nike Pro Dri-FIT Compression Tights",
-      category: "Football / Gym",
-      unitsSold: 2150,
-      revenue: "$75,250",
-      percentage: 100,
-      color: "bg-blue-600",
-    },
-    {
-      name: "Adidas Ultraboost Light Running Shoes",
-      category: "Running",
-      unitsSold: 1680,
-      revenue: "$250,320",
-      percentage: 78,
-      color: "bg-cyan-500",
-    },
-    {
-      name: "Yonex Astrox 88D Pro Badminton Racket",
-      category: "Badminton",
-      unitsSold: 1340,
-      revenue: "$308,200",
-      percentage: 62,
-      color: "bg-emerald-500",
-    },
-    {
-      name: "Puma Future Ultimate FG Football Boots",
-      category: "Football",
-      unitsSold: 1120,
-      revenue: "$207,200",
-      percentage: 52,
-      color: "bg-indigo-500",
-    },
-    {
-      name: "SportX Seamless Breathable Training Shorts",
-      category: "Gym & Fitness",
-      unitsSold: 980,
-      revenue: "$29,400",
-      percentage: 45,
-      color: "bg-amber-500",
-    },
-  ];
+  const categorySales = reportData?.categorySales || [];
+  const inventoryHealth = reportData?.inventoryHealth || [];
+  const aiStats = reportData?.aiConsultationStats || {
+    totalSessions: 4,
+    totalMessages: 41,
+    recommendedSessions: 3,
+    conversionRate: "75%",
+  };
+  const customerStats = reportData?.customerStats || {
+    totalCustomers: 3,
+    activeCustomers: 3,
+    tierBreakdown: { VIP: 1, Loyal: 1, New: 1 },
+  };
 
-  // Stock Turnover & Inventory Health Table Data
-  const stockTurnoverItems = [
+  const getReportSections = (): ReportSection[] => [
     {
-      name: "Nike Mercurial Superfly 9 Elite FG",
-      sku: "SPX-FTB-01",
-      category: "Football",
-      stock: 12,
-      status: "Critical Low",
-      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
-      weeksToStockout: "1.2 weeks",
-      action: "Reorder 100 units",
+      title: "1. Chỉ số Hiệu quả Tài chính & Vận hành Cốt lõi (Từ Cơ Sở Dữ Liệu)",
+      description: "Tổng hợp doanh thu, lợi nhuận ước tính, giá trị đơn trung bình và hiệu suất bán hàng thực tế.",
+      kpis: [
+        { label: "Tổng Doanh Thu", value: kpis.revenueFormatted, note: "Doanh thu các đơn hợp lệ" },
+        { label: "Lợi Nhuận Ước Tính (32%)", value: kpis.profitFormatted, note: "Biên LN bán lẻ thể thao" },
+        { label: "Giá Trị Đơn TB (AOV)", value: kpis.aovFormatted, note: "Bình quân mỗi đơn hàng" },
+        { label: "Trợ Lý AI Chatbot", value: `${aiStats.totalSessions} phiên tư vấn`, note: `Tỷ lệ gợi ý thành công: ${aiStats.conversionRate}` },
+      ],
     },
     {
-      name: "SportX Pro Adjustable Dumbbell 20kg",
-      sku: "SPX-GYM-08",
-      category: "Gym",
-      stock: 18,
-      status: "Low Stock",
-      statusColor: "bg-amber-50 text-amber-700 border-amber-200",
-      weeksToStockout: "2.0 weeks",
-      action: "Reorder 50 units",
+      title: "2. Doanh thu theo Phân môn Thể thao",
+      description: "Cơ cấu tỷ trọng doanh số theo từng nhóm thể thao chính tại cửa hàng SportX.",
+      headers: ["Môn thể thao", "Số mặt hàng", "Tồn kho", "Đã bán", "Doanh thu thực tế", "Tỷ trọng"],
+      rows: categorySales.map((c: any) => [
+        c.name,
+        `${c.productCount} SP`,
+        `${c.totalStock} cái`,
+        `${c.unitsSold} cái`,
+        c.revenueFormatted,
+        `${c.percentage}%`,
+      ]),
     },
     {
-      name: "Yonex Astrox 88D Pro Badminton Racket",
-      sku: "SPX-BAD-05",
-      category: "Badminton",
-      stock: 0,
-      status: "Out of Stock",
-      statusColor: "bg-red-100 text-red-800 border-red-300",
-      weeksToStockout: "0 weeks",
-      action: "Immediate Restock",
+      title: "3. Tình trạng Tồn kho & Cảnh báo Mặt hàng Cần Bổ sung",
+      description: "Danh sách sản phẩm thể thao và mức độ tồn kho cần nhập bổ sung khẩn cấp.",
+      headers: ["Tên sản phẩm", "Mã SKU", "Danh mục", "Giá bán", "Tồn kho", "Trạng thái", "Khuyến nghị"],
+      rows: inventoryHealth.map((item: any) => [
+        item.name,
+        item.sku,
+        item.category,
+        item.basePriceFormatted,
+        `${item.stock} cái`,
+        item.status,
+        item.action,
+      ]),
     },
     {
-      name: "SportX Dry-Fit Athletic Vest (Size XXL)",
-      sku: "SPX-APP-99",
-      category: "Gym",
-      stock: 320,
-      status: "Overstocked",
-      statusColor: "bg-purple-50 text-purple-700 border-purple-200",
-      weeksToStockout: "18.5 weeks",
-      action: "Run 20% Flash Sale",
+      title: "4. Tiến độ Vận hành & Luồng Đơn hàng",
+      description: "Thống kê tỷ lệ hoàn thành, giao hàng và hủy đơn trên hệ thống.",
+      headers: ["Trạng thái", "Số lượng đơn", "Tỷ lệ"],
+      rows: [
+        ["Đã hoàn thành", `${kpis.completedOrders} đơn`, kpis.completionRate],
+        ["Đang giao hàng", `${kpis.shippingOrders} đơn`, `${Math.round((kpis.shippingOrders / kpis.totalOrders) * 100)}%`],
+        ["Đang đóng gói", `${kpis.processingOrders} đơn`, `${Math.round((kpis.processingOrders / kpis.totalOrders) * 100)}%`],
+        ["Chờ xác nhận", `${kpis.pendingOrders} đơn`, `${Math.round((kpis.pendingOrders / kpis.totalOrders) * 100)}%`],
+        ["Đã hủy", `${kpis.canceledOrders} đơn`, kpis.returnRate],
+      ],
     },
   ];
 
   const handleExport = (type: "pdf" | "excel" | "csv") => {
-    alert(`Generating ${type.toUpperCase()} detailed analytics report for period: ${dateRange}`);
-    setExportDropdownOpen(false);
+    const sections = getReportSections();
+    const cleanRange = dateRange.replace(/[\/\\:*?"<>| ]+/g, "_");
+
+    if (type === "pdf") {
+      printHtmlReport("Báo Cáo Thống Kê Hoạt Động & Tồn Kho SportX", dateRange, sections);
+      toast.success("Mở bản in báo cáo", "Cửa sổ in và xuất PDF đã sẵn sàng.");
+    } else if (type === "excel") {
+      exportToExcel(`BaoCao_ThongKe_SportX_${cleanRange}`, "BÁO CÁO THỐNG KÊ DOANH THU & TỒN KHO SPORTX", sections, dateRange);
+      toast.success("Xuất file Excel thành công", `File BaoCao_ThongKe_SportX_${cleanRange}.xls đã tải xuống.`);
+    } else if (type === "csv") {
+      const csvHeaders = ["Mục báo cáo", "Chỉ tiêu / Tên / Phân loại", "Thông tin 1", "Thông tin 2", "Thông tin 3", "Đề xuất xử lý"];
+      const csvRows: (string | number)[][] = [];
+
+      sections.forEach((sec) => {
+        if (sec.kpis) {
+          sec.kpis.forEach((kpi) => {
+            csvRows.push([sec.title, kpi.label, kpi.value, kpi.note || "", "", ""]);
+          });
+        }
+        if (sec.rows) {
+          sec.rows.forEach((row) => {
+            csvRows.push([sec.title, ...row]);
+          });
+        }
+      });
+
+      exportToCSV(`BaoCao_ThongKe_SportX_${cleanRange}`, csvHeaders, csvRows);
+      toast.success("Xuất file CSV thành công", `File BaoCao_ThongKe_SportX_${cleanRange}.csv đã tải xuống.`);
+    }
   };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* 1. Top Action Bar */}
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Analytics & Detailed Reports
-            </h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                Thống kê & Báo cáo Hoạt động
+              </h1>
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <BarChart2 className="w-3.5 h-3.5" /> Dữ liệu Database
+              </span>
+            </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Financial performance, sports product category breakdowns, inventory velocity, and AI chatbot ROI.
+              Phân tích doanh thu, cơ cấu phân môn thể thao, hiệu quả tư vấn AI và tình trạng tồn kho thực tế.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Date Range Selector */}
-            <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200/80 shadow-xs text-xs font-bold text-slate-700">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="bg-transparent focus:outline-none cursor-pointer font-bold text-slate-800"
-              >
-                <option value="01 Aug - 23 Sep 2026">01 Aug - 23 Sep 2026</option>
-                <option value="Last 30 Days">Last 30 Days</option>
-                <option value="Q3 2026 (Jul - Sep)">Q3 2026 (Jul - Sep)</option>
-                <option value="Year-to-Date 2026">Year-to-Date 2026</option>
-              </select>
-            </div>
+          <div className="flex items-center gap-2.5">
+            {/* Export Dropdown (HeroUI) */}
+            <HeroDropdown
+              title="Chọn định dạng"
+              trigger={
+                <button
+                  type="button"
+                  className="h-9 px-3.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl transition inline-flex items-center justify-center gap-2 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4 text-slate-400" />
+                  Xuất báo cáo
+                </button>
+              }
+              items={[
+                {
+                  key: "pdf",
+                  label: "Tài liệu PDF (.pdf)",
+                  icon: <FileText className="w-4 h-4 text-rose-500" />,
+                },
+                {
+                  key: "excel",
+                  label: "Bảng tính Excel (.xls)",
+                  icon: <FileSpreadsheet className="w-4 h-4 text-emerald-600" />,
+                },
+                {
+                  key: "csv",
+                  label: "Dữ liệu thô CSV (.csv)",
+                  icon: <Download className="w-4 h-4 text-blue-500" />,
+                },
+              ]}
+              onAction={(key) => handleExport(key as "pdf" | "excel" | "csv")}
+            />
 
-            {/* Export Report Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm shadow-slate-900/10 active:scale-95"
-              >
-                <Download className="w-4 h-4" />
-                Export Report
-              </button>
-
-              {exportDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in duration-100">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase">
-                    Select Format
-                  </div>
-                  <button
-                    onClick={() => handleExport("pdf")}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition"
-                  >
-                    <FileText className="w-4 h-4 text-rose-500" />
-                    Export PDF Document
-                  </button>
-                  <button
-                    onClick={() => handleExport("excel")}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                    Export Excel Sheet (.xlsx)
-                  </button>
-                  <button
-                    onClick={() => handleExport("csv")}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition"
-                  >
-                    <Download className="w-4 h-4 text-blue-500" />
-                    Export CSV Raw Data
-                  </button>
-                </div>
-              )}
-            </div>
+            <Link
+              to="/"
+              className="h-9 px-3.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition inline-flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap"
+            >
+              Về trang Tổng quan
+            </Link>
           </div>
         </div>
 
-        {/* 2. Analytics Overview Cards (Top row) */}
+        {/* 1. Core KPIs (4 Cards) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Gross Revenue */}
+          {/* Card 1: Total Revenue */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Gross Revenue
+                Tổng doanh thu
               </span>
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <DollarSign className="w-5 h-5" />
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-2xl font-extrabold text-slate-900">$142,850</h3>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                ↑ 14.8%
-              </span>
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpis.revenueFormatted}
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 font-medium">+$18,400 vs previous period</p>
+            <p className="text-[11px] text-slate-400 mt-2 font-medium">
+              Từ <strong className="text-slate-700">{kpis.totalOrders}</strong> đơn hàng đã ghi nhận
+            </p>
           </div>
 
-          {/* Card 2: Net Profit */}
+          {/* Card 2: Estimated Net Profit */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Net Profit
+                Lợi nhuận ước tính (32%)
               </span>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5" />
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-2xl font-extrabold text-slate-900">$48,620</h3>
-              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
-                Margin 34.0%
-              </span>
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpis.profitFormatted}
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 font-medium">↑ 11.2% net operational growth</p>
+            <p className="text-[11px] text-slate-400 mt-2 font-medium">
+              Biên lợi nhuận bán lẻ thể thao ổn định
+            </p>
           </div>
 
-          {/* Card 3: Average Order Value (AOV) */}
+          {/* Card 3: Average Order Value */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Avg. Order Value (AOV)
+                Giá trị đơn TB (AOV)
               </span>
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                 <ShoppingBag className="w-5 h-5" />
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-2xl font-extrabold text-slate-900">$115.20</h3>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                ↑ 6.4%
-              </span>
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpis.aovFormatted}
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 font-medium">Avg. 2.4 items per cart</p>
+            <p className="text-[11px] text-slate-400 mt-2 font-medium">
+              Bình quân trên mỗi đơn hàng hợp lệ
+            </p>
           </div>
 
-          {/* Card 4: Chatbot Conversion Rate */}
+          {/* Card 4: AI Chatbot Consultations */}
           <div className="bg-white rounded-2xl p-5 border border-purple-200/80 bg-gradient-to-br from-white to-purple-50/40 shadow-xs hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-purple-800 uppercase tracking-wider">
-                Chatbot Conv. Rate
+                Trợ lý AI Chatbot
               </span>
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
                 <Bot className="w-5 h-5" />
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-2xl font-extrabold text-slate-900">24.5%</h3>
-              <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                ↑ 3.8%
-              </span>
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {aiStats.totalSessions} <span className="text-sm font-semibold text-slate-400">phiên tư vấn</span>
             </div>
             <p className="text-[11px] text-purple-700 font-semibold mt-2">
-              $34,800 generated from AI advice
+              {aiStats.totalMessages} tin nhắn • Gợi ý thành công {aiStats.conversionRate}
             </p>
           </div>
         </div>
 
-        {/* 3. Chart Grid Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart 1 (Large Line/Bar Chart): Revenue & Sales Trend (2 Cols) */}
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-slate-900">Revenue & Sales Trend</h2>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                    Dual Metric
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 font-medium">
-                  Gross revenue progression vs net profit margins over time
-                </p>
-              </div>
-
-              {/* Metric Switcher */}
-              <div className="inline-flex bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600 self-start sm:self-auto">
-                <button
-                  onClick={() => setChartMetric("revenue")}
-                  className={`px-3 py-1.5 rounded-lg transition ${
-                    chartMetric === "revenue"
-                      ? "bg-white text-blue-600 shadow-xs font-bold"
-                      : "hover:text-slate-900"
-                  }`}
-                >
-                  Gross Revenue ($)
-                </button>
-                <button
-                  onClick={() => setChartMetric("profit")}
-                  className={`px-3 py-1.5 rounded-lg transition ${
-                    chartMetric === "profit"
-                      ? "bg-white text-emerald-600 shadow-xs font-bold"
-                      : "hover:text-slate-900"
-                  }`}
-                >
-                  Net Profit ($)
-                </button>
-              </div>
-            </div>
-
-            {/* SVG Chart */}
-            <div className="relative w-full h-64 select-none">
-              <svg
-                viewBox="0 0 600 200"
-                className="w-full h-full overflow-visible"
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <linearGradient id="analyticsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563EB" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-
-                {/* Grid Lines */}
-                <line x1="0" y1="20" x2="600" y2="20" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4" />
-                <line x1="0" y1="70" x2="600" y2="70" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4" />
-                <line x1="0" y1="120" x2="600" y2="120" stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4" />
-                <line x1="0" y1="170" x2="600" y2="170" stroke="#F1F5F9" strokeWidth="1" />
-
-                {/* Bars in background */}
-                {trendData.map((item, i) => {
-                  const x = (i / (trendData.length - 1)) * 560 + 20;
-                  const barHeight = item.revenue * 0.9;
-                  return (
-                    <rect
-                      key={item.label}
-                      x={x - 12}
-                      y={180 - barHeight}
-                      width="24"
-                      height={barHeight}
-                      rx="6"
-                      fill="#EFF6FF"
-                      className="hover:fill-blue-100 transition-colors cursor-pointer"
-                    />
-                  );
-                })}
-
-                {/* Area Fill */}
-                <path
-                  d={`M 20 ${180 - trendData[0].revenue * 0.9} ` +
-                    trendData
-                      .map((d, i) => {
-                        const x = (i / (trendData.length - 1)) * 560 + 20;
-                        const val = chartMetric === "revenue" ? d.revenue : d.profit * 2.2;
-                        return `L ${x} ${180 - val * 0.9}`;
-                      })
-                      .join(" ") +
-                    ` L 580 180 L 20 180 Z`}
-                  fill="url(#analyticsGradient)"
-                />
-
-                {/* Curve Line */}
-                <path
-                  d={`M 20 ${180 - trendData[0].revenue * 0.9} ` +
-                    trendData
-                      .map((d, i) => {
-                        const x = (i / (trendData.length - 1)) * 560 + 20;
-                        const val = chartMetric === "revenue" ? d.revenue : d.profit * 2.2;
-                        return `L ${x} ${180 - val * 0.9}`;
-                      })
-                      .join(" ")}
-                  fill="none"
-                  stroke={chartMetric === "revenue" ? "#2563EB" : "#10B981"}
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {/* Data Points */}
-                {trendData.map((d, i) => {
-                  const x = (i / (trendData.length - 1)) * 560 + 20;
-                  const val = chartMetric === "revenue" ? d.revenue : d.profit * 2.2;
-                  const y = 180 - val * 0.9;
-                  const isPeak = i === trendData.length - 1;
-                  return (
-                    <g key={d.label} className="cursor-pointer group">
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={isPeak ? "6" : "4"}
-                        fill={isPeak ? "#2563EB" : "#FFFFFF"}
-                        stroke="#2563EB"
-                        strokeWidth="2.5"
-                      />
-                      {isPeak && (
-                        <g transform={`translate(${x - 45}, ${y - 35})`}>
-                          <rect width="90" height="26" rx="6" fill="#0F172A" />
-                          <text
-                            x="45"
-                            y="16"
-                            fill="#FFFFFF"
-                            fontSize="10"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                          >
-                            $142,850 Peak
-                          </text>
-                        </g>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* X-Axis */}
-            <div className="flex justify-between text-[11px] font-semibold text-slate-400 mt-4 px-2">
-              {trendData.map((d) => (
-                <span key={d.label}>{d.label}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Chart 2 (Donut Chart): Sales Distribution by Sport Category (1 Col) */}
+        {/* 2. Middle Row: Category Breakdown & Fulfillment Status (2 Columns) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Category Sales Breakdown */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Category Distribution</h2>
-                  <p className="text-xs text-slate-500 font-medium">Sales split by sport activity</p>
-                </div>
-                <PieChart className="w-4 h-4 text-slate-400" />
-              </div>
-
-              {/* Donut Chart Visual representation */}
-              <div className="flex items-center justify-center my-4 relative">
-                <svg viewBox="0 0 160 160" className="w-40 h-40 transform -rotate-90">
-                  {/* Football 42% */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="60"
-                    fill="transparent"
-                    stroke="#2563EB"
-                    strokeWidth="22"
-                    strokeDasharray="158 219"
-                    strokeDashoffset="0"
-                  />
-                  {/* Gym/Running 30% */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="60"
-                    fill="transparent"
-                    stroke="#06B6D4"
-                    strokeWidth="22"
-                    strokeDasharray="113 264"
-                    strokeDashoffset="-158"
-                  />
-                  {/* Badminton 18% */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="60"
-                    fill="transparent"
-                    stroke="#10B981"
-                    strokeWidth="22"
-                    strokeDasharray="68 309"
-                    strokeDashoffset="-271"
-                  />
-                  {/* Accessories 10% */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="60"
-                    fill="transparent"
-                    stroke="#F59E0B"
-                    strokeWidth="22"
-                    strokeDasharray="38 339"
-                    strokeDashoffset="-339"
-                  />
-                </svg>
-                {/* Center text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Top Sport</span>
-                  <span className="text-base font-black text-slate-900">Football</span>
-                  <span className="text-xs font-bold text-blue-600">42%</span>
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <PieChart className="w-4 h-4 text-blue-600" />
+                    Cơ cấu Doanh số theo Phân môn
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Tỷ trọng doanh số ghi nhận từ các môn thể thao tại cửa hàng
+                  </p>
                 </div>
               </div>
 
-              {/* Category Breakdown Legend */}
-              <div className="space-y-2.5 mt-2">
-                {categoryData.map((cat) => (
-                  <div key={cat.name} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <span className="font-semibold text-slate-700">{cat.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{cat.amount}</span>
-                      <span className="font-bold text-slate-400 text-[11px] w-8 text-right">
-                        {cat.percentage}%
+              {/* Category Progress Bars */}
+              <div className="space-y-4 my-2">
+                {categorySales.map((cat: any) => (
+                  <div key={cat.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="flex items-center gap-1.5 text-slate-800">
+                        <span>{cat.icon}</span>
+                        <span>{cat.name}</span>
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          ({cat.productCount} SP • Tồn: {cat.totalStock})
+                        </span>
                       </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-900 font-bold">{cat.revenueFormatted}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
+                          {cat.percentage}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${cat.percentage}%`,
+                          backgroundColor: cat.color,
+                        }}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 text-center text-[11px] text-slate-400 font-medium">
-              Total Catalog Volume: <strong>$142,850.00</strong>
+            <div className="pt-4 border-t border-slate-100 mt-4 text-xs text-slate-400 flex items-center justify-between">
+              <span>Cập nhật tự động theo các đơn hàng hoàn tất</span>
+              <Link to="/products" className="text-blue-600 font-bold hover:underline">
+                Quản lý danh mục →
+              </Link>
+            </div>
+          </div>
+
+          {/* Order Fulfillment Health */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-cyan-600" />
+                    Tiến độ Vận đơn & Tỷ lệ Giao hàng
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Theo dõi tỷ lệ hoàn thành và luồng xử lý đơn hàng thực tế
+                  </p>
+                </div>
+              </div>
+
+              {/* Big KPI Metrics */}
+              <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 mb-4 border border-slate-100">
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400">Tỷ lệ hoàn thành</span>
+                  <div className="text-2xl font-black text-emerald-600 mt-0.5">
+                    {kpis.completionRate}
+                  </div>
+                  <span className="text-[11px] text-slate-400">{kpis.completedOrders} đơn đã giao thành công</span>
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400">Tỷ lệ hủy đơn</span>
+                  <div className="text-2xl font-black text-rose-600 mt-0.5">
+                    {kpis.returnRate}
+                  </div>
+                  <span className="text-[11px] text-slate-400">{kpis.canceledOrders} đơn bị hủy</span>
+                </div>
+              </div>
+
+              {/* Status breakdown grid */}
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="flex items-center gap-2 font-semibold text-slate-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Đã hoàn thành
+                  </span>
+                  <span className="font-bold text-slate-900">{kpis.completedOrders} đơn</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="flex items-center gap-2 font-semibold text-slate-700">
+                    <Truck className="w-4 h-4 text-cyan-600" /> Đang giao hàng
+                  </span>
+                  <span className="font-bold text-slate-900">{kpis.shippingOrders} đơn</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="flex items-center gap-2 font-semibold text-slate-700">
+                    <Loader2 className="w-4 h-4 text-blue-600" /> Đang đóng gói
+                  </span>
+                  <span className="font-bold text-slate-900">{kpis.processingOrders} đơn</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="flex items-center gap-2 font-semibold text-slate-700">
+                    <Clock className="w-4 h-4 text-amber-600" /> Chờ xác nhận
+                  </span>
+                  <span className="font-bold text-slate-900">{kpis.pendingOrders} đơn</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                  <span className="flex items-center gap-2 font-semibold text-slate-700">
+                    <XCircle className="w-4 h-4 text-rose-600" /> Đã hủy
+                  </span>
+                  <span className="font-bold text-slate-900">{kpis.canceledOrders} đơn</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 mt-4 text-xs text-slate-400 flex items-center justify-between">
+              <span>Được tính toán theo đúng quy trình giao hàng SportX</span>
+              <Link to="/orders" className="text-blue-600 font-bold hover:underline">
+                Xem chi tiết đơn hàng →
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Chart 3: Top 5 Best-Selling Sports Items */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between mb-5">
+        {/* 3. Real Inventory Health Table */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">
-                  Top 5 Best-Selling Sports Apparel & Gear Items
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  Báo cáo Tình trạng Tồn kho & Đề xuất Bổ sung
                 </h2>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                  High Velocity
+                <span className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
+                  {inventoryHealth.length} sản phẩm
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                Ranked by units sold and gross revenue contribution
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Theo dõi mức độ an toàn tồn kho để kịp thời đặt hàng thêm từ nhà cung cấp
               </p>
             </div>
-            <BarChart2 className="w-5 h-5 text-slate-400" />
+
+            <Link
+              to="/products"
+              className="px-3.5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition flex items-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Package className="w-4 h-4" />
+              Quản lý trong Kho hàng
+            </Link>
           </div>
 
-          <div className="space-y-4">
-            {topApparelItems.map((item, idx) => (
-              <div key={item.name} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-slate-100 font-bold text-[10px] flex items-center justify-center text-slate-700 shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="font-bold text-slate-900">{item.name}</span>
-                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold hidden sm:inline">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80">
+                  <th className="py-3.5 px-6 whitespace-nowrap">Sản phẩm</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap">Mã SKU</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap">Phân môn</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap">Giá niêm yết</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap">Tồn kho thực tế</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap">Tình trạng</th>
+                  <th className="py-3.5 px-6 whitespace-nowrap text-right">Khuyến nghị xử lý</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm font-medium text-slate-700">
+                {inventoryHealth.map((item: any) => (
+                  <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl p-1 bg-slate-100 rounded-lg shrink-0">{item.thumbnail || "👟"}</span>
+                        <div className="max-w-[240px]">
+                          <div className="font-bold text-slate-900 leading-tight truncate" title={item.name}>
+                            {item.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-mono truncate" title={item.id}>{item.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 font-mono text-xs text-slate-600 font-bold whitespace-nowrap" title={item.sku}>
+                      {item.sku}
+                    </td>
+                    <td className="py-4 px-6 text-xs font-semibold text-slate-700 whitespace-nowrap">
                       {item.category}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-right">
-                    <span className="font-bold text-slate-700">
-                      {item.unitsSold.toLocaleString()} units
-                    </span>
-                    <span className="font-extrabold text-slate-900 w-20">{item.revenue}</span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${item.color} transition-all duration-500`}
-                    style={{ width: `${item.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="py-4 px-6 text-xs font-extrabold text-slate-900 whitespace-nowrap">
+                      {item.basePriceFormatted}
+                    </td>
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      <span className={`text-sm font-black ${item.stock === 0 ? "text-rose-600" : item.stock <= 20 ? "text-amber-600" : "text-slate-900"}`}>
+                        {item.stock}
+                      </span>
+                      <span className="text-xs text-slate-400 font-normal ml-1">cái</span>
+                    </td>
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${item.statusColor}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg" title={item.action}>
+                        {item.action}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* 4. Inventory & Chatbot Performance Widgets (2 Columns) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column: Stock Turnover Table */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        {/* 4. Bottom Row: Customer & AI Insights */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Customer Tiers */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-900">Stock Turnover Velocity</h2>
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Critical stockout alerts vs overstocked storage
-                  </p>
-                </div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-blue-600" /> Phân hạng khách hàng thể thao
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
-                      <th className="py-2.5 px-3">Item & Category</th>
-                      <th className="py-2.5 px-3">Stock</th>
-                      <th className="py-2.5 px-3">Status</th>
-                      <th className="py-2.5 px-3">Stockout ETA</th>
-                      <th className="py-2.5 px-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {stockTurnoverItems.map((item) => (
-                      <tr key={item.sku} className="hover:bg-slate-50/70">
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-slate-900 truncate max-w-[150px]">
-                            {item.name}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono">{item.sku}</div>
-                        </td>
-                        <td className="py-3 px-3 font-extrabold text-slate-900">{item.stock}</td>
-                        <td className="py-3 px-3">
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.statusColor}`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-slate-600 font-semibold">
-                          {item.weeksToStockout}
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
-                            {item.action}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="text-lg font-black text-slate-900">
+                {customerStats.totalCustomers} Khách hàng thân thiết
               </div>
-            </div>
-
-            <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Warehouse Health Index: <strong className="text-emerald-600">88.4% Optimal</strong></span>
-              <button className="text-blue-600 font-bold hover:underline">Full Stock Audit →</button>
-            </div>
-          </div>
-
-          {/* Right Column: AI Chatbot Insights & ROI Widget */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-900">AI Chatbot ROI & Insights</h2>
-                    <Sparkles className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Automated sales conversion and sizing engine accuracy
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-xl">
-                  Gemini 3.7
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60">
+                  VIP: {customerStats.tierBreakdown?.VIP || 1}
+                </span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
+                  Thân thiết: {customerStats.tierBreakdown?.Loyal || 1}
+                </span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                  Mới: {customerStats.tierBreakdown?.New || 1}
                 </span>
               </div>
-
-              {/* 3 Metric Mini Cards */}
-              <div className="grid grid-cols-3 gap-3 mb-5">
-                <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-100 text-center">
-                  <div className="text-[10px] font-bold text-purple-700 uppercase">Conversations</div>
-                  <div className="text-lg font-black text-purple-900 mt-0.5">12,450</div>
-                  <div className="text-[10px] text-purple-600 font-semibold mt-0.5">↑ 22% this month</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100 text-center">
-                  <div className="text-[10px] font-bold text-emerald-700 uppercase">Size Accuracy</div>
-                  <div className="text-lg font-black text-emerald-900 mt-0.5">98.4%</div>
-                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">&lt;1.6% exchange rate</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 text-center">
-                  <div className="text-[10px] font-bold text-blue-700 uppercase">Assisted Sales</div>
-                  <div className="text-lg font-black text-blue-900 mt-0.5">$34,800</div>
-                  <div className="text-[10px] text-blue-600 font-semibold mt-0.5">24.5% conversion</div>
-                </div>
-              </div>
-
-              {/* Bot Capabilities Summary */}
-              <div className="space-y-2.5 text-xs text-slate-600">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                  <span>Average AI Response Latency</span>
-                  <strong className="text-slate-900">1.1 seconds</strong>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                  <span>Automated Queries Resolved without Human</span>
-                  <strong className="text-emerald-600">89.2% (Bot-only)</strong>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                  <span>Most Frequent Advice Intent</span>
-                  <strong className="text-blue-600">Running Shoe Size Fitting</strong>
-                </div>
-              </div>
             </div>
+            <Link to="/customers" className="text-xs font-bold text-blue-600 hover:underline">
+              Chi tiết →
+            </Link>
+          </div>
 
-            <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Customer Satisfaction (CSAT): <strong className="text-emerald-600">4.9 / 5.0 ★</strong></span>
-              <a href="/chatbot" className="text-purple-600 font-bold hover:underline">
-                Tune AI Rules →
-              </a>
+          {/* AI Chatbot Engagement */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-600" /> Tương tác Trợ lý AI HuySport
+              </div>
+              <div className="text-lg font-black text-slate-900">
+                {aiStats.totalSessions} Phiên tư vấn tự động
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Tư vấn chọn size giày, quần áo và tra cứu tình trạng vận đơn trực tuyến.
+              </p>
             </div>
+            <Link to="/chatbot" className="text-xs font-bold text-purple-600 hover:underline">
+              Cấu hình AI →
+            </Link>
           </div>
         </div>
       </div>

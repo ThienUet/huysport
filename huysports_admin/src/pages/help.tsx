@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminLayout from "@/layouts/admin-layout";
+import { HeroSelect } from "@/components/ui/HeroSelect";
 import {
   HelpCircle,
   Search,
@@ -27,32 +28,32 @@ export default function HelpPage() {
 
   const helpGuides = [
     {
-      title: "Getting Started & Storefront Setup",
-      desc: "Complete guide on configuring your sports catalog, themes, and staff permissions.",
+      title: "Bắt đầu & Thiết lập cửa hàng",
+      desc: "Hướng dẫn đầy đủ về cách cấu hình danh mục thể thao, giao diện và phân quyền nhân viên.",
       icon: BookOpen,
       color: "bg-blue-50 text-blue-600 border-blue-200",
-      readTime: "5 min read",
+      readTime: "5 phút đọc",
     },
     {
-      title: "Order Fulfillment & Shipping Sync",
-      desc: "Step-by-step instructions for batch dispatching orders and syncing courier tracking.",
+      title: "Xử lý đơn hàng & Đồng bộ vận chuyển",
+      desc: "Hướng dẫn từng bước đóng gói xử lý hàng loạt và đồng bộ mã vận đơn đối tác.",
       icon: Truck,
       color: "bg-cyan-50 text-cyan-600 border-cyan-200",
-      readTime: "8 min read",
+      readTime: "8 phút đọc",
     },
     {
-      title: "Payment Gateway Credentials (VNPAY & MoMo)",
-      desc: "How to obtain Merchant TMN Code, generate Secret Hash, and configure webhook callbacks.",
+      title: "Cấu hình cổng thanh toán (VNPAY & MoMo)",
+      desc: "Cách lấy mã TMN Code, sinh khóa Hash Secret và cấu hình webhook callback.",
       icon: CreditCard,
       color: "bg-emerald-50 text-emerald-600 border-emerald-200",
-      readTime: "6 min read",
+      readTime: "6 phút đọc",
     },
     {
-      title: "AI Sizing Engine Rules & Heuristics",
-      desc: "Best practices for calibrating size recommendation rules for athletic apparel and footwear.",
+      title: "Quy tắc tư vấn kích cỡ tự động AI",
+      desc: "Kinh nghiệm thực tiễn hiệu chỉnh các quy tắc kích cỡ chuẩn xác cho quần áo và giày thể thao.",
       icon: Bot,
       color: "bg-purple-50 text-purple-600 border-purple-200",
-      readTime: "10 min read",
+      readTime: "10 phút đọc",
     },
   ];
 
@@ -81,11 +82,11 @@ export default function HelpPage() {
           <div className="relative z-10 max-w-2xl mx-auto space-y-3">
             <span className="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20 inline-flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              SportX Knowledge & Support Center
+              Trung tâm Trợ giúp & Tri thức SportX
             </span>
-            <h1 className="text-3xl font-black tracking-tight">How can we help you today?</h1>
+            <h1 className="text-3xl font-black tracking-tight">Chúng tôi có thể giúp gì cho bạn hôm nay?</h1>
             <p className="text-xs sm:text-sm text-blue-100 font-medium">
-              Search documentation guides, verify system uptime, or connect directly with our engineering support squad.
+              Tìm kiếm tài liệu hướng dẫn, kiểm tra trạng thái máy chủ hoặc liên hệ trực tiếp với đội ngũ kỹ sư hỗ trợ.
             </p>
 
             {/* Search Box */}
@@ -93,7 +94,7 @@ export default function HelpPage() {
               <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search guides, documentation, API FAQs..."
+                placeholder="Tìm kiếm tài liệu, hướng dẫn vận hành, câu hỏi API..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-white text-slate-900 placeholder:text-slate-400 text-xs font-medium rounded-2xl shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -108,7 +109,7 @@ export default function HelpPage() {
           <div className="lg:col-span-2 space-y-4">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-blue-600" />
-              Popular Administration Guides
+              Tài liệu hướng dẫn quản trị phổ biến
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -134,7 +135,7 @@ export default function HelpPage() {
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] font-bold text-slate-400">
                       <span>{guide.readTime}</span>
                       <span className="text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                        Read Guide →
+                        Đọc hướng dẫn →
                       </span>
                     </div>
                   </div>
@@ -147,10 +148,10 @@ export default function HelpPage() {
           <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="font-bold text-sm text-slate-900">System Service Health</h3>
+                <h3 className="font-bold text-sm text-slate-900">Trạng thái máy chủ & Dịch vụ</h3>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  All Systems Normal
+                  Hoạt động bình thường
                 </span>
               </div>
 
@@ -158,46 +159,46 @@ export default function HelpPage() {
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">SportX API Service</span>
+                    <span className="font-bold text-slate-800">Dịch vụ API SportX</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-semibold">99.98% Uptime</span>
+                  <span className="text-[11px] text-slate-400 font-semibold">99.98% Thời gian online</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">VNPAY Gateway</span>
+                    <span className="font-bold text-slate-800">Cổng thanh toán VNPAY</span>
                   </div>
-                  <span className="text-[11px] text-emerald-600 font-bold">Operational</span>
+                  <span className="text-[11px] text-emerald-600 font-bold">Hoạt động tốt</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">MoMo Webhook Handler</span>
+                    <span className="font-bold text-slate-800">Cổng MoMo Webhook</span>
                   </div>
-                  <span className="text-[11px] text-emerald-600 font-bold">Operational</span>
+                  <span className="text-[11px] text-emerald-600 font-bold">Hoạt động tốt</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">Gemini 3.7 AI Engine</span>
+                    <span className="font-bold text-slate-800">Động cơ AI Gemini 3.7</span>
                   </div>
-                  <span className="text-[11px] text-purple-600 font-bold">100% Online</span>
+                  <span className="text-[11px] text-purple-600 font-bold">100% Trực tuyến</span>
                 </div>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
-              Last status ping check: <strong>Just now (Live)</strong>
+              Lần kiểm tra gần nhất: <strong>Vừa xong (Trực tiếp)</strong>
             </div>
           </div>
         </div>
 
         {/* Contact & Direct Support Channels */}
         <div className="space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Direct Support Channels</h2>
+          <h2 className="text-base font-bold text-slate-900">Kênh hỗ trợ trực tiếp</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Live Chat */}
@@ -205,12 +206,12 @@ export default function HelpPage() {
               <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <MessageCircle className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-slate-900">Live Chat Support</h3>
+              <h3 className="font-bold text-sm text-slate-900">Trò chuyện trực tuyến</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Connect instantly with dedicated technical engineers.
+                Kết nối ngay lập tức với kỹ sư kỹ thuật chuyên trách.
               </p>
               <span className="text-xs font-bold text-emerald-600 inline-block pt-1">
-                ● Online (Avg. 2 min response)
+                ● Trực tuyến (Phản hồi TB 2 phút)
               </span>
             </div>
 
@@ -219,12 +220,12 @@ export default function HelpPage() {
               <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                 <Phone className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-slate-900">Hotline 24/7</h3>
+              <h3 className="font-bold text-sm text-slate-900">Tổng đài 24/7</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Emergency escalation phone support for warehouse & store issues.
+                Hỗ trợ khẩn cấp qua điện thoại đối với sự cố kho hàng và vận hành.
               </p>
               <div className="font-mono font-bold text-xs text-indigo-600 pt-1">
-                1900-SPORTX (Ext 1)
+                1900-SPORTX (Nhánh 1)
               </div>
             </div>
 
@@ -233,9 +234,9 @@ export default function HelpPage() {
               <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
                 <Mail className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-slate-900">Email Support</h3>
+              <h3 className="font-bold text-sm text-slate-900">Hỗ trợ qua Email</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Send queries, feature requests, and custom integrations.
+                Gửi yêu cầu giải đáp, đề xuất tính năng hoặc tích hợp tùy biến.
               </p>
               <div className="font-bold text-xs text-slate-800 pt-1">
                 support@sportx.store
@@ -251,14 +252,14 @@ export default function HelpPage() {
                 <div className="w-9 h-9 rounded-xl bg-white/20 text-white flex items-center justify-center mb-2">
                   <Plus className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-sm">Submit a Ticket</h3>
+                <h3 className="font-bold text-sm">Gửi phiếu hỗ trợ (Ticket)</h3>
                 <p className="text-xs text-blue-100 mt-1">
-                  Create a tracked incident or bug report for our dev team.
+                  Tạo phiếu báo cáo sự cố hoặc lỗi hệ thống tới đội ngũ kỹ thuật.
                 </p>
               </div>
 
               <div className="pt-2 text-xs font-bold text-white flex items-center gap-1">
-                Open Ticket Form →
+                Mở biểu mẫu Ticket →
               </div>
             </div>
           </div>
@@ -271,7 +272,7 @@ export default function HelpPage() {
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
                   <Send className="w-4 h-4 text-blue-600" />
-                  Submit Support Ticket
+                  Gửi yêu cầu hỗ trợ kỹ thuật
                 </h3>
                 <button
                   onClick={() => setIsTicketModalOpen(false)}
@@ -284,19 +285,19 @@ export default function HelpPage() {
               {ticketSubmitted ? (
                 <div className="py-8 text-center space-y-2">
                   <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-                  <h4 className="font-bold text-base text-slate-900">Ticket #SPX-TK-902 Created!</h4>
+                  <h4 className="font-bold text-base text-slate-900">Đã tạo phiếu hỗ trợ #SPX-TK-902!</h4>
                   <p className="text-xs text-slate-500">
-                    Our technical support team will reply within 2 hours.
+                    Đội ngũ kỹ thuật viên sẽ phản hồi bạn trong vòng 2 giờ.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmitTicket} className="space-y-4 text-xs">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Issue Subject *</label>
+                    <label className="block font-bold text-slate-700 mb-1">Tiêu đề vấn đề *</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. VNPAY Webhook returning error 99"
+                      placeholder="Ví dụ: Webhook VNPAY trả về mã lỗi 99"
                       value={ticketSubject}
                       onChange={(e) => setTicketSubject(e.target.value)}
                       className="w-full p-2.5 bg-slate-50 font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -305,39 +306,45 @@ export default function HelpPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Category</label>
-                      <select
+                      <label className="block font-bold text-slate-700 mb-1">Danh mục sự cố</label>
+                      <HeroSelect
                         value={ticketCategory}
-                        onChange={(e) => setTicketCategory(e.target.value)}
-                        className="w-full p-2.5 bg-slate-50 font-bold text-slate-700 rounded-xl border border-slate-200"
-                      >
-                        <option value="Technical Support">Technical Support</option>
-                        <option value="Payment Gateway">Payment Gateway</option>
-                        <option value="AI Sizing Tuning">AI Sizing Tuning</option>
-                        <option value="Inventory Sync">Inventory Sync</option>
-                      </select>
+                        onChange={setTicketCategory}
+                        options={[
+                          { key: "Technical Support", label: "Hỗ trợ kỹ thuật" },
+                          { key: "Payment Gateway", label: "Cổng thanh toán" },
+                          { key: "AI Sizing Tuning", label: "Hiệu chỉnh tư vấn AI" },
+                          { key: "Inventory Sync", label: "Đồng bộ tồn kho" },
+                        ]}
+                        className="w-full"
+                        triggerClassName="w-full bg-slate-50 py-2.5"
+                        aria-label="Chọn danh mục sự cố"
+                      />
                     </div>
 
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Priority</label>
-                      <select
+                      <label className="block font-bold text-slate-700 mb-1">Mức độ ưu tiên</label>
+                      <HeroSelect
                         value={ticketPriority}
-                        onChange={(e) => setTicketPriority(e.target.value)}
-                        className="w-full p-2.5 bg-slate-50 font-bold text-slate-700 rounded-xl border border-slate-200"
-                      >
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High (Urgent)">High (Urgent)</option>
-                      </select>
+                        onChange={setTicketPriority}
+                        options={[
+                          { key: "Low", label: "Thấp" },
+                          { key: "Medium", label: "Trung bình" },
+                          { key: "High (Urgent)", label: "Cao (Khẩn cấp)" },
+                        ]}
+                        className="w-full"
+                        triggerClassName="w-full bg-slate-50 py-2.5"
+                        aria-label="Chọn mức độ ưu tiên"
+                      />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Detailed Description *</label>
+                    <label className="block font-bold text-slate-700 mb-1">Mô tả chi tiết *</label>
                     <textarea
                       rows={3}
                       required
-                      placeholder="Provide order ID or error logs to help us diagnose quickly..."
+                      placeholder="Cung cấp mã đơn hàng hoặc nhật ký lỗi để chúng tôi chẩn đoán nhanh nhất..."
                       value={ticketMessage}
                       onChange={(e) => setTicketMessage(e.target.value)}
                       className="w-full p-2.5 bg-slate-50 font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -350,13 +357,13 @@ export default function HelpPage() {
                       onClick={() => setIsTicketModalOpen(false)}
                       className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
                     >
-                      Cancel
+                      Hủy
                     </button>
                     <button
                       type="submit"
                       className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md shadow-blue-500/20 active:scale-95"
                     >
-                      Send Ticket
+                      Gửi phiếu hỗ trợ
                     </button>
                   </div>
                 </form>

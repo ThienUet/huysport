@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/layouts/admin-layout";
+import { HeroSelect } from "@/components/ui/HeroSelect";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { settingsService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
@@ -123,14 +124,14 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Settings & Configurations
+                Cài đặt & Cấu hình hệ thống
               </h1>
               <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                System v2.4
+                Hệ thống v2.4
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Manage store profile, payment gateway credentials, shipping logistics, and security policies.
+              Quản lý thông tin cửa hàng, cổng thanh toán, đơn vị vận chuyển và chính sách bảo mật.
             </p>
           </div>
 
@@ -138,7 +139,7 @@ export default function SettingsPage() {
             {isSaved && (
               <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5 animate-in fade-in">
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                Settings Saved Successfully!
+                Đã lưu cài đặt thành công!
               </span>
             )}
             <button
@@ -146,7 +147,7 @@ export default function SettingsPage() {
               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95"
             >
               <Save className="w-4 h-4" />
-              Save Changes
+              Lưu thay đổi
             </button>
           </div>
         </div>
@@ -162,7 +163,7 @@ export default function SettingsPage() {
             }`}
           >
             <Building2 className="w-4 h-4" />
-            General Store Information
+            Thông tin chung cửa hàng
           </button>
 
           <button
@@ -174,7 +175,7 @@ export default function SettingsPage() {
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            Payment Gateways (VNPAY / MoMo / COD)
+            Cổng thanh toán (VNPAY / MoMo / COD)
           </button>
 
           <button
@@ -186,7 +187,7 @@ export default function SettingsPage() {
             }`}
           >
             <Truck className="w-4 h-4" />
-            Shipping & Carriers
+            Vận chuyển & Giao nhận
           </button>
 
           <button
@@ -198,7 +199,7 @@ export default function SettingsPage() {
             }`}
           >
             <Shield className="w-4 h-4" />
-            Security & Alerts
+            Bảo mật & Cảnh báo
           </button>
         </div>
 
@@ -208,13 +209,13 @@ export default function SettingsPage() {
             <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
               <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <Globe className="w-4 h-4 text-blue-600" />
-                Store Profile Details
+                Hồ sơ & Thông tin liên hệ
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Store Legal Name *
+                    Tên doanh nghiệp / Cửa hàng *
                   </label>
                   <input
                     type="text"
@@ -227,24 +228,27 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Primary Store Currency
+                    Đơn vị tiền tệ chính
                   </label>
-                  <select
+                  <HeroSelect
                     value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold text-slate-800 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                  >
-                    <option value="USD">USD ($) - United States Dollar</option>
-                    <option value="VND">VND (₫) - Vietnamese Dong</option>
-                    <option value="EUR">EUR (€) - Euro</option>
-                  </select>
+                    onChange={setCurrency}
+                    options={[
+                      { key: "VND", label: "VND (₫) - Đồng Việt Nam" },
+                      { key: "USD", label: "USD ($) - Đô la Mỹ" },
+                      { key: "EUR", label: "EUR (€) - Đồng Euro" },
+                    ]}
+                    className="w-full"
+                    triggerClassName="w-full bg-slate-50 py-2.5"
+                    aria-label="Chọn đơn vị tiền tệ chính"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Official Support Email
+                    Email hỗ trợ khách hàng
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -260,7 +264,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Customer Hotline Phone
+                    Hotline chăm sóc khách hàng
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -277,7 +281,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Store Operating Timezone
+                  Múi giờ vận hành hệ thống
                 </label>
                 <input
                   type="text"
@@ -289,7 +293,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Headquarter Physical Address
+                  Địa chỉ trụ sở / Kho chính
                 </label>
                 <textarea
                   rows={2}
@@ -313,8 +317,8 @@ export default function SettingsPage() {
                     VNPAY
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900">VNPAY Payment Gateway</h3>
-                    <p className="text-xs text-slate-400">QR Code, Domestic ATM & Visa/Mastercard</p>
+                    <h3 className="font-bold text-sm text-slate-900">Cổng thanh toán VNPAY</h3>
+                    <p className="text-xs text-slate-400">Quét mã VNPAY-QR, Thẻ ATM nội địa & Thẻ quốc tế</p>
                   </div>
                 </div>
 
@@ -326,7 +330,7 @@ export default function SettingsPage() {
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {vnpayActive ? "Active" : "Disabled"}
+                    {vnpayActive ? "Đang bật" : "Tạm tắt"}
                   </span>
                   <button
                     type="button"
@@ -347,7 +351,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Merchant ID (TMN Code)
+                    Mã định danh Merchant (TMN Code)
                   </label>
                   <input
                     type="text"
@@ -359,7 +363,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Hash Secret Key
+                    Khóa bí mật tạo chuỗi băm (Hash Secret)
                   </label>
                   <input
                     type="password"
@@ -379,7 +383,7 @@ export default function SettingsPage() {
                   className="rounded text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor="vnpay-sandbox" className="text-slate-600 font-medium cursor-pointer">
-                  Enable Test Sandbox Environment (Testing Mode)
+                  Kích hoạt môi trường thử nghiệm Sandbox (Chế độ test)
                 </label>
               </div>
             </div>
@@ -392,8 +396,8 @@ export default function SettingsPage() {
                     MoMo
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900">MoMo E-Wallet</h3>
-                    <p className="text-xs text-slate-400">Direct wallet auto-debit & QR scan</p>
+                    <h3 className="font-bold text-sm text-slate-900">Ví điện tử MoMo</h3>
+                    <p className="text-xs text-slate-400">Thanh toán ví MoMo & Quét mã QR</p>
                   </div>
                 </div>
 
@@ -405,7 +409,7 @@ export default function SettingsPage() {
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {momoActive ? "Active" : "Disabled"}
+                    {momoActive ? "Đang bật" : "Tạm tắt"}
                   </span>
                   <button
                     type="button"
@@ -425,7 +429,7 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Partner Code</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Mã đối tác (Partner Code)</label>
                   <input
                     type="text"
                     value={momoPartnerCode}
@@ -435,7 +439,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">API Access Key</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Khóa truy cập API (Access Key)</label>
                   <input
                     type="password"
                     value={momoApiKey}
@@ -453,8 +457,8 @@ export default function SettingsPage() {
                   💵
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900">Cash on Delivery (COD)</h3>
-                  <p className="text-xs text-slate-400">Collect payment upon door delivery</p>
+                  <h3 className="font-bold text-sm text-slate-900">Thanh toán khi nhận hàng (COD)</h3>
+                  <p className="text-xs text-slate-400">Thu tiền mặt trực tiếp khi giao hàng tận nơi</p>
                 </div>
               </div>
 
@@ -481,13 +485,13 @@ export default function SettingsPage() {
             <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
               <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-blue-600" />
-                Shipping Rules & Thresholds
+                Quy định phí vận chuyển & Đơn vị giao nhận
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Free Shipping Threshold ($)
+                    Hạn mức miễn phí vận chuyển (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -495,12 +499,12 @@ export default function SettingsPage() {
                     onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
                     className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold rounded-xl border border-slate-200"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">Orders above this qualify for free freight</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Đơn hàng có giá trị cao hơn mức này sẽ được miễn phí giao hàng</p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Standard Flat Rate Shipping Fee ($)
+                    Phí vận chuyển tiêu chuẩn (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -513,7 +517,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2">
-                  Active Courier Partners
+                  Đối tác vận chuyển đang liên kết
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {["GHTK", "GHN", "Viettel Post", "SportX Express"].map((carrier) => {
@@ -546,13 +550,13 @@ export default function SettingsPage() {
             <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
               <h3 className="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-600" />
-                Admin Security & Automated Inventory Alerts
+                Bảo mật tài khoản quản trị & Cảnh báo tồn kho tự động
               </h3>
 
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                 <div>
-                  <div className="font-bold text-xs text-slate-900">Two-Factor Authentication (2FA)</div>
-                  <div className="text-[11px] text-slate-500">Require authenticator code on admin sign in</div>
+                  <div className="font-bold text-xs text-slate-900">Xác thực hai yếu tố (2FA)</div>
+                  <div className="text-[11px] text-slate-500">Yêu cầu mã xác thực OTP khi quản trị viên đăng nhập</div>
                 </div>
                 <button
                   type="button"
@@ -572,7 +576,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Low Stock Alert Recipient Email
+                    Email nhận thông báo hàng sắp hết
                   </label>
                   <input
                     type="email"
@@ -584,7 +588,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Critical Stock Threshold Level
+                    Ngưỡng tồn kho tối thiểu cảnh báo
                   </label>
                   <input
                     type="number"

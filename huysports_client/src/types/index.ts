@@ -69,6 +69,20 @@ export interface ShippingAddress {
   note?: string;
 }
 
+export interface ReturnRequest {
+  reason: string;
+  detailedReason?: string;
+  bankName?: string;
+  bankAccount?: string;
+  accountHolder?: string;
+  refundAmount: number;
+  status: "Pending" | "Approved" | "Rejected" | "Completed";
+  adminNote?: string;
+  requestedAt: string;
+  processedAt?: string;
+  completedAt?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -88,8 +102,15 @@ export interface Order {
   paymentMethod: "COD" | "VNPAY" | "MOMO" | "BANK_TRANSFER";
   paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   fulfillmentStatus: "PENDING" | "PROCESSING" | "SHIPPING" | "DELIVERED" | "CANCELLED";
+  shippingCarrier?: string;
+  trackingCode?: string;
+  cancelReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+  returnRequest?: ReturnRequest;
   transactionId?: string;
   notes?: string;
+  dateTime?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -136,14 +157,17 @@ export interface ChatMessage {
 export interface Coupon {
   id: string;
   code: string;
-  discountType: "PERCENT" | "FIXED_AMOUNT";
+  discountType: "PERCENT" | "FIXED_AMOUNT" | "percentage" | "fixed" | "free_shipping";
   discountValue: number;
   minOrderValue: number;
   maxDiscountAmount?: number;
+  maxDiscount?: number;
   startDate: string;
   endDate: string;
   usageLimit?: number;
-  usageCount: number;
-  isActive: boolean;
+  usageCount?: number;
+  usedCount?: number;
+  isActive?: boolean;
+  status?: string;
   description?: string;
 }

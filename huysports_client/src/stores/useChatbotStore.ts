@@ -17,19 +17,19 @@ interface ChatbotState {
 const INITIAL_GREETING: ChatMessage = {
   id: "msg-welcome",
   sender: "bot",
-  content: "Xin chào! Tôi là SportX AI Assistant. Tôi có thể tư vấn kích cỡ (Size), gợi ý trang phục thể thao hoặc hỗ trợ đơn hàng giúp bạn.",
+  content: "Xin chào bạn! 👋 Tôi là **Trợ Lý AI SportX**.\nTôi có thể giúp bạn:\n• 📐 **Tư vấn chọn Size chuẩn xác** theo chiều cao & cân nặng\n• 👟 **Gợi ý trang phục & dụng cụ thể thao** chính hãng\n• 📦 **Tra cứu đơn hàng** realtime\n• 🛡️ **Hỗ trợ chính sách** đổi size 30 ngày & giao hàng\n\nBạn hãy gửi tin nhắn hoặc chọn nhanh gợi ý bên dưới nhé!",
   timestamp: new Date().toISOString(),
   quickReplies: [
-    "Tư vấn chọn Size chuẩn xác",
-    "Xem các sản phẩm bán chạy nhất",
-    "Chính sách giao hàng & đổi trả",
-    "Tra cứu tình trạng đơn hàng",
+    "Tư vấn size (Cao 1m75 nặng 70kg)",
+    "Xem đồ bóng đá hot",
+    "Giày chạy bộ êm ái",
+    "Chính sách đổi trả 30 ngày",
   ],
 };
 
 export const useChatbotStore = create<ChatbotState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       isOpen: false,
       messages: [INITIAL_GREETING],
       sessionId: `session-${Date.now()}`,
@@ -51,10 +51,19 @@ export const useChatbotStore = create<ChatbotState>()(
 
       setIsTyping: (typing) => set({ isTyping: typing }),
 
-      clearMessages: () => set({ messages: [INITIAL_GREETING] }),
+      clearMessages: () =>
+        set({
+          messages: [
+            {
+              ...INITIAL_GREETING,
+              id: `msg-welcome-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
     }),
     {
-      name: "sportx_client_chatbot",
+      name: "sportx_client_chatbot_v2", // use v2 to ensure users get fresh start
     }
   )
 );

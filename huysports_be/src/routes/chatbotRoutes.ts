@@ -15,8 +15,9 @@ router.post("/faqs", ChatbotController.createFAQ);
 router.put("/faqs/:id", ChatbotController.updateFAQ);
 router.delete("/faqs/:id", ChatbotController.deleteFAQ);
 
-// AI Size Recommendation & Chat Processor
+// AI Size Recommendation & Chat Processor (support both naming conventions)
 router.post("/recommend-size", ChatbotController.recommendSize);
+router.post("/size-recommend", ChatbotController.recommendSize);
 router.post("/message", ChatbotController.processMessage);
 
 // Chat Sessions

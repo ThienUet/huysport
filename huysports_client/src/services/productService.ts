@@ -92,22 +92,28 @@ export const normalizeProduct = (raw: any): Product => {
         color: v.color || "Mặc định",
         colorHex: v.colorHex || "#0F172A",
         price: vPrice,
-        stock: v.stock !== undefined ? Number(v.stock) : 15,
+        stock: v.stock !== undefined ? Math.max(0, Number(v.stock)) : 0,
       };
     });
   } else {
+    const rawStock = raw.totalStock !== undefined ? Number(raw.totalStock) : (raw.stock !== undefined ? Number(raw.stock) : 0);
     const defaultSizes = Array.isArray(raw.sizes) && raw.sizes.length > 0 ? raw.sizes : ["S", "M", "L", "XL", "2XL"];
-    variants = defaultSizes.map((sz: string) => ({
+    const perSizeStock = rawStock > 0 ? Math.floor(rawStock / defaultSizes.length) : 0;
+    variants = defaultSizes.map((sz: string, idx: number) => ({
       sku: `${raw.sku || "SPX"}-${sz}`,
       size: sz,
       color: "Mặc định",
       colorHex: "#0F172A",
       price: effectivePrice,
-      stock: 20,
+      stock: idx === 0 ? rawStock - perSizeStock * (defaultSizes.length - 1) : perSizeStock,
     }));
   }
 
-  const totalStock = raw.totalStock !== undefined ? Number(raw.totalStock) : (raw.stock !== undefined ? Number(raw.stock) : 50);
+  const computedStock = variants.length > 0
+    ? variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+    : (raw.totalStock !== undefined ? Number(raw.totalStock) : (raw.stock !== undefined ? Number(raw.stock) : 0));
+
+  const totalStock = raw.totalStock !== undefined ? Number(raw.totalStock) : computedStock;
 
   return {
     id: String(raw.id || `p-${Math.random().toString(36).slice(2, 7)}`),

@@ -14,6 +14,10 @@ export interface IOrderDocument extends Document {
     address: string;
   };
   items: OrderItem[];
+  subtotal?: number;
+  shippingFee?: number;
+  discountAmount?: number;
+  couponCode?: string;
   totalAmount: number;
   paymentMethod: "VNPAY" | "MoMo" | "COD";
   paymentStatus: "Paid" | "Unpaid";
@@ -26,6 +30,7 @@ export interface IOrderDocument extends Document {
     responseMessage?: string;
   };
   note?: string;
+  returnRequest?: any;
 }
 
 const OrderItemSchema = new Schema(
@@ -73,6 +78,23 @@ const OrderSchema = new Schema<IOrderDocument>(
       responseMessage: { type: String },
     },
     note: { type: String },
+    subtotal: { type: Number },
+    shippingFee: { type: Number },
+    discountAmount: { type: Number },
+    couponCode: { type: String },
+    returnRequest: {
+      reason: { type: String },
+      detailedReason: { type: String },
+      bankName: { type: String },
+      bankAccount: { type: String },
+      accountHolder: { type: String },
+      refundAmount: { type: Number },
+      status: { type: String, enum: ["Pending", "Approved", "Rejected", "Completed"] },
+      adminNote: { type: String },
+      requestedAt: { type: String },
+      processedAt: { type: String },
+      completedAt: { type: String },
+    },
   },
   {
     timestamps: true,
