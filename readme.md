@@ -195,7 +195,7 @@ flowchart TD
     CheckStock -- Hết hàng (stock = 0) --> DisableBtn[Vô hiệu hóa nút Thêm vào giỏ]
     CheckStock -- Còn hàng --> AddCart[Click 'Thêm Vào Giỏ' hoặc 'Thêm Nhanh +']
     
-    AddCart --> ZustandAction[Gọi addItem() trong Zustand useCartStore]
+    AddCart --> ZustandAction[Gọi addItem trong Zustand useCartStore]
     ZustandAction --> LocalStorage[(Lưu trữ đồng bộ LocalStorage 'sportx-cart')]
     LocalStorage --> OpenDrawer[Tự động bật CartDrawer xem lại giỏ hàng]
     
@@ -273,7 +273,7 @@ flowchart TD
     AuthChoice -- Chưa --> RegisterPage[Truy cập /auth/register]
     RegisterPage --> SubmitRegister[Nhập: Họ tên, Email, Mật khẩu, SĐT]
     SubmitRegister --> PostRegister[POST /api/auth/register]
-    PostRegister --> HashPassword[Backend băm mật khẩu: bcrypt.hashSync(pw, 10)]
+    PostRegister --> HashPassword["Backend băm mật khẩu: bcrypt.hashSync(pw, 10)"]
     HashPassword --> SaveUser[Lưu User mới với role = 'CUSTOMER']
     SaveUser --> RegisterSuccess[Thông báo thành công -> Chuyển sang /auth/login]
     
