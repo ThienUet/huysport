@@ -18,9 +18,9 @@ import {
   FaRulerCombined,
   FaCheck,
 } from "react-icons/fa6";
-import { useQuery } from "@tanstack/react-query";
-import { productService } from "@/services/productService";
+import { useProducts } from "@/hooks";
 import ProductCard from "@/components/products/ProductCard";
+import ProductCardSkeleton from "@/components/products/ProductCardSkeleton";
 import AISizeAdvisorModal from "@/components/products/AISizeAdvisorModal";
 import { Product } from "@/types";
 import { useFilterStore } from "@/stores/useFilterStore";
@@ -322,11 +322,8 @@ function ProductsContent() {
     if (searchParam) setSearch(searchParam);
   }, [searchParams, setSport, setCategory, setSearch]);
 
-  // Fetch all products
-  const { data: productsData, isLoading } = useQuery({
-    queryKey: ["products", "catalog"],
-    queryFn: () => productService.getProducts(),
-  });
+  // Fetch all products via custom React Query hook
+  const { data: productsData, isLoading } = useProducts();
 
   const products: Product[] = productsData?.data || [];
 
@@ -460,7 +457,7 @@ function ProductsContent() {
           {isLoading ? (
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="aspect-[3/4] rounded-xl bg-gray-100 animate-pulse" />
+                <ProductCardSkeleton key={i} />
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (

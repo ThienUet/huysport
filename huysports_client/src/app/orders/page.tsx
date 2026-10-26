@@ -20,8 +20,7 @@ import {
   FaArrowRotateLeft,
   FaBuildingColumns,
 } from "react-icons/fa6";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { orderService } from "@/services/orderService";
+import { useTrackOrders, useCancelOrder, useRequestReturn } from "@/hooks";
 import { Order } from "@/types";
 import { formatDateTime } from "@/utils/formatUtils";
 
@@ -43,9 +42,9 @@ const RETURN_REASONS = [
 ];
 
 function OrdersContent() {
-  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const initialSearch = searchParams.get("search") || "";
+  const rawSearch = searchParams.get("search") || "";
+  const initialSearch = rawSearch.trim().replace(/^#/, "");
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [submittedQuery, setSubmittedQuery] = useState(initialSearch);
 
@@ -74,17 +73,16 @@ function OrdersContent() {
     if (typeof window !== "undefined") {
       try {
         const local: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        const codes = Array.from(new Set(local.map((o) => o.orderNumber))).slice(0, 5);
+        const codes = Array.from(new Set(local.map((o) => o.orderNumber.replace(/^#/, "")))).slice(0, 5);
         setRecentOrderNumbers(codes);
       } catch {}
     }
   }, [initialSearch]);
 
-  const { data: ordersData, isLoading, refetch } = useQuery({
-    queryKey: ["orders", "track", submittedQuery],
-    queryFn: () => orderService.trackOrderByCode(submittedQuery),
-    enabled: true,
-  });
+  // Use custom React Query hooks
+  const { data: ordersData, isLoading, refetch } = useTrackOrders(submittedQuery);
+  const cancelOrderMutation = useCancelOrder();
+  const requestReturnMutation = useRequestReturn();
 
   const orders: Order[] = ordersData?.data || [];
 
@@ -95,14 +93,13 @@ function OrdersContent() {
     setIsCancelling(true);
     setCancelActionMessage(null);
     try {
-      await orderService.cancelOrder(cancelModalOrder.id, finalReason);
+      await cancelOrderMutation.mutateAsync({ id: cancelModalOrder.id, reason: finalReason });
       setCancelActionMessage({
         type: "success",
         text: `Đã hủy đơn hàng #${cancelModalOrder.orderNumber} thành công và hoàn trả lại số lượng tồn kho.`,
       });
       setCancelModalOrder(null);
       refetch();
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (err: any) {
       setCancelActionMessage({
         type: "error",
@@ -124,7 +121,7 @@ function OrdersContent() {
     setCancelActionMessage(null);
 
     try {
-      await orderService.requestReturn({
+      await requestReturnMutation.mutateAsync({
         orderNumber: returnModalOrder.orderNumber,
         reason: finalReason,
         detailedReason: customReturnText,
@@ -140,7 +137,6 @@ function OrdersContent() {
       });
       setReturnModalOrder(null);
       refetch();
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (err: any) {
       setCancelActionMessage({
         type: "error",
@@ -153,8 +149,9 @@ function OrdersContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      setSubmittedQuery(searchInput.trim());
+    const clean = searchInput.trim().replace(/^#/, "");
+    if (clean) {
+      setSubmittedQuery(clean);
     }
   };
 
@@ -197,7 +194,7 @@ function OrdersContent() {
           Tra Cứu Thông Tin Đơn Hàng
         </h1>
         <p className="text-xs text-gray-500">
-          Nhập mã đơn hàng (VD: <strong>#ORD-2026-0001</strong>) hoặc số điện thoại đặt hàng để kiểm tra tiến trình giao hàng.
+          Nhập mã đơn hàng (VD: <strong>SPX-1234</strong>) hoặc số điện thoại đặt hàng để kiểm tra tiến trình giao hàng.
         </p>
       </div>
 
@@ -229,19 +226,22 @@ function OrdersContent() {
       {recentOrderNumbers.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-500 max-w-xl mx-auto">
           <span className="font-semibold text-gray-700">Đơn gần đây của bạn:</span>
-          {recentOrderNumbers.map((code) => (
-            <button
-              key={code}
-              type="button"
-              onClick={() => {
-                setSearchInput(code);
-                setSubmittedQuery(code);
-              }}
-              className="px-2.5 py-1 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 font-mono font-bold text-gray-800 rounded-lg border border-gray-200 shadow-2xs transition cursor-pointer"
-            >
-              {code}
-            </button>
-          ))}
+          {recentOrderNumbers.map((code) => {
+            const cleanCode = code.replace(/^#/, "");
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() => {
+                  setSearchInput(cleanCode);
+                  setSubmittedQuery(cleanCode);
+                }}
+                className="px-2.5 py-1 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 font-mono font-bold text-gray-800 rounded-lg border border-gray-200 shadow-2xs transition cursor-pointer"
+              >
+                #{cleanCode}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -266,9 +266,33 @@ function OrdersContent() {
         )}
 
         {isLoading && (
-          <div className="text-center py-12 text-xs text-gray-500 space-y-2">
-            <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p>Đang tìm kiếm thông tin đơn hàng...</p>
+          <div className="space-y-4 animate-pulse">
+            {[1, 2].map((idx) => (
+              <div key={idx} className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 space-y-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 w-32 bg-slate-200 rounded" />
+                      <div className="h-5 w-24 bg-blue-100 rounded-full" />
+                    </div>
+                    <div className="h-3.5 w-44 bg-slate-100 rounded" />
+                  </div>
+                  <div className="h-6 w-28 bg-emerald-100 rounded" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-slate-100 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                    <div className="h-3 w-1/3 bg-slate-100 rounded" />
+                  </div>
+                  <div className="h-4 w-20 bg-slate-200 rounded shrink-0" />
+                </div>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <div className="h-4 w-48 bg-slate-100 rounded" />
+                  <div className="h-8 w-24 bg-slate-100 rounded-lg" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -284,8 +308,10 @@ function OrdersContent() {
 
         {orders.map((order) => {
           const normStatus = (order.fulfillmentStatus || "").toUpperCase();
-          const canCancel = normStatus === "PENDING" || normStatus === "PROCESSING";
           const isShipping = normStatus === "SHIPPING";
+          const isDelivered = normStatus === "DELIVERED" || normStatus === "COMPLETED";
+          const isCanceled = normStatus === "CANCELLED" || normStatus === "CANCELED";
+          const canCancel = !isShipping && !isDelivered && !isCanceled;
 
           return (
             <div
@@ -297,46 +323,9 @@ function OrdersContent() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-lg text-gray-900 font-mono">
-                      {order.orderNumber}
+                      #{order.orderNumber.replace(/^#/, "")}
                     </span>
                     {getStatusBadge(order)}
-                    {canCancel ? (
-                      <Button
-                        size="sm"
-                        color="danger"
-                        variant="flat"
-                        className="font-bold text-xs rounded-full h-7 px-3 cursor-pointer"
-                        onClick={() => {
-                          setCancelModalOrder(order);
-                          setSelectedReason(CANCEL_REASONS[0]);
-                          setCustomReasonText("");
-                        }}
-                      >
-                        Hủy đơn hàng
-                      </Button>
-                    ) : isShipping ? (
-                      <Tooltip
-                        content="Đang giao hàng, bạn không được hủy đơn hàng."
-                        placement="top"
-                        classNames={{
-                          content: "text-xs py-1.5 px-3 font-semibold bg-gray-900 text-white rounded-lg shadow-xl",
-                        }}
-                      >
-                        <div
-                          className="inline-block cursor-not-allowed"
-                          title="Đang giao hàng, bạn không được hủy đơn hàng."
-                        >
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            isDisabled
-                            className="font-bold text-xs rounded-full h-7 px-3 bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
-                          >
-                            Hủy đơn hàng
-                          </Button>
-                        </div>
-                      </Tooltip>
-                    ) : null}
                   </div>
                   <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
                     <FaCalendarDays className="w-3.5 h-3.5" />
@@ -489,7 +478,7 @@ function OrdersContent() {
                   <span className="text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md font-medium inline-block border border-amber-200">
                     ⚡ Đơn hàng đang giao. Không thể hủy đơn trong quá trình vận chuyển.
                   </span>
-                ) : order.fulfillmentStatus === "CANCELLED" ? (
+                ) : isCanceled ? (
                   <span className="text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md font-medium inline-block">
                     Đơn hàng đã được hủy thành công và hoàn lại số lượng tồn kho.
                   </span>
@@ -549,7 +538,7 @@ function OrdersContent() {
                       setCustomReasonText("");
                     }}
                   >
-                    Hủy đơn hàng này
+                    Hủy đơn hàng
                   </Button>
                 ) : isShipping ? (
                   <Tooltip
@@ -570,7 +559,7 @@ function OrdersContent() {
                         className="font-bold text-xs rounded-xl border-gray-200 text-gray-400 bg-gray-50 h-9 px-4 cursor-not-allowed pointer-events-none"
                         startContent={<FaXmark className="w-3.5 h-3.5 text-gray-400" />}
                       >
-                        Hủy đơn hàng này
+                        Hủy đơn hàng
                       </Button>
                     </div>
                   </Tooltip>
@@ -744,11 +733,10 @@ function OrdersContent() {
                     <option value="ACB">ACB</option>
                     <option value="Agribank">Agribank</option>
                     <option value="TPBank">TPBank</option>
-                    <option value="Ví MoMo">Ví MoMo</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] text-gray-500 block mb-1">Số tài khoản / SĐT MoMo:</label>
+                  <label className="text-[11px] text-gray-500 block mb-1">Số tài khoản ngân hàng nhận tiền hoàn:</label>
                   <input
                     type="text"
                     placeholder="VD: 0398802022..."

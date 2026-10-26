@@ -168,7 +168,19 @@ class DataStore {
   }
 
   public getOrderById(id: string): Order | null {
-    return this.data.orders.find((o) => o.id === id) || null;
+    if (!id) return null;
+    const cleanId = id.replace(/^#/, "").toUpperCase();
+    return (
+      this.data.orders.find((o) => {
+        const cleanOrderNumber = (o.orderNumber || "").replace(/^#/, "").toUpperCase();
+        return (
+          o.id === id ||
+          cleanOrderNumber === cleanId ||
+          (o.orderNumber && o.orderNumber.toUpperCase() === id.toUpperCase()) ||
+          (o.id && o.id.toUpperCase() === id.toUpperCase())
+        );
+      }) || null
+    );
   }
 
   public addOrder(order: Order): Order {
@@ -181,12 +193,23 @@ class DataStore {
   }
 
   public updateOrder(id: string, updates: Partial<Order>): Order | null {
-    const index = this.data.orders.findIndex((o) => o.id === id);
+    if (!id) return null;
+    const cleanId = id.replace(/^#/, "").toUpperCase();
+    const index = this.data.orders.findIndex((o) => {
+      const cleanOrderNumber = (o.orderNumber || "").replace(/^#/, "").toUpperCase();
+      return (
+        o.id === id ||
+        cleanOrderNumber === cleanId ||
+        (o.orderNumber && o.orderNumber.toUpperCase() === id.toUpperCase()) ||
+        (o.id && o.id.toUpperCase() === id.toUpperCase())
+      );
+    });
     if (index === -1) return null;
+    const realId = this.data.orders[index].id;
     this.data.orders[index] = { ...this.data.orders[index], ...updates };
     this.persist();
     if (this.isMongoReady()) {
-      OrderModel.findOneAndUpdate({ id }, { $set: updates }).catch((err: any) =>
+      OrderModel.findOneAndUpdate({ id: realId }, { $set: updates }).catch((err: any) =>
         console.error("Mongo OrderModel update error:", err.message)
       );
     }

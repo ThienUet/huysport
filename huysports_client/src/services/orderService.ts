@@ -33,7 +33,7 @@ export interface CreateOrderPayload {
   discountAmount: number;
   couponCode?: string;
   totalAmount: number;
-  paymentMethod: "COD" | "VNPAY" | "MOMO" | "BANK_TRANSFER";
+  paymentMethod: "COD" | "VNPAY";
   notes?: string;
 }
 
@@ -135,7 +135,7 @@ export const orderService = {
       discountAmount: payload.discountAmount,
       couponCode: payload.couponCode,
       totalAmount: payload.totalAmount,
-      paymentMethod: payload.paymentMethod === "BANK_TRANSFER" ? "COD" : payload.paymentMethod,
+      paymentMethod: payload.paymentMethod,
       note: payload.notes,
     };
 
@@ -200,12 +200,16 @@ export const orderService = {
 
   getOrderById: async (id: string): Promise<{ success: boolean; data: Order }> => {
     try {
-      const res = await api.get(`/orders/${id}`);
+      const cleanId = id.replace(/^#/, "");
+      const res = await api.get(`/orders/${cleanId}`);
       return { success: true, data: normalizeOrder(res.data?.data || res.data) };
     } catch {
       if (typeof window !== "undefined") {
+        const cleanId = id.replace(/^#/, "").toLowerCase();
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        const found = existing.find((o) => o.id === id || o.orderNumber === id);
+        const found = existing.find(
+          (o) => o.id === id || o.orderNumber.replace(/^#/, "").toLowerCase() === cleanId
+        );
         if (found) return { success: true, data: found };
       }
       throw new Error("Không tìm thấy đơn hàng");
@@ -215,8 +219,9 @@ export const orderService = {
   trackOrderByCode: async (orderNumberOrPhone: string): Promise<{ success: boolean; data: Order[] }> => {
     try {
       const q = orderNumberOrPhone.trim();
+      const cleanQ = q.replace(/^#/, "");
       const res = await api.get("/orders", {
-        params: q ? { search: q } : {},
+        params: cleanQ ? { search: cleanQ } : {},
       });
       const rawList = res.data?.data || res.data || [];
       if (Array.isArray(rawList) && rawList.length > 0) {
@@ -225,13 +230,13 @@ export const orderService = {
       // Check local storage
       if (typeof window !== "undefined") {
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        if (!q) {
+        if (!cleanQ) {
           return { success: true, data: existing };
         }
-        const lowerQ = q.toLowerCase();
+        const lowerQ = cleanQ.toLowerCase();
         const found = existing.filter(
           (o) =>
-            o.orderNumber.toLowerCase().includes(lowerQ) ||
+            o.orderNumber.replace(/^#/, "").toLowerCase().includes(lowerQ) ||
             o.shippingAddress?.phone.includes(lowerQ) ||
             o.customer?.email?.toLowerCase().includes(lowerQ)
         );
@@ -242,13 +247,14 @@ export const orderService = {
       if (typeof window !== "undefined") {
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
         const q = orderNumberOrPhone.trim();
-        if (!q) {
+        const cleanQ = q.replace(/^#/, "");
+        if (!cleanQ) {
           return { success: true, data: existing };
         }
-        const lowerQ = q.toLowerCase();
+        const lowerQ = cleanQ.toLowerCase();
         const found = existing.filter(
           (o) =>
-            o.orderNumber.toLowerCase().includes(lowerQ) ||
+            o.orderNumber.replace(/^#/, "").toLowerCase().includes(lowerQ) ||
             o.shippingAddress?.phone.includes(lowerQ) ||
             o.customer?.email?.toLowerCase().includes(lowerQ)
         );
@@ -269,7 +275,8 @@ export const orderService = {
 
   cancelOrder: async (id: string, reason: string): Promise<{ success: boolean; message: string; data?: Order }> => {
     try {
-      const res = await api.post(`/orders/${id}/cancel`, {
+      const cleanId = (id || "").replace(/^#/, "");
+      const res = await api.post(`/orders/${encodeURIComponent(cleanId)}/cancel`, {
         reason,
         cancelledBy: "customer",
       });
@@ -277,11 +284,12 @@ export const orderService = {
       // Update local storage if present
       if (typeof window !== "undefined") {
         const existing: Order[] = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
-        const updated = existing.map((o) =>
-          o.id === id || o.orderNumber === id
+        const updated = existing.map((o) => {
+          const oClean = (o.orderNumber || "").replace(/^#/, "");
+          return o.id === id || o.orderNumber === id || oClean === cleanId || o.id === cleanId
             ? { ...o, fulfillmentStatus: "CANCELLED" as const, cancelReason: reason }
-            : o
-        );
+            : o;
+        });
         localStorage.setItem("sportx_local_orders", JSON.stringify(updated));
       }
 

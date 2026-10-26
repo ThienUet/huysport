@@ -19,10 +19,10 @@ import {
   FaXmark,
   FaCircleCheck,
   FaCircleExclamation,
+  FaCamera,
 } from "react-icons/fa6";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { orderService } from "@/services/orderService";
+import { useTrackOrders, useCancelOrder } from "@/hooks";
 import { authService } from "@/services/authService";
 import { Order } from "@/types";
 import { formatDateTime } from "@/utils/formatUtils";
@@ -38,9 +38,58 @@ const CANCEL_REASONS = [
 
 export default function AccountPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { user, token, isAuthenticated, isHydrated, setAuth, logout } = useAuthStore();
+  const { user, token, isAuthenticated, isHydrated, setAuth, logout, updateUser } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Avatar upload state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUploadMsg, setAvatarUploadMsg] = useState<string | null>(null);
+
+  const handleClientAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    setAvatarUploadMsg(null);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:5000";
+
+      const res = await fetch(`${apiUrl}/api/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: base64,
+          filename: `avatar-${file.name}`,
+          type: "avatar",
+        }),
+      });
+
+      const data = await res.json();
+      const finalUrl = data?.url || base64;
+      if (user) {
+        updateUser({ avatar: finalUrl });
+        authService.updateProfile({ avatar: finalUrl }).catch(() => {});
+      } else {
+        const updatedGuest = { ...currentUser, avatar: finalUrl };
+        setAuth(updatedGuest, "sportx_guest_token");
+      }
+      setAvatarUploadMsg("Đã cập nhật và lưu ảnh avatar vào images/avatars!");
+      setTimeout(() => setAvatarUploadMsg(null), 3500);
+    } catch {
+      setAvatarUploadMsg("Lỗi khi tải ảnh đại diện lên");
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = "";
+    }
+  };
 
   // Cancellation modal state
   const [cancelModalOrder, setCancelModalOrder] = useState<Order | null>(null);
@@ -77,11 +126,9 @@ export default function AccountPage() {
     }
   }, [isAuthenticated, isHydrated, user, token, router, setAuth]);
 
-  const { data: ordersData, isLoading: isOrdersLoading, refetch: refetchOrders } = useQuery({
-    queryKey: ["orders", "user", user?.email || "customer"],
-    queryFn: () => orderService.trackOrderByCode(user?.email || user?.phone || "customer@sportx.store"),
-    enabled: !!user?.email || !!user?.phone,
-  });
+  const userQueryKey = user?.email || user?.phone || "customer@sportx.store";
+  const { data: ordersData, isLoading: isOrdersLoading, refetch: refetchOrders } = useTrackOrders(userQueryKey);
+  const cancelOrderMutation = useCancelOrder();
 
   const orders: Order[] = ordersData?.data || [];
 
@@ -92,14 +139,13 @@ export default function AccountPage() {
     setIsCancelling(true);
     setCancelMessage(null);
     try {
-      await orderService.cancelOrder(cancelModalOrder.id, finalReason);
+      await cancelOrderMutation.mutateAsync({ id: cancelModalOrder.id, reason: finalReason });
       setCancelMessage({
         type: "success",
         text: `Đã hủy đơn hàng #${cancelModalOrder.orderNumber} thành công và hoàn trả lại số lượng tồn kho.`,
       });
       setCancelModalOrder(null);
       refetchOrders();
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (err: any) {
       setCancelMessage({
         type: "error",
@@ -112,9 +158,26 @@ export default function AccountPage() {
 
   if (isCheckingAuth || (!user && (isAuthenticated || (typeof window !== "undefined" && localStorage.getItem("sportx_client_token"))))) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-20 text-center space-y-3">
-        <div className="w-10 h-10 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-sm text-gray-500 font-semibold">Đang tải thông tin tài khoản...</p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6 animate-pulse">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-slate-200 shrink-0" />
+            <div className="space-y-2">
+              <div className="h-5 w-40 bg-slate-200 rounded" />
+              <div className="h-4 w-52 bg-slate-100 rounded" />
+            </div>
+          </div>
+          <div className="h-10 w-28 bg-slate-100 rounded-xl" />
+        </div>
+        <div className="flex gap-2 border-b border-gray-200 pb-2">
+          <div className="h-9 w-28 bg-emerald-100 rounded-lg" />
+          <div className="h-9 w-28 bg-slate-100 rounded-lg" />
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 w-full bg-slate-50 border border-slate-100 rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -142,11 +205,30 @@ export default function AccountPage() {
         {/* Profile Header */}
         <div className="bg-emerald-600 text-white p-6 sm:p-8 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <Avatar
-              size="lg"
-              name={currentUser.fullName}
-              className="w-16 h-16 text-lg font-bold bg-white text-emerald-600 border-2 border-emerald-200 flex-shrink-0"
-            />
+            <div className="relative group">
+              <Avatar
+                size="lg"
+                src={currentUser.avatar || undefined}
+                name={currentUser.fullName}
+                className="w-16 h-16 text-lg font-bold bg-white text-emerald-600 border-2 border-emerald-200 flex-shrink-0"
+              />
+              <label
+                htmlFor="client-avatar-file"
+                className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-white"
+                title="Thay đổi ảnh đại diện (Lưu vào images/avatars)"
+              >
+                <FaCamera className="w-4 h-4" />
+                <span className="text-[9px] font-bold mt-0.5">Đổi ảnh</span>
+              </label>
+              <input
+                id="client-avatar-file"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={isUploadingAvatar}
+                onChange={handleClientAvatarChange}
+              />
+            </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-extrabold">{currentUser.fullName}</h1>
@@ -155,6 +237,8 @@ export default function AccountPage() {
                 </Chip>
               </div>
               <p className="text-sm text-emerald-100">{currentUser.email}</p>
+              {isUploadingAvatar && <p className="text-xs text-emerald-200 animate-pulse">Đang tải ảnh avatar lên...</p>}
+              {avatarUploadMsg && <p className="text-xs text-white font-semibold">{avatarUploadMsg}</p>}
             </div>
           </div>
 
@@ -285,7 +369,21 @@ export default function AccountPage() {
               )}
 
               {isOrdersLoading ? (
-                <div className="py-12 text-center text-sm text-gray-400">Đang tải lịch sử đơn hàng...</div>
+                <div className="space-y-3 animate-pulse">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 rounded-xl border border-gray-100 bg-slate-50/70 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div className="h-5 w-28 bg-slate-200 rounded" />
+                        <div className="h-5 w-20 bg-slate-200 rounded-full" />
+                      </div>
+                      <div className="h-4 w-2/3 bg-slate-100 rounded" />
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <div className="h-4 w-32 bg-slate-100 rounded" />
+                        <div className="h-4 w-24 bg-emerald-100 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : orders.length === 0 ? (
                 <div className="py-12 text-center space-y-3">
                   <FaBagShopping className="w-12 h-12 text-gray-300 mx-auto" />
@@ -376,7 +474,7 @@ export default function AccountPage() {
                           )}
 
                           <Link
-                            href={`/orders?search=${encodeURIComponent(ord.orderNumber)}`}
+                            href={`/orders?search=${encodeURIComponent(ord.orderNumber.replace(/^#/, ""))}`}
                             className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
                           >
                             Xem chi tiết <FaChevronRight className="w-3 h-3" />

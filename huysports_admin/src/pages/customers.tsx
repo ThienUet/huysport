@@ -1,10 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import AdminLayout from "@/layouts/admin-layout";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { customerService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce, useCustomers, useUpdateCustomerStatus } from "@/hooks";
 import {
   Users,
   UserCheck,
@@ -26,6 +24,7 @@ import { exportToCSV, exportToExcel, ReportSection } from "@/utils/exportUtils";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { HeroDropdown } from "@/components/ui/HeroDropdown";
 import { formatDateTime } from "@/utils/formatUtils";
+import { TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
 
 export interface CustomerOrderHistory {
   id: string;
@@ -81,7 +80,6 @@ const removeVietnameseTones = (str: string) => {
 };
 
 export default function CustomersPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
   const [searchParams] = useSearchParams();
 
@@ -102,34 +100,36 @@ export default function CustomersPage() {
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
   const [drawerTab, setDrawerTab] = useState<"orders" | "addresses">("orders");
 
-  // Fetch customers with React Query
-  const { data: customers = [] } = useQuery<Customer[]>({
-    queryKey: ["customers", statusFilter, tierFilter],
-    queryFn: () =>
-      customerService.getAll({
-        status: statusFilter !== "all" ? statusFilter : undefined,
-        tier: tierFilter !== "all" ? tierFilter : undefined,
-      }),
+  // Fetch customers with custom React Query hook
+  const { data: customers = [], isLoading } = useCustomers({
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    tier: tierFilter !== "all" ? tierFilter : undefined,
   });
 
   // Toggle status mutation
-  const toggleStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "Active" | "Blocked" }) =>
-      customerService.updateStatus(id, status),
-    onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      if (detailCustomer && detailCustomer.id === updated.id) {
-        setDetailCustomer(updated);
-      }
-      toast.success(
-        "Cập nhật thành công",
-        `Đã chuyển trạng thái ${updated.fullName} sang ${updated.status === "Active" ? "Hoạt động" : "Bị khóa"}`
+  const baseToggleStatus = useUpdateCustomerStatus();
+  const toggleStatusMutation = {
+    ...baseToggleStatus,
+    mutate: ({ id, status }: { id: string; status: "Active" | "Blocked" }) => {
+      baseToggleStatus.mutate(
+        { id, status },
+        {
+          onSuccess: (updated) => {
+            if (detailCustomer && detailCustomer.id === updated.id) {
+              setDetailCustomer(updated);
+            }
+            toast.success(
+              "Cập nhật thành công",
+              `Đã chuyển trạng thái ${updated.fullName} sang ${updated.status === "Active" ? "Hoạt động" : "Bị khóa"}`
+            );
+          },
+          onError: (err: any) => {
+            toast.error("Lỗi", err.message || "Không thể cập nhật trạng thái khách hàng");
+          },
+        }
       );
     },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể cập nhật trạng thái khách hàng");
-    },
-  });
+  };
 
   // Filtered customers
   const filteredCustomers = useMemo(() => {
@@ -446,7 +446,9 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                {filteredCustomers.length > 0 ? (
+                {isLoading ? (
+                  <TableSkeletonRows cols={9} rows={5} />
+                ) : filteredCustomers.length > 0 ? (
                   filteredCustomers.map((cust: Customer) => {
                     const isSelected = selectedCustomerIds.includes(cust.id);
                     return (

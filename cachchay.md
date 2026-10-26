@@ -48,7 +48,8 @@ pnpm run dev
 
 | Lệnh | Chức năng |
 | :--- | :--- |
-| `pnpm run dev` | **Chạy đồng thời** cả 3 project (Admin + Client + BE) |
+| `pnpm start:demo` | **🚀 Build 2 Frontend + Backend rồi chạy bản Build Production** (Tốc độ tối đa, mượt mà, không giật lag) |
+| `pnpm run dev` | **Chạy đồng thời** cả 3 project (Admin + Client + BE) ở chế độ Dev |
 | `pnpm run dev:admin` | Chỉ chạy riêng giao diện **Admin Dashboard** |
 | `pnpm run dev:client` | Chỉ chạy riêng giao diện **Website Khách hàng (Client)** |
 | `pnpm run dev:be` | Chỉ chạy riêng **Backend API Server** |

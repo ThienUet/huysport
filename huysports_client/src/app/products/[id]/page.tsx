@@ -31,8 +31,7 @@ import {
   FaBell,
   FaFire,
 } from "react-icons/fa6";
-import { useQuery } from "@tanstack/react-query";
-import { productService } from "@/services/productService";
+import { useProduct, useProducts } from "@/hooks";
 import { useCartStore } from "@/stores/useCartStore";
 import AISizeAdvisorModal from "@/components/products/AISizeAdvisorModal";
 import ProductCard from "@/components/products/ProductCard";
@@ -42,25 +41,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const resolvedParams = use(params);
   const router = useRouter();
   const productId = resolvedParams.id;
-  const { addItem, setIsCartDrawerOpen } = useCartStore();
+  const { addItem, setIsCartDrawerOpen, setBuyNowItem } = useCartStore();
 
-  // Fetch product detail
-  const { data: productData, isLoading, isError } = useQuery({
-    queryKey: ["product", productId],
-    queryFn: () => productService.getProductById(productId),
-  });
-
-  // Fetch related products
-  const { data: allProductsData } = useQuery({
-    queryKey: ["products", "all"],
-    queryFn: () => productService.getProducts(),
-  });
+  // Fetch product detail and related products via custom hooks
+  const { data: productData, isLoading, isError } = useProduct(productId);
+  const { data: allProductsData } = useProducts();
 
   const product: Product | undefined = productData?.data;
   const relatedProducts: Product[] = (allProductsData?.data || []).filter((p) => p.id !== productId).slice(0, 4);
 
   // Gallery state
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  React.useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [productId]);
 
   // Variant selection state
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -176,7 +171,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return product.stock ?? 0;
   }, [product, currentVariant]);
 
-  const currentPrice = currentVariant?.price ?? product?.price ?? 250000;
+  const currentPrice = useMemo(() => {
+    if (!product) return 250000;
+    if (
+      currentVariant?.price &&
+      currentVariant.price !== 250000 &&
+      currentVariant.price !== product.originalPrice &&
+      currentVariant.price !== product.basePrice
+    ) {
+      return currentVariant.price;
+    }
+    return product.price ?? 250000;
+  }, [product, currentVariant]);
 
   // Auto-adjust quantity when currentStock changes
   React.useEffect(() => {
@@ -220,20 +226,72 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleBuyNow = () => {
-    handleAddToCart();
+    if (!product) return;
+
+    // Shopee-style: Create a dedicated 1-item purchase without polluting or clearing the main cart!
+    setBuyNowItem({
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images?.[selectedImageIndex] || product.images?.[0] || "",
+      sku: currentVariant?.sku || `${product.sku}-${selectedSize}`,
+      size: selectedSize || "L",
+      color: selectedColor || "Mặc định",
+      price: currentPrice,
+      quantity: quantity,
+      maxStock: currentStock,
+      selected: true,
+    });
+
     setIsCartDrawerOpen(false);
-    router.push("/checkout");
+    router.push("/checkout?mode=buy_now");
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="aspect-square rounded-xl bg-gray-100 animate-pulse" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 animate-pulse">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-16 bg-slate-200 rounded" />
+          <div className="h-4 w-4 bg-slate-200 rounded" />
+          <div className="h-4 w-24 bg-slate-200 rounded" />
+          <div className="h-4 w-4 bg-slate-200 rounded" />
+          <div className="h-4 w-40 bg-slate-200 rounded" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           <div className="space-y-4">
-            <div className="h-8 bg-gray-100 rounded-lg w-3/4 animate-pulse" />
-            <div className="h-6 bg-gray-100 rounded-lg w-1/3 animate-pulse" />
-            <div className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+            <div className="aspect-square w-full rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-slate-200/80" />
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="aspect-square rounded-xl bg-slate-100 border border-slate-200" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-20 bg-emerald-100 rounded-md" />
+                <div className="h-5 w-28 bg-slate-100 rounded-md" />
+              </div>
+              <div className="h-8 w-4/5 bg-slate-200 rounded-lg" />
+              <div className="h-4 w-36 bg-slate-100 rounded" />
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="h-7 w-36 bg-emerald-200/70 rounded-md" />
+              <div className="h-4 w-48 bg-slate-200 rounded" />
+            </div>
+            <div className="space-y-2.5">
+              <div className="h-4 w-28 bg-slate-200 rounded" />
+              <div className="flex gap-2">
+                {["S", "M", "L", "XL", "2XL"].map((s) => (
+                  <div key={s} className="h-10 w-14 rounded-lg bg-slate-100 border border-slate-200" />
+                ))}
+              </div>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <div className="h-12 flex-1 rounded-full bg-slate-200" />
+              <div className="h-12 flex-1 rounded-full bg-emerald-200/70" />
+            </div>
           </div>
         </div>
       </div>

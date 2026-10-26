@@ -1,5 +1,5 @@
 {
-  "name": "vite-template",
+  "name": "huysports_admin",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint --fix",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite preview --port 5173"
   },
   "dependencies": {
     "@heroui/react": "3.2.5",

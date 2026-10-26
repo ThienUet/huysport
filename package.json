@@ -8,6 +8,7 @@
     "dev:client": "pnpm --filter huysports_client dev",
     "dev:be": "pnpm --filter huysports_be dev",
     "build": "pnpm --recursive run build",
+    "start:demo": "node scripts/start-demo.mjs",
     "clean-source": "node scripts/clean.cjs"
   }
 }

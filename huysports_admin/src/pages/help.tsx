@@ -42,8 +42,8 @@ export default function HelpPage() {
       readTime: "8 phút đọc",
     },
     {
-      title: "Cấu hình cổng thanh toán (VNPAY & MoMo)",
-      desc: "Cách lấy mã TMN Code, sinh khóa Hash Secret và cấu hình webhook callback.",
+      title: "Cấu hình cổng thanh toán trực tuyến (VNPAY Sandbox)",
+      desc: "Cách lấy mã TMN Code, sinh khóa Hash Secret và cấu hình webhook callback VNPAY không cần đăng ký doanh nghiệp.",
       icon: CreditCard,
       color: "bg-emerald-50 text-emerald-600 border-emerald-200",
       readTime: "6 phút đọc",
@@ -167,15 +167,7 @@ export default function HelpPage() {
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">Cổng thanh toán VNPAY</span>
-                  </div>
-                  <span className="text-[11px] text-emerald-600 font-bold">Hoạt động tốt</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">Cổng MoMo Webhook</span>
+                    <span className="font-bold text-slate-800">Cổng thanh toán VNPAY Sandbox</span>
                   </div>
                   <span className="text-[11px] text-emerald-600 font-bold">Hoạt động tốt</span>
                 </div>

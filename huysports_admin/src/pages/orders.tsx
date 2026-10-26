@@ -1,10 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import AdminLayout from "@/layouts/admin-layout";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { orderService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce, useOrders, useUpdateOrderStatus, useProcessReturn } from "@/hooks";
 import {
   Search,
   Calendar,
@@ -31,6 +29,7 @@ import { exportToCSV, exportToExcel, ReportSection } from "@/utils/exportUtils";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { HeroDropdown } from "@/components/ui/HeroDropdown";
 import { formatDateTime } from "@/utils/formatUtils";
+import { TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
 
 export type StatusTab = "all" | "pending_approval" | "processing" | "shipping" | "completed" | "returns" | "canceled";
 
@@ -80,7 +79,7 @@ export interface Order {
   discountAmount?: number;
   couponCode?: string;
   totalAmount: number;
-  paymentMethod: "VNPAY" | "MoMo" | "COD";
+  paymentMethod: "VNPAY" | "COD";
   paymentStatus: "Paid" | "Unpaid";
   fulfillmentStatus: "Pending Approval" | "Processing" | "Shipping" | "Completed" | "Canceled";
   shippingCarrier?: string;
@@ -93,7 +92,7 @@ export interface Order {
   failedDeliveryAttempts?: number;
   returnRequest?: ReturnRequest;
   transactionDetails?: {
-    gateway: "VNPAY" | "MoMo" | "COD";
+    gateway: "VNPAY" | "COD";
     transactionCode: string;
     timestamp: string;
     bankCode?: string;
@@ -122,7 +121,6 @@ const removeVietnameseTones = (str: string) => {
 };
 
 export default function OrdersPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
   const [searchParams] = useSearchParams();
 
@@ -158,88 +156,79 @@ export default function OrdersPage() {
   } | null>(null);
   const [returnAdminNote, setReturnAdminNote] = useState<string>("");
 
-  // Fetch orders with React Query
-  const { data: orders = [] } = useQuery<Order[]>({
-    queryKey: ["orders", activeTab, paymentMethodFilter],
-    queryFn: () =>
-      orderService.getAll({
-        status: activeTab !== "all" ? activeTab : undefined,
-        paymentMethod: paymentMethodFilter !== "all" ? paymentMethodFilter : undefined,
-      }),
+  // Fetch orders with custom React Query hook
+  const { data: orders = [], isLoading } = useOrders({
+    status: activeTab !== "all" ? activeTab : undefined,
+    paymentMethod: paymentMethodFilter !== "all" ? paymentMethodFilter : undefined,
   });
 
-  // Update order status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: (payload: {
-      id: string;
-      fulfillmentStatus?: string;
-      paymentStatus?: string;
-      shippingCarrier?: string;
-      trackingCode?: string;
-      cancelReason?: string;
-      failedDeliveryAttempts?: number;
-    }) => {
-      const { id, ...data } = payload;
-      return orderService.updateStatus(id, data);
+  const baseUpdateStatus = useUpdateOrderStatus();
+  const updateStatusMutation = {
+    ...baseUpdateStatus,
+    mutate: (payload: any, options?: any) => {
+      baseUpdateStatus.mutate(payload, {
+        onSuccess: (updatedOrder: any, variables: any) => {
+          setSelectedOrder(updatedOrder);
+          if (variables.fulfillmentStatus === "Canceled") {
+            toast.success(
+              "Hủy đơn / Hoàn kho thành công",
+              `Đã chuyển trạng thái đơn #${updatedOrder.orderNumber} sang Đã hủy & hoàn lại số lượng tồn kho`
+            );
+          } else if (variables.fulfillmentStatus === "Processing") {
+            toast.success(
+              "Duyệt đơn thành công",
+              `Đơn #${updatedOrder.orderNumber} chuyển sang Đang đóng gói & chuẩn bị in phiếu xuất kho`
+            );
+          } else if (variables.fulfillmentStatus === "Shipping") {
+            toast.success(
+              "Bàn giao vận chuyển thành công",
+              `Đơn #${updatedOrder.orderNumber} đã bàn giao cho ${variables.shippingCarrier || "GHTK"}`
+            );
+          } else if (variables.fulfillmentStatus === "Completed") {
+            toast.success(
+              "Giao hàng thành công",
+              `Đơn #${updatedOrder.orderNumber} đã hoàn tất và thu tiền đủ.`
+            );
+          } else {
+            toast.success("Thành công", `Đã cập nhật trạng thái đơn #${updatedOrder.orderNumber}`);
+          }
+          options?.onSuccess?.(updatedOrder, variables);
+        },
+        onError: (err: any) => {
+          toast.error("Lỗi", err.message || "Không thể cập nhật đơn hàng");
+          options?.onError?.(err);
+        },
+      });
     },
-    onSuccess: (updatedOrder, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-orders"] });
-      setSelectedOrder(updatedOrder);
-      if (variables.fulfillmentStatus === "Canceled") {
-        toast.success(
-          "Hủy đơn / Hoàn kho thành công",
-          `Đã chuyển trạng thái đơn #${updatedOrder.orderNumber} sang Đã hủy & hoàn lại số lượng tồn kho`
-        );
-      } else if (variables.fulfillmentStatus === "Processing") {
-        toast.success(
-          "Duyệt đơn thành công",
-          `Đơn #${updatedOrder.orderNumber} chuyển sang Đang đóng gói & chuẩn bị in phiếu xuất kho`
-        );
-      } else if (variables.fulfillmentStatus === "Shipping") {
-        toast.success(
-          "Bàn giao vận chuyển thành công",
-          `Đơn #${updatedOrder.orderNumber} đã bàn giao cho ${variables.shippingCarrier || "GHTK"}`
-        );
-      } else if (variables.fulfillmentStatus === "Completed") {
-        toast.success(
-          "Giao hàng thành công",
-          `Đơn #${updatedOrder.orderNumber} đã hoàn tất và thu tiền đủ.`
-        );
-      } else {
-        toast.success("Thành công", `Đã cập nhật trạng thái đơn #${updatedOrder.orderNumber}`);
-      }
-    },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể cập nhật đơn hàng");
-    },
-  });
+  };
 
-  // Process return mutation (Approve, Reject, Complete)
-  const processReturnMutation = useMutation({
-    mutationFn: (payload: { id: string; payload: { action: "approve" | "reject" | "complete"; adminNote?: string } }) =>
-      orderService.processReturn(payload.id, payload.payload),
-    onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      if (selectedOrder && (selectedOrder.id === updated.id || selectedOrder.orderNumber === updated.orderNumber)) {
-        setSelectedOrder(updated);
-      }
-      toast.success(
-        "Thành công",
-        updated.returnRequest?.status === "Approved"
-          ? "Đã duyệt yêu cầu đổi trả / hoàn hàng"
-          : updated.returnRequest?.status === "Rejected"
-          ? "Đã từ chối yêu cầu đổi trả"
-          : "Đã xác nhận nhận hàng hoàn & tự động nhập lại kho"
-      );
-      setReturnActionModal(null);
+  const baseProcessReturn = useProcessReturn();
+  const processReturnMutation = {
+    ...baseProcessReturn,
+    mutate: (payload: any, options?: any) => {
+      baseProcessReturn.mutate(payload, {
+        onSuccess: (updated: any) => {
+          if (selectedOrder && (selectedOrder.id === updated.id || selectedOrder.orderNumber === updated.orderNumber)) {
+            setSelectedOrder(updated);
+          }
+          toast.success(
+            "Thành công",
+            updated.returnRequest?.status === "Approved"
+              ? "Đã duyệt yêu cầu đổi trả / hoàn hàng"
+              : updated.returnRequest?.status === "Rejected"
+              ? "Đã từ chối yêu cầu đổi trả"
+              : "Đã xác nhận nhận hàng hoàn & tự động nhập lại kho"
+          );
+          setReturnActionModal(null);
+          options?.onSuccess?.(updated);
+        },
+        onError: (err: any) => {
+          toast.error("Lỗi", err.message || "Không thể xử lý yêu cầu hoàn trả");
+          options?.onError?.(err);
+        },
+      });
     },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể xử lý yêu cầu hoàn trả");
-    },
-  });
+  };
 
   // Tab counters dynamically calculated
   const tabCounts = useMemo(() => {
@@ -807,8 +796,7 @@ export default function OrdersPage() {
                 size="sm"
                 options={[
                   { key: "all", label: "Tất cả hình thức" },
-                  { key: "VNPAY", label: "🔹 VNPAY (QR / Thẻ ATM)" },
-                  { key: "MoMo", label: "🌸 Ví MoMo" },
+                  { key: "VNPAY", label: "🔹 VNPAY Sandbox (Online)" },
                   { key: "COD", label: "💵 COD (Nhận hàng thanh toán)" },
                 ]}
                 aria-label="Lọc hình thức thanh toán"
@@ -850,7 +838,9 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                {filteredOrders.length > 0 ? (
+                {isLoading ? (
+                  <TableSkeletonRows cols={9} rows={6} />
+                ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((order: Order) => (
                     <tr
                       key={order.id}
@@ -924,15 +914,6 @@ export default function OrdersPage() {
                           >
                             <span className="w-2 h-2 rounded-sm bg-blue-600 rotate-45 inline-block" />
                             VNPAY
-                          </span>
-                        )}
-                        {order.paymentMethod === "MoMo" && (
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-[11px] bg-pink-50 text-pink-700 border border-pink-200/60 whitespace-nowrap"
-                            title="Thanh toán qua ví điện tử MoMo"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-pink-600 inline-block" />
-                            MoMo
                           </span>
                         )}
                         {order.paymentMethod === "COD" && (

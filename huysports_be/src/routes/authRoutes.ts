@@ -3,6 +3,7 @@ import {
   register,
   login,
   getMe,
+  updateProfile,
   changePassword,
   getUsers,
   updateUserRole,
@@ -18,6 +19,8 @@ router.post("/login", login);
 
 // Authenticated user profile routes
 router.get("/me", authenticate, getMe);
+router.patch("/me", authenticate, updateProfile);
+router.put("/me", authenticate, updateProfile);
 router.post("/change-password", authenticate, changePassword);
 
 // Admin-only User & Staff Management routes

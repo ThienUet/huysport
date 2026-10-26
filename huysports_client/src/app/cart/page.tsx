@@ -16,7 +16,7 @@ import {
   FaTruckFast,
 } from "react-icons/fa6";
 import { useCartStore } from "@/stores/useCartStore";
-import { couponService } from "@/services/couponService";
+import { useValidateCoupon } from "@/hooks";
 
 export default function CartPage() {
   const {
@@ -31,6 +31,10 @@ export default function CartPage() {
     getSubtotal,
     getShippingFee,
     getTotal,
+    toggleSelectItem,
+    toggleSelectAll,
+    getSelectedItems,
+    getSelectedCount,
   } = useCartStore();
 
   const [couponInput, setCouponInput] = useState("");
@@ -38,12 +42,19 @@ export default function CartPage() {
   const [couponSuccess, setCouponSuccess] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  const selectedItems = getSelectedItems();
+  const selectedCount = getSelectedCount();
+  const allSelected = items.length > 0 && items.every((i) => i.selected !== false);
+  const isIndeterminate = items.some((i) => i.selected !== false) && !allSelected;
+
   const subtotal = getSubtotal();
   const shippingFee = getShippingFee();
   const total = getTotal();
   const freeShipThreshold = 500000;
+  const validateCouponMutation = useValidateCoupon();
   const progressPercent = Math.min(100, Math.round((subtotal / freeShipThreshold) * 100));
-  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
+  const hasOutOfStockSelected = selectedItems.some((i) => (i.maxStock ?? 0) <= 0);
+  const hasAnyOutOfStock = items.some((i) => (i.maxStock ?? 0) <= 0);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,15 +64,23 @@ export default function CartPage() {
     setCouponError("");
     setCouponSuccess("");
 
-    const res = await couponService.validateCoupon(couponInput.trim(), subtotal);
-    setIsApplyingCoupon(false);
+    try {
+      const res = await validateCouponMutation.mutateAsync({
+        code: couponInput.trim(),
+        orderValue: subtotal,
+      });
 
-    if (res.success && res.coupon) {
-      setCoupon(res.coupon, res.discountAmount);
-      setCouponSuccess(res.message);
-      setCouponInput("");
-    } else {
-      setCouponError(res.message);
+      if (res.success && res.coupon) {
+        setCoupon(res.coupon, res.discountAmount);
+        setCouponSuccess(res.message);
+        setCouponInput("");
+      } else {
+        setCouponError(res.message);
+      }
+    } catch (err: any) {
+      setCouponError(err.message || "Không thể áp dụng mã ưu đãi lúc này.");
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -138,19 +157,55 @@ export default function CartPage() {
             </div>
           </div>
 
-          {hasOutOfStockItems && (
+          {hasOutOfStockSelected && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
               <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>Trong giỏ hàng có sản phẩm hiện đã hết hàng trong kho. Vui lòng xóa các sản phẩm hết hàng để tiến hành thanh toán.</span>
+              <span>Trong các sản phẩm bạn ĐÃ CHỌN có sản phẩm tạm hết hàng. Vui lòng bỏ chọn hoặc xóa sản phẩm để tiếp tục thanh toán.</span>
             </div>
           )}
+
+          {hasAnyOutOfStock && !hasOutOfStockSelected && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-2">
+              <FaCircleExclamation className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Trong giỏ có sản phẩm tạm hết hàng nhưng bạn chưa chọn mua, bạn vẫn có thể tiến hành thanh toán các món đã chọn.</span>
+            </div>
+          )}
+
+          {/* Select All Toolbar */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = isIndeterminate;
+                }}
+                onChange={(e) => toggleSelectAll(e.target.checked)}
+                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 cursor-pointer accent-emerald-600"
+              />
+              <span className="text-xs font-bold text-gray-800">
+                Chọn tất cả ({items.length} sản phẩm trong giỏ)
+              </span>
+            </label>
+            <span className="text-xs text-gray-500">
+              Đã chọn: <strong className="text-emerald-600 font-bold">{selectedCount}</strong> sản phẩm
+            </span>
+          </div>
 
           {/* Table of Items */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-100">
               {items.map((item) => (
                 <div key={item.sku} className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={item.selected !== false}
+                      onChange={() => toggleSelectItem(item.sku)}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 cursor-pointer accent-emerald-600 shrink-0"
+                      title="Chọn sản phẩm này để mua"
+                    />
+
                     <div className="relative w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
                       <img
                         src={
@@ -333,17 +388,21 @@ export default function CartPage() {
             <Button
               color="primary"
               size="lg"
-              isDisabled={hasOutOfStockItems}
+              isDisabled={selectedCount === 0 || hasOutOfStockSelected}
               className={`w-full font-bold text-xs h-12 rounded-full shadow-md transition ${
-                hasOutOfStockItems
+                selectedCount === 0 || hasOutOfStockSelected
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
               }`}
               endContent={<FaArrowRight className="w-3.5 h-3.5" />}
               as={Link}
-              href={hasOutOfStockItems ? "#" : "/checkout"}
+              href={selectedCount === 0 || hasOutOfStockSelected ? "#" : "/checkout"}
             >
-              {hasOutOfStockItems ? "Có Sản Phẩm Hết Hàng Trong Giỏ" : "Tiến hành thanh toán"}
+              {selectedCount === 0
+                ? "Vui lòng chọn sản phẩm"
+                : hasOutOfStockSelected
+                ? "Có sản phẩm đã chọn hết hàng"
+                : `Tiến hành thanh toán (${selectedCount})`}
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500">

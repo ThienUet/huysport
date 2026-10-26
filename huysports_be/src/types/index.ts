@@ -19,6 +19,7 @@ export interface Product {
   basePrice: number;
   discountPrice?: number;
   thumbnail: string;
+  images?: string[];
   icon: string;
   sizes: string[];
   colors: { name: string; hex: string }[];
@@ -75,7 +76,7 @@ export interface Order {
   discountAmount?: number;
   couponCode?: string;
   totalAmount: number;
-  paymentMethod: "VNPAY" | "MoMo" | "COD";
+  paymentMethod: "VNPAY" | "COD";
   paymentStatus: "Paid" | "Unpaid";
   fulfillmentStatus: "Pending Approval" | "Processing" | "Shipping" | "Completed" | "Canceled";
   shippingCarrier?: "GHTK" | "ViettelPost" | "J&T Express" | "Shopee Xpress" | string;
@@ -88,7 +89,7 @@ export interface Order {
   deliveredAt?: string;
   returnRequest?: ReturnRequest;
   transactionDetails?: {
-    gateway: "VNPAY" | "MoMo" | "COD";
+    gateway: "VNPAY" | "COD";
     transactionCode: string;
     timestamp: string;
     bankCode?: string;
@@ -212,8 +213,6 @@ export interface SystemSettings {
   vnpayEnabled: boolean;
   vnpayTmnCode: string;
   vnpayHashSecret: string;
-  momoEnabled: boolean;
-  momoPartnerCode: string;
   codEnabled: boolean;
   chatbotEnabled: boolean;
   chatbotAutoReply: boolean;
@@ -228,6 +227,7 @@ export interface User {
   passwordHash: string;
   fullName: string;
   phone?: string;
+  address?: string;
   role: UserRole;
   avatar?: string;
   status: "Active" | "Blocked";
@@ -240,6 +240,7 @@ export interface AuthUserResponse {
   email: string;
   fullName: string;
   phone?: string;
+  address?: string;
   role: UserRole;
   avatar?: string;
   status: "Active" | "Blocked";

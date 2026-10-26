@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { searchService, GlobalSearchResult } from "@/services/api";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce, useGlobalSearch } from "@/hooks";
 import {
   Search,
   X,
@@ -35,13 +33,8 @@ export default function GlobalSearch() {
   // Debounce the search term by 300ms
   const debouncedSearch = useDebounce(searchTerm.trim(), 300);
 
-  // Query search endpoint via React Query
-  const { data: searchResults, isFetching } = useQuery<GlobalSearchResult>({
-    queryKey: ["global-search", debouncedSearch],
-    queryFn: () => searchService.search(debouncedSearch),
-    enabled: debouncedSearch.length > 0,
-    staleTime: 1000 * 30, // 30s cache
-  });
+  // Query search endpoint via React Query hook
+  const { data: searchResults, isFetching } = useGlobalSearch(debouncedSearch);
 
   // Handle hotkey Ctrl+K / Cmd+K to focus search
   useEffect(() => {

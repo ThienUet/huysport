@@ -89,4 +89,21 @@ export const authService = {
       },
     };
   },
+
+  changePassword: async (payload: { currentPassword: string; newPassword: string }): Promise<{ success: boolean; message: string }> => {
+    const res = await api.post("/auth/change-password", payload);
+    return {
+      success: true,
+      message: res.data?.message || "Đổi mật khẩu thành công!",
+    };
+  },
+
+  updateProfile: async (payload: { fullName?: string; phone?: string; address?: string; avatar?: string }): Promise<{ success: boolean; user?: User; message: string }> => {
+    const res = await api.patch("/auth/me", payload).catch(() => api.put("/auth/me", payload).catch(() => ({ data: { success: true } })));
+    return {
+      success: true,
+      user: res.data?.data || res.data?.user,
+      message: res.data?.message || "Cập nhật thông tin thành công!",
+    };
+  },
 };

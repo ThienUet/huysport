@@ -399,7 +399,7 @@ export class FAQEngine {
         `• 📐 **Tư vấn chọn Size chuẩn xác**: Chỉ cần gửi chiều cao & cân nặng (VD: 'cao 1m75 nặng 70kg').\n` +
         `• 👟 **Gợi ý trang phục & dụng cụ**: Đồ bóng đá, chạy bộ, gym, cầu lông chính hãng.\n` +
         `• 📦 **Tra cứu đơn hàng**: Kiểm tra tiến trình giao hàng realtime.\n` +
-        `• 🛡️ **Giải đáp chính sách**: Đổi size 30 ngày, bảo hành, phí ship, thanh toán VNPAY/MoMo.\n\n` +
+        `• 🛡️ **Giải đáp chính sách**: Đổi size 30 ngày, bảo hành, phí ship, thanh toán VNPAY/COD.\n\n` +
         `Bạn đang quan tâm đến sản phẩm hoặc cần SportX hỗ trợ điều gì hôm nay?`;
 
       return {
@@ -446,7 +446,7 @@ export class FAQEngine {
       const reply = `🎁 **Mã Giảm Giá Độc Quyền Hiện Có Tại SportX:**\n\n` +
         `1. **SPORTX10**: Giảm ngay **10%** cho mọi đơn hàng từ 300.000đ (Dành cho thành viên mới).\n` +
         `2. **FREESHIP**: Miễn phí vận chuyển toàn quốc cho đơn hàng từ **500.000đ**.\n` +
-        `3. **SPORTXVIP**: Giảm ngay **50.000đ** cho khách hàng thanh toán qua VNPAY / MoMo.\n\n` +
+        `3. **SPORTXVIP**: Giảm ngay **50.000đ** cho khách hàng thanh toán trực tuyến qua VNPAY.\n\n` +
         `Bạn chỉ cần nhập mã tại bước thanh toán (Checkout) là được áp dụng ngay nhé! 🛒`;
 
       const topProducts = activeProducts.slice(0, 2).map((p) => this.toRecommendedProduct(p));

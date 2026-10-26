@@ -40,6 +40,19 @@ export const productService = {
   },
 };
 
+// --- Upload Service ---
+export const uploadService = {
+  uploadImage: async (data: {
+    image: string;
+    filename?: string;
+    type?: "avatar" | "product" | "thumbnail" | "products" | "thumbnails" | "avatars";
+    folder?: string;
+  }) => {
+    const res = await apiClient.post("/upload", data);
+    return res.data;
+  },
+};
+
 // --- Order Service ---
 export const orderService = {
   getAll: async (params?: { status?: string; search?: string; paymentMethod?: string }) => {

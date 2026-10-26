@@ -12,7 +12,7 @@ import {
 } from "@heroui/react";
 import { FaCircleCheck, FaRuler, FaUser, FaArrowRight } from "react-icons/fa6";
 import { Product, SizeRecommendationResult } from "@/types";
-import { chatbotService } from "@/services/chatbotService";
+import { useRecommendSize } from "@/hooks";
 
 interface AISizeAdvisorModalProps {
   isOpen: boolean;
@@ -31,13 +31,13 @@ export default function AISizeAdvisorModal({
   const [weightKg, setWeightKg] = useState<number>(68);
   const [gender, setGender] = useState<"Nam" | "Nữ" | "Unisex">("Nam");
   const [bodyFitPreference, setBodyFitPreference] = useState<"Slim Fit" | "Regular Fit" | "Loose Fit / Thoải mái">("Regular Fit");
-  const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SizeRecommendationResult | null>(null);
+  const recommendSizeMutation = useRecommendSize();
+  const isLoading = recommendSizeMutation.isPending;
 
   const handleCalculate = async () => {
-    setIsLoading(true);
     try {
-      const res = await chatbotService.recommendSize({
+      const res = await recommendSizeMutation.mutateAsync({
         heightCm,
         weightKg,
         gender,
@@ -52,8 +52,6 @@ export default function AISizeAdvisorModal({
       }
     } catch {
       fallbackCalculate();
-    } finally {
-      setIsLoading(false);
     }
   };
 

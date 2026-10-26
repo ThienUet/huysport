@@ -1,10 +1,19 @@
 import { useState, useMemo } from "react";
 import AdminLayout from "@/layouts/admin-layout";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatbotService } from "@/services/api";
+import {
+  useSizeRules,
+  useCreateSizeRule,
+  useDeleteSizeRule,
+  useFAQs,
+  useCreateFAQ,
+  useDeleteFAQ,
+  useChatSessions,
+  useProcessMessage,
+} from "@/hooks";
 import { useToastStore } from "@/store/useToastStore";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { formatDateTime } from "@/utils/formatUtils";
+import { TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
 import {
   Bot,
   Ruler,
@@ -121,7 +130,7 @@ const INITIAL_SESSIONS: ChatSession[] = [
       {
         id: "m6",
         sender: "bot",
-        text: "Yes, 100%! SportX offers 30-day free door-to-door size exchange. Would you like to add it to your cart or pay via VNPAY / MoMo?",
+        text: "Yes, 100%! SportX offers 30-day free door-to-door size exchange. Would you like to add it to your cart or pay via VNPAY / COD?",
         timestamp: "14:33",
       },
     ],
@@ -187,17 +196,13 @@ const INITIAL_SESSIONS: ChatSession[] = [
 ];
 
 export default function ChatbotPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
 
   const [activeTab, setActiveTab] = useState<ChatbotTab>("size_rules");
   const [isAiFittingEnabled, setIsAiFittingEnabled] = useState(true);
 
   // Tab 1: Size Rules State & Query
-  const { data: sizeRules = [] } = useQuery<SizeRule[]>({
-    queryKey: ["size-rules"],
-    queryFn: chatbotService.getSizeRules,
-  });
+  const { data: sizeRules = [], isLoading: isRulesLoading } = useSizeRules();
 
   const [ruleSearch, setRuleSearch] = useState("");
   const [isAddRuleModalOpen, setIsAddRuleModalOpen] = useState(false);
@@ -211,30 +216,33 @@ export default function ChatbotPage() {
   const [newRuleFit, setNewRuleFit] = useState<SizeRule["fitType"]>("Regular Fit");
 
   // Size Rule Mutations
-  const createRuleMutation = useMutation({
-    mutationFn: chatbotService.createSizeRule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["size-rules"] });
-      toast.success("Thành công", "Đã tạo quy tắc kích cỡ mới");
-      setIsAddRuleModalOpen(false);
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseCreateRule = useCreateSizeRule();
+  const createRuleMutation = {
+    ...baseCreateRule,
+    mutate: (payload: any) =>
+      baseCreateRule.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã tạo quy tắc kích cỡ mới");
+          setIsAddRuleModalOpen(false);
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
-  const deleteRuleMutation = useMutation({
-    mutationFn: chatbotService.deleteSizeRule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["size-rules"] });
-      toast.success("Thành công", "Đã xóa quy tắc kích cỡ");
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseDeleteRule = useDeleteSizeRule();
+  const deleteRuleMutation = {
+    ...baseDeleteRule,
+    mutate: (id: string) =>
+      baseDeleteRule.mutate(id, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã xóa quy tắc kích cỡ");
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
   // Tab 2: FAQ State & Query
-  const { data: faqs = [] } = useQuery<FAQItem[]>({
-    queryKey: ["faqs"],
-    queryFn: chatbotService.getFAQs,
-  });
+  const { data: faqs = [], isLoading: isFaqsLoading } = useFAQs();
 
   const [faqSearch, setFaqSearch] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<string>("all");
@@ -244,32 +252,35 @@ export default function ChatbotPage() {
   const [newFaqIntent, setNewFaqIntent] = useState<FAQItem["intent"]>("Size Fitting");
 
   // FAQ Mutations
-  const createFaqMutation = useMutation({
-    mutationFn: chatbotService.createFAQ,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["faqs"] });
-      toast.success("Thành công", "Đã thêm câu hỏi FAQ mới vào Knowledge Base");
-      setNewFaqQuestion("");
-      setNewFaqAnswer("");
-      setIsAddFaqOpen(false);
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseCreateFaq = useCreateFAQ();
+  const createFaqMutation = {
+    ...baseCreateFaq,
+    mutate: (payload: any) =>
+      baseCreateFaq.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã thêm câu hỏi FAQ mới vào Knowledge Base");
+          setNewFaqQuestion("");
+          setNewFaqAnswer("");
+          setIsAddFaqOpen(false);
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
-  const deleteFaqMutation = useMutation({
-    mutationFn: chatbotService.deleteFAQ,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["faqs"] });
-      toast.success("Thành công", "Đã xóa câu hỏi FAQ");
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseDeleteFaq = useDeleteFAQ();
+  const deleteFaqMutation = {
+    ...baseDeleteFaq,
+    mutate: (id: string) =>
+      baseDeleteFaq.mutate(id, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã xóa câu hỏi FAQ");
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
   // Tab 3: Conversation Logs & Simulator State
-  const { data: serverSessions = [] } = useQuery<ChatSession[]>({
-    queryKey: ["chat-sessions"],
-    queryFn: chatbotService.getSessions,
-  });
+  const { data: serverSessions = [] } = useChatSessions();
 
   const [activeSessionId, setActiveSessionId] = useState<string>("chat-1");
   const [replyText, setReplyText] = useState("");
@@ -280,14 +291,19 @@ export default function ChatbotPage() {
   }, [sessions, activeSessionId]);
 
   // AI Message Processing Mutation (for chat simulator)
-  const processMessageMutation = useMutation({
-    mutationFn: ({ message, sessionId }: { message: string; sessionId?: string }) =>
-      chatbotService.processMessage({ message, sessionId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
-      setReplyText("");
-    },
-  });
+  const baseProcessMessage = useProcessMessage();
+  const processMessageMutation = {
+    ...baseProcessMessage,
+    mutate: ({ message, sessionId }: { message: string; sessionId?: string }) =>
+      baseProcessMessage.mutate(
+        { message, sessionId },
+        {
+          onSuccess: () => {
+            setReplyText("");
+          },
+        }
+      ),
+  };
 
   // Filtered Size Rules
   const filteredRules = useMemo(() => {
@@ -499,7 +515,10 @@ export default function ChatbotPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                    {filteredRules.map((rule: SizeRule) => {
+                    {isRulesLoading ? (
+                      <TableSkeletonRows cols={7} rows={4} />
+                    ) : filteredRules.length > 0 ? (
+                      filteredRules.map((rule: SizeRule) => {
                       const categoryLabel =
                         rule.category === "Apparel"
                           ? "Quần áo"
@@ -568,7 +587,14 @@ export default function ChatbotPage() {
                           </td>
                         </tr>
                       );
-                    })}
+                    })
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-slate-400">
+                          Chưa có quy tắc kích cỡ nào phù hợp.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -622,6 +648,17 @@ export default function ChatbotPage() {
             </div>
 
             {/* Q&A Cards Grid */}
+            {isFaqsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                    <div className="h-5 w-24 bg-slate-200 rounded-full" />
+                    <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                    <div className="h-14 w-full bg-slate-50 border border-slate-100 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredFaqs.map((faq: FAQItem) => {
                 const intentLabel =
@@ -684,6 +721,7 @@ export default function ChatbotPage() {
                 );
               })}
             </div>
+            )}
           </div>
         )}
 

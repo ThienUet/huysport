@@ -36,35 +36,21 @@ import { GiShuttlecock } from "react-icons/gi";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useFilterStore } from "@/stores/useFilterStore";
+import ClientSearch from "./ClientSearch";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { getItemCount, setIsCartDrawerOpen } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { search, setSearch, setSport } = useFilterStore();
+  const { setSport } = useFilterStore();
 
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [localSearch, setLocalSearch] = useState(search);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Sync local search when store changes
-  useEffect(() => {
-    setLocalSearch(search);
-  }, [search]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (localSearch.trim()) {
-      setSearch(localSearch.trim());
-      router.push(`/products?search=${encodeURIComponent(localSearch.trim())}`);
-      setIsMobileMenuOpen(false);
-    }
-  };
 
   const navigateToSport = (sportName: string) => {
     setSport(sportName);
@@ -174,11 +160,11 @@ export default function Header() {
             </Link>
 
             {/* Desktop Navigation Links (Scientific & Clean) */}
-            <nav className="hidden lg:flex items-center gap-1 text-[13.5px] font-semibold text-gray-700">
+            <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-[13px] xl:text-[13.5px] font-semibold text-gray-700 shrink-0">
               {/* Trang Chủ */}
               <Link
                 href="/"
-                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                className={`px-2.5 xl:px-3 py-1.5 rounded-lg transition-colors ${
                   pathname === "/"
                     ? "text-emerald-600 font-bold bg-emerald-50/70"
                     : "hover:text-emerald-600 hover:bg-gray-50"
@@ -324,39 +310,10 @@ export default function Header() {
               </Link>
             </nav>
 
-            {/* Desktop Balanced Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-xs lg:max-w-sm relative">
-              <Input
-                aria-label="Tìm kiếm sản phẩm"
-                type="text"
-                placeholder="Tìm giày, quần áo, phụ kiện..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                startContent={<FaMagnifyingGlass className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
-                endContent={
-                  localSearch ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLocalSearch("");
-                        setSearch("");
-                      }}
-                      className="p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      title="Xóa tìm kiếm"
-                    >
-                      <FaXmark className="w-3 h-3" />
-                    </button>
-                  ) : null
-                }
-                size="sm"
-                radius="full"
-                classNames={{
-                  inputWrapper:
-                    "bg-gray-100/90 hover:bg-gray-100 focus-within:!bg-white focus-within:ring-2 focus-within:ring-emerald-500 border border-transparent focus-within:border-emerald-500 shadow-none transition-all h-9",
-                  input: "text-xs",
-                }}
-              />
-            </form>
+            {/* Desktop Live Autocomplete Search Bar */}
+            <div className="hidden md:flex flex-1 min-w-[200px] max-w-xs lg:max-w-sm">
+              <ClientSearch />
+            </div>
 
             {/* Right Action Icons (Cart & Account) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5">
@@ -388,6 +345,7 @@ export default function Header() {
                     >
                       <Avatar
                         size="sm"
+                        src={user?.avatar || undefined}
                         name={user?.fullName || "User"}
                         className="bg-emerald-600 text-white font-bold text-xs w-7 h-7 shrink-0"
                       />
@@ -406,9 +364,19 @@ export default function Header() {
                       if (key === "logout") logout();
                     }}
                   >
-                    <DropdownItem key="profile" textValue="Hồ sơ" className="h-12 gap-2 opacity-100 cursor-default" isReadOnly>
-                      <p className="font-bold text-xs text-gray-900">{user?.fullName}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
+                    <DropdownItem key="profile" textValue="Hồ sơ" className="h-14 gap-2.5 opacity-100 cursor-default" isReadOnly>
+                      <div className="flex items-center gap-2.5">
+                        <Avatar
+                          size="sm"
+                          src={user?.avatar || undefined}
+                          name={user?.fullName || "User"}
+                          className="bg-emerald-600 text-white font-bold text-xs shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-xs text-gray-900 truncate">{user?.fullName}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
+                        </div>
+                      </div>
                     </DropdownItem>
                     <DropdownItem
                       key="account"
@@ -463,34 +431,8 @@ export default function Header() {
         {/* 3. Mobile Navigation Drawer (Structured & Scientific) */}
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-100 bg-white px-4 pt-3.5 pb-6 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-150">
-            {/* Mobile Search Bar */}
-            <form onSubmit={handleSearchSubmit}>
-              <Input
-                aria-label="Tìm kiếm sản phẩm thể thao"
-                type="text"
-                placeholder="Tìm sản phẩm thể thao..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                startContent={<FaMagnifyingGlass className="w-3.5 h-3.5 text-gray-400" />}
-                endContent={
-                  localSearch ? (
-                    <button
-                      type="button"
-                      onClick={() => setLocalSearch("")}
-                      className="p-1 text-gray-400 hover:text-gray-600"
-                    >
-                      <FaXmark className="w-3 h-3" />
-                    </button>
-                  ) : null
-                }
-                size="sm"
-                radius="lg"
-                classNames={{
-                  inputWrapper: "bg-gray-100 border-none h-10",
-                  input: "text-xs",
-                }}
-              />
-            </form>
+            {/* Mobile Live Autocomplete Search Bar */}
+            <ClientSearch isMobile onCloseMobileMenu={() => setIsMobileMenuOpen(false)} />
 
             {/* Sport Categories Grid (Touch-friendly 2 columns) */}
             <div>
@@ -571,7 +513,12 @@ export default function Header() {
               {isUserAuth ? (
                 <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
                   <div className="flex items-center gap-2.5">
-                    <Avatar size="sm" name={user?.fullName || "User"} className="bg-emerald-600 text-white" />
+                    <Avatar
+                      size="sm"
+                      src={user?.avatar || undefined}
+                      name={user?.fullName || "User"}
+                      className="bg-emerald-600 text-white shrink-0"
+                    />
                     <div>
                       <div className="text-xs font-bold text-gray-900">{user?.fullName}</div>
                       <div className="text-[10px] text-gray-500">{user?.email}</div>

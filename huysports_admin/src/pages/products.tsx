@@ -1,10 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import AdminLayout from "@/layouts/admin-layout";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { productService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce, useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks";
 import {
   Search,
   Plus,
@@ -18,10 +16,17 @@ import {
   Boxes,
   Download,
   FileSpreadsheet,
+  Upload,
+  Image as ImageIcon,
+  Check,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { exportToCSV, exportToExcel, ReportSection } from "@/utils/exportUtils";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { HeroDropdown } from "@/components/ui/HeroDropdown";
+import { TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
+import { uploadService } from "@/services/api";
 
 interface VariantItem {
   id: string;
@@ -42,6 +47,7 @@ interface Product {
   basePrice: number;
   discountPrice?: number;
   thumbnail: string;
+  images?: string[];
   icon: string;
   sizes: string[];
   colors: { name: string; hex: string }[];
@@ -49,7 +55,36 @@ interface Product {
   status: "Active" | "Draft";
   variants: VariantItem[];
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+const PRESET_SPORTS_IMAGES: Record<string, { label: string; url: string }[]> = {
+  Football: [
+    { label: "Giày Mercurial Elite", url: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800" },
+    { label: "Quả bóng thi đấu", url: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800" },
+    { label: "Áo đấu sân nhà", url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800" },
+    { label: "Giày cỏ nhân tạo TF", url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800" },
+  ],
+  Running: [
+    { label: "Giày chạy bộ Pro", url: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800" },
+    { label: "Bộ quần áo thể thao", url: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800" },
+    { label: "Bình nước & Phụ kiện", url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800" },
+    { label: "Giày Marathon", url: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800" },
+  ],
+  Gym: [
+    { label: "Bộ tạ tay cao cấp", url: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800" },
+    { label: "Áo thun tập gym", url: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800" },
+    { label: "Găng tay & Đai tạ", url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800" },
+    { label: "Dây nhảy thể lực", url: "https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=800" },
+  ],
+  Badminton: [
+    { label: "Vợt Nanoflare Pro", url: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800" },
+    { label: "Hộp quả cầu lông", url: "https://images.unsplash.com/photo-1613918108466-292b78a8ef95?w=800" },
+    { label: "Giày cầu lông bám sàn", url: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800" },
+    { label: "Túi đựng vợt cao cấp", url: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800" },
+  ],
+};
 
 const AVAILABLE_SIZES = ["S", "M", "L", "XL", "XXL"];
 const AVAILABLE_COLORS = [
@@ -81,7 +116,6 @@ const removeVietnameseTones = (str: string) => {
 };
 
 export default function ProductsPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
   const [searchParams] = useSearchParams();
 
@@ -101,52 +135,14 @@ export default function ProductsPage() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
 
-  // React Query Fetch Products
-  const { data: products = [] } = useQuery({
-    queryKey: ["products", categoryFilter],
-    queryFn: () =>
-      productService.getAll({ category: categoryFilter !== "all" ? categoryFilter : undefined }),
+  // React Query Custom Hooks
+  const { data: products = [], isLoading } = useProducts({
+    category: categoryFilter !== "all" ? categoryFilter : undefined,
   });
 
-  // Create Product Mutation
-  const createMutation = useMutation({
-    mutationFn: productService.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast.success("Thành công", "Đã thêm sản phẩm thể thao mới");
-      setIsDrawerOpen(false);
-    },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể tạo sản phẩm");
-    },
-  });
-
-  // Update Product Mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => productService.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Thành công", "Đã cập nhật thông tin sản phẩm");
-      setIsDrawerOpen(false);
-    },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể cập nhật sản phẩm");
-    },
-  });
-
-  // Delete Product Mutation
-  const deleteMutation = useMutation({
-    mutationFn: productService.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast.success("Thành công", "Đã xóa sản phẩm khỏi hệ thống");
-    },
-    onError: (err: any) => {
-      toast.error("Lỗi", err.message || "Không thể xóa sản phẩm");
-    },
-  });
+  const createMutation = useCreateProduct();
+  const updateMutation = useUpdateProduct();
+  const deleteMutation = useDeleteProduct();
 
   // Drawer state (Add or Edit)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -154,17 +150,55 @@ export default function ProductsPage() {
 
   // Form State inside Drawer
   const [formName, setFormName] = useState("");
+  const [formSku, setFormSku] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formCategory, setFormCategory] = useState<"Football" | "Running" | "Gym" | "Badminton">("Football");
   const [formBrand, setFormBrand] = useState("");
   const [formBasePrice, setFormBasePrice] = useState<number>(250000);
   const [formDiscountPrice, setFormDiscountPrice] = useState<number>(0);
+  const [formThumbnail, setFormThumbnail] = useState("");
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState("");
+  const [customThumbnailInput, setCustomThumbnailInput] = useState("");
   const [formSelectedSizes, setFormSelectedSizes] = useState<string[]>(["M", "L"]);
   const [formSelectedColors, setFormSelectedColors] = useState<{ name: string; hex: string }[]>([
     AVAILABLE_COLORS[0],
     AVAILABLE_COLORS[2],
   ]);
   const [matrixVariants, setMatrixVariants] = useState<VariantItem[]>([]);
+
+  // Form field-level validation errors: "thiếu chỗ nào báo chỗ nấy"
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const clearError = (field: string) => {
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handleGenerateSku = () => {
+    const prefixMap: Record<string, string> = {
+      Football: "SPX-FB",
+      Running: "SPX-RN",
+      Gym: "SPX-GYM",
+      Badminton: "SPX-BD",
+    };
+    const prefix = prefixMap[formCategory] || "SPX-PRO";
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const newSku = `${prefix}-${randomSuffix}`;
+    setFormSku(newSku);
+    clearError("sku");
+    setMatrixVariants((prev) =>
+      generateMatrix(formSelectedSizes, formSelectedColors, newSku, formBasePrice, prev)
+    );
+    toast.info("Đã tạo mã SKU mới", `Mã SKU: ${newSku}`);
+  };
 
   // Regenerate matrix variants when sizes, colors or base price changes
   const generateMatrix = (
@@ -196,22 +230,30 @@ export default function ProductsPage() {
   const handleOpenAddDrawer = () => {
     setEditingProductId(null);
     setFormName("");
+    const generatedInitialSku = `SPX-FB-${Math.floor(100 + Math.random() * 900)}`;
+    setFormSku(generatedInitialSku);
     setFormDescription("");
     setFormCategory("Football");
     setFormBrand("SportX Pro");
     setFormBasePrice(250000);
     setFormDiscountPrice(0);
+    setFormThumbnail("");
+    setFormImages([]);
+    setCustomUrlInput("");
+    setCustomThumbnailInput("");
+    setFormErrors({});
     const initialSizes = ["M", "L"];
     const initialColors = [AVAILABLE_COLORS[0], AVAILABLE_COLORS[2]];
     setFormSelectedSizes(initialSizes);
     setFormSelectedColors(initialColors);
-    setMatrixVariants(generateMatrix(initialSizes, initialColors, "SPX-NEW", 250000));
+    setMatrixVariants(generateMatrix(initialSizes, initialColors, generatedInitialSku, 250000));
     setIsDrawerOpen(true);
   };
 
   const handleOpenEditDrawer = (product: Product) => {
     setEditingProductId(product.id);
     setFormName(product.title);
+    setFormSku(product.sku || `SPX-PRO-${Math.floor(100 + Math.random() * 900)}`);
     setFormDescription(product.description || "");
     setFormCategory(product.category);
     setFormBrand(product.brand);
@@ -219,8 +261,178 @@ export default function ProductsPage() {
     setFormDiscountPrice(product.discountPrice || 0);
     setFormSelectedSizes(product.sizes);
     setFormSelectedColors(product.colors);
-    setMatrixVariants(product.variants || []);
+    const effectivePrice = product.discountPrice || product.basePrice || 250000;
+    const initialVariants = (product.variants || []).map((v) => ({
+      ...v,
+      price: v.price && v.price !== 250000 ? v.price : effectivePrice,
+    }));
+    setMatrixVariants(initialVariants);
+    setFormErrors({});
+    const initialThumb = product.thumbnail || "";
+    setFormThumbnail(initialThumb);
+    const initialImages =
+      product.images && product.images.length > 0
+        ? product.images
+        : initialThumb &&
+          (initialThumb.startsWith("http") ||
+            initialThumb.startsWith("/") ||
+            initialThumb.startsWith("data:"))
+        ? [initialThumb]
+        : [];
+    setFormImages(initialImages);
+    setCustomUrlInput("");
+    setCustomThumbnailInput("");
     setIsDrawerOpen(true);
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.warning("Cảnh báo", "Vui lòng chọn file hình ảnh hợp lệ (PNG, JPG, WEBP)");
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      try {
+        const res = await uploadService.uploadImage({
+          image: base64,
+          filename: `thumb-${file.name}`,
+          type: "thumbnail",
+        });
+        const finalUrl = res?.url || base64;
+        setFormThumbnail(finalUrl);
+        setFormImages((prev) => (prev.includes(finalUrl) ? prev : [finalUrl, ...prev]));
+        clearError("images");
+        toast.success("Thành công", "Đã lưu ảnh Thumbnail vào thư mục images/thumbnails");
+      } catch {
+        setFormThumbnail(base64);
+        setFormImages((prev) => (prev.includes(base64) ? prev : [base64, ...prev]));
+        clearError("images");
+        toast.success("Đã chọn ảnh", "Đã cập nhật ảnh Thumbnail");
+      }
+    } catch (err: any) {
+      toast.error("Lỗi", err.message || "Không thể tải ảnh Thumbnail");
+    } finally {
+      setIsUploadingThumbnail(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleProductImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+    try {
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) {
+          toast.warning("Cảnh báo", `File ${file.name} không phải là file ảnh hợp lệ`);
+          continue;
+        }
+
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        try {
+          const res = await uploadService.uploadImage({
+            image: base64,
+            filename: `prod-${file.name}`,
+            type: "product",
+          });
+          newUrls.push(res?.url || base64);
+        } catch {
+          newUrls.push(base64);
+        }
+      }
+
+      if (newUrls.length > 0) {
+        setFormImages((prev) => Array.from(new Set([...prev, ...newUrls])));
+        if (!formThumbnail) {
+          setFormThumbnail(newUrls[0]);
+        }
+        clearError("images");
+        toast.success("Thành công", `Đã lưu ${newUrls.length} ảnh vào thư mục images/products`);
+      }
+    } catch (err: any) {
+      toast.error("Lỗi", err.message || "Không thể tải ảnh sản phẩm");
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleAddCustomThumbnailUrl = () => {
+    const url = customThumbnailInput.trim();
+    if (!url) return;
+    if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("data:") && !url.startsWith("/")) {
+      toast.warning("Thông báo", "Vui lòng nhập đường link URL ảnh hợp lệ (http://... hoặc https://...)");
+      return;
+    }
+    setFormThumbnail(url);
+    setFormImages((prev) => (prev.includes(url) ? prev : [url, ...prev]));
+    clearError("images");
+    setCustomThumbnailInput("");
+    toast.success("Thành công", "Đã cập nhật liên kết ảnh Thumbnail");
+  };
+
+  const handleAddCustomProductUrl = () => {
+    const url = customUrlInput.trim();
+    if (!url) return;
+    if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("data:") && !url.startsWith("/")) {
+      toast.warning("Thông báo", "Vui lòng nhập đường link URL ảnh hợp lệ (http://... hoặc https://...)");
+      return;
+    }
+    setFormImages((prev) => (prev.includes(url) ? prev : [...prev, url]));
+    if (!formThumbnail) {
+      setFormThumbnail(url);
+    }
+    clearError("images");
+    setCustomUrlInput("");
+    toast.success("Thành công", "Đã thêm ảnh chi tiết từ liên kết");
+  };
+
+  const handleSelectPreset = (url: string) => {
+    setFormImages((prev) => (prev.includes(url) ? prev : [...prev, url]));
+    if (!formThumbnail) {
+      setFormThumbnail(url);
+    }
+    clearError("images");
+    toast.success("Đã chọn ảnh", "Đã thêm ảnh mẫu vào bộ sưu tập sản phẩm");
+  };
+
+  const handleSetThumbnail = (url: string) => {
+    setFormThumbnail(url);
+    setFormImages((prev) => [url, ...prev.filter((u) => u !== url)]);
+    clearError("images");
+    toast.info("Đã chọn ảnh chính", "Ảnh này sẽ được dùng làm Thumbnail hiển thị chính");
+  };
+
+  const handleRemoveImage = (url: string) => {
+    const remaining = formImages.filter((u) => u !== url);
+    setFormImages(remaining);
+    if (formThumbnail === url) {
+      setFormThumbnail(remaining[0] || "");
+    }
+  };
+
+  const handleClearThumbnail = () => {
+    setFormThumbnail("");
+    toast.info("Đã xóa thumbnail", "Bạn có thể chọn ảnh khác làm ảnh đại diện");
   };
 
   const handleToggleColor = (color: { name: string; hex: string }) => {
@@ -235,9 +447,10 @@ export default function ProductsPage() {
       updated = [...formSelectedColors, color];
     }
     setFormSelectedColors(updated);
-    const baseSku = editingProductId
+    clearError("colors");
+    const baseSku = formSku || (editingProductId
       ? products.find((p: Product) => p.id === editingProductId)?.sku || "SPX-ITEM"
-      : "SPX-NEW";
+      : "SPX-NEW");
     setMatrixVariants((prev) =>
       generateMatrix(formSelectedSizes, updated, baseSku, formBasePrice, prev)
     );
@@ -255,9 +468,10 @@ export default function ProductsPage() {
       updated = [...formSelectedSizes, size];
     }
     setFormSelectedSizes(updated);
-    const baseSku = editingProductId
+    clearError("sizes");
+    const baseSku = formSku || (editingProductId
       ? products.find((p: Product) => p.id === editingProductId)?.sku || "SPX-ITEM"
-      : "SPX-NEW";
+      : "SPX-NEW");
     setMatrixVariants((prev) =>
       generateMatrix(updated, formSelectedColors, baseSku, formBasePrice, prev)
     );
@@ -267,50 +481,154 @@ export default function ProductsPage() {
     setMatrixVariants((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
+    clearError("variants");
+  };
+
+  const validateProductForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formName.trim()) {
+      errors.name = "Vui lòng nhập tên sản phẩm thể thao (bắt buộc)";
+    } else if (formName.trim().length < 3) {
+      errors.name = "Tên sản phẩm quá ngắn, vui lòng nhập tối thiểu 3 ký tự";
+    }
+
+    if (!formSku.trim()) {
+      errors.sku = "Vui lòng nhập mã SKU cho sản phẩm (bắt buộc, VD: SPX-FB-01)";
+    } else if (!/^[A-Za-z0-9_-]+$/.test(formSku.trim())) {
+      errors.sku = "Mã SKU chỉ được chứa ký tự chữ, số, dấu gạch nối (-) hoặc gạch dưới (_)";
+    }
+
+    if (!formCategory) {
+      errors.category = "Vui lòng chọn môn thể thao cho sản phẩm";
+    }
+
+    if (formBasePrice === undefined || formBasePrice === null || isNaN(formBasePrice) || Number(formBasePrice) <= 0) {
+      errors.basePrice = "Giá niêm yết gốc phải là số dương lớn hơn 0đ";
+    }
+
+    if (formDiscountPrice && Number(formDiscountPrice) > 0) {
+      if (Number(formDiscountPrice) >= Number(formBasePrice)) {
+        errors.discountPrice = "Giá khuyến mãi phải nhỏ hơn giá niêm yết gốc";
+      }
+    }
+
+    const hasThumbnail = Boolean(formThumbnail && formThumbnail.trim());
+    const hasImages = formImages && formImages.length > 0;
+    if (!hasThumbnail && !hasImages) {
+      errors.images = "Vui lòng tải lên hoặc chọn ít nhất 1 ảnh đại diện (Thumbnail) hoặc ảnh sản phẩm";
+    }
+
+    if (!formSelectedSizes || formSelectedSizes.length === 0) {
+      errors.sizes = "Vui lòng chọn ít nhất một kích cỡ (Size) sản phẩm";
+    }
+
+    if (!formSelectedColors || formSelectedColors.length === 0) {
+      errors.colors = "Vui lòng chọn ít nhất một màu sắc sản phẩm";
+    }
+
+    if (!matrixVariants || matrixVariants.length === 0) {
+      errors.variants = "Cần có ít nhất 1 biến thể SKU hợp lệ trong ma trận";
+    }
+
+    return errors;
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim()) {
-      toast.error("Lỗi", "Vui lòng nhập tên sản phẩm");
+    const errors = validateProductForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error(
+        "Thiếu thông tin bắt buộc",
+        `Vui lòng kiểm tra lại biểu mẫu: có ${Object.keys(errors).length} trường cần bổ sung.`
+      );
+      // Auto-scroll to the first invalid field
+      const firstErrorField = Object.keys(errors)[0];
+      const targetElement = document.getElementById(`field-${firstErrorField}`);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        const inputElem = targetElement.querySelector("input, select, textarea") as HTMLElement;
+        inputElem?.focus?.();
+      }
       return;
     }
+    setFormErrors({});
 
     const totalStock = matrixVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    const finalThumbnail = formThumbnail || (formImages.length > 0 ? formImages[0] : "");
+    const finalImages = formImages.length > 0 ? formImages : (finalThumbnail ? [finalThumbnail] : []);
+
+    const finalBasePrice = Number(formBasePrice);
+    const finalDiscountPrice = formDiscountPrice ? Number(formDiscountPrice) : undefined;
+    const finalEffectivePrice = finalDiscountPrice && finalDiscountPrice > 0 ? finalDiscountPrice : finalBasePrice;
+
+    // Synchronize variant prices with the effective product price if not customized
+    const finalVariants = matrixVariants.map((v) => ({
+      ...v,
+      price: v.price && v.price !== 250000 ? v.price : finalEffectivePrice,
+    }));
 
     const payload = {
-      title: formName,
-      description: formDescription,
+      title: formName.trim(),
+      sku: formSku.trim(),
+      description: formDescription.trim(),
       category: formCategory,
-      brand: formBrand || "SportX Pro",
-      basePrice: Number(formBasePrice),
-      discountPrice: formDiscountPrice ? Number(formDiscountPrice) : undefined,
+      brand: formBrand.trim() || "SportX Pro",
+      basePrice: finalBasePrice,
+      discountPrice: finalDiscountPrice,
+      thumbnail: finalThumbnail || "👟",
+      images: finalImages,
       sizes: formSelectedSizes,
       colors: formSelectedColors,
       totalStock,
-      variants: matrixVariants,
+      variants: finalVariants,
       status: "Active",
     };
 
     if (editingProductId) {
-      updateMutation.mutate({ id: editingProductId, data: payload });
+      updateMutation.mutate(
+        { id: editingProductId, data: payload },
+        {
+          onSuccess: () => {
+            toast.success("Thành công", "Đã cập nhật thông tin sản phẩm");
+            setIsDrawerOpen(false);
+          },
+          onError: (err: any) => toast.error("Lỗi cập nhật", err.message || "Không thể cập nhật sản phẩm"),
+        }
+      );
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã thêm sản phẩm thể thao mới");
+          setIsDrawerOpen(false);
+        },
+        onError: (err: any) => toast.error("Lỗi tạo mới", err.message || "Không thể tạo sản phẩm"),
+      });
     }
   };
 
   const handleDeleteProduct = (id: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi hệ thống?")) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => toast.success("Thành công", "Đã xóa sản phẩm khỏi hệ thống"),
+        onError: (err: any) => toast.error("Lỗi", err.message || "Không thể xóa sản phẩm"),
+      });
     }
   };
 
   const handleToggleStatus = (product: Product) => {
     const nextStatus = product.status === "Active" ? "Draft" : "Active";
-    updateMutation.mutate({
-      id: product.id,
-      data: { status: nextStatus },
-    });
+    updateMutation.mutate(
+      {
+        id: product.id,
+        data: { status: nextStatus },
+      },
+      {
+        onSuccess: () => toast.success("Thành công", "Đã cập nhật trạng thái sản phẩm"),
+        onError: (err: any) => toast.error("Lỗi", err.message || "Không thể cập nhật sản phẩm"),
+      }
+    );
   };
 
   // Filtering products
@@ -577,7 +895,9 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                {filteredProducts.length > 0 ? (
+                {isLoading ? (
+                  <TableSkeletonRows cols={8} rows={6} />
+                ) : filteredProducts.length > 0 ? (
                   filteredProducts.map((product: Product) => {
                     const isSelected = selectedProductIds.includes(product.id);
                     return (
@@ -601,7 +921,7 @@ export default function ProductsPage() {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
-                              {product.thumbnail && (product.thumbnail.startsWith("http") || product.thumbnail.startsWith("/")) ? (
+                              {product.thumbnail && (product.thumbnail.startsWith("http") || product.thumbnail.startsWith("/") || product.thumbnail.startsWith("data:")) ? (
                                 <img
                                   src={product.thumbnail}
                                   alt={product.title}
@@ -864,7 +1184,29 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Drawer Form Body */}
-                <form id="product-form" onSubmit={handleSaveProduct} className="p-6 space-y-6 flex-1">
+                <form id="product-form" onSubmit={handleSaveProduct} noValidate className="p-6 space-y-6 flex-1">
+                  {/* Validation Error Summary Alert */}
+                  {Object.keys(formErrors).length > 0 && (
+                    <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3 shadow-xs animate-in fade-in zoom-in-95 duration-150">
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-extrabold text-rose-900">
+                            Biểu mẫu còn {Object.keys(formErrors).length} thông tin chưa hợp lệ:
+                          </p>
+                          <span className="text-[10px] font-bold bg-rose-200/60 text-rose-800 px-2 py-0.5 rounded-full">
+                            Thiếu trường nào báo trường nấy
+                          </span>
+                        </div>
+                        <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-700 font-medium">
+                          {Object.values(formErrors).map((msg, idx) => (
+                            <li key={idx}>{msg}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
                   {/* General Info Section */}
                   <div className="space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
@@ -872,18 +1214,73 @@ export default function ProductsPage() {
                     </h3>
 
                     {/* Product Name */}
-                    <div>
+                    <div id="field-name">
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Tên sản phẩm *
+                        Tên sản phẩm <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <input
                         type="text"
-                        required
                         placeholder="VD: Áo đấu bóng đá tuyển Việt Nam 2026"
                         value={formName}
-                        onChange={(e) => setFormName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
+                        onChange={(e) => {
+                          setFormName(e.target.value);
+                          clearError("name");
+                        }}
+                        className={`w-full px-3.5 py-2.5 text-xs font-medium rounded-xl border transition focus:outline-none focus:ring-2 ${
+                          formErrors.name
+                            ? "bg-rose-50/40 border-rose-400 text-rose-950 focus:ring-rose-500/20"
+                            : "bg-slate-50 border-slate-200 focus:ring-blue-500/20 focus:bg-white"
+                        }`}
                       />
+                      {formErrors.name && (
+                        <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formErrors.name}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* SKU Code (Dedicated required field) */}
+                    <div id="field-sku">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Mã SKU sản phẩm <span className="text-rose-500 font-bold">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleGenerateSku}
+                          className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100/70 px-2 py-0.5 rounded-md transition cursor-pointer"
+                          title="Tự động tạo mã SKU ngẫu nhiên theo môn thể thao"
+                        >
+                          <Sparkles className="w-3 h-3 text-blue-500" />
+                          <span>Tự sinh SKU</span>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="VD: SPX-FB-01"
+                        value={formSku}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          setFormSku(val);
+                          clearError("sku");
+                        }}
+                        className={`w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl border transition focus:outline-none focus:ring-2 ${
+                          formErrors.sku
+                            ? "bg-rose-50/40 border-rose-400 text-rose-950 focus:ring-rose-500/20"
+                            : "bg-slate-50 border-slate-200 text-blue-700 focus:ring-blue-500/20 focus:bg-white"
+                        }`}
+                      />
+                      {formErrors.sku ? (
+                        <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formErrors.sku}</span>
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[10px] text-slate-400 font-medium">
+                          Mã định danh sản phẩm duy nhất trong kho hàng (Ví dụ: SPX-FB-01)
+                        </p>
+                      )}
                     </div>
 
                     {/* Description */}
@@ -902,13 +1299,16 @@ export default function ProductsPage() {
 
                     {/* Category & Brand */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
+                      <div id="field-category">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Môn thể thao *
+                          Môn thể thao <span className="text-rose-500 font-bold">*</span>
                         </label>
                         <HeroSelect
                           value={formCategory}
-                          onChange={(val) => setFormCategory(val as any)}
+                          onChange={(val) => {
+                            setFormCategory(val as any);
+                            clearError("category");
+                          }}
                           options={[
                             { key: "Football", label: "⚽ Bóng đá" },
                             { key: "Running", label: "🏃 Chạy bộ" },
@@ -916,9 +1316,15 @@ export default function ProductsPage() {
                             { key: "Badminton", label: "🏸 Cầu lông" },
                           ]}
                           className="w-full"
-                          triggerClassName="w-full bg-slate-50 py-2.5"
+                          triggerClassName={`w-full py-2.5 ${formErrors.category ? "border-rose-400 bg-rose-50/40 text-rose-900" : "bg-slate-50"}`}
                           aria-label="Chọn môn thể thao"
                         />
+                        {formErrors.category && (
+                          <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                            <span>{formErrors.category}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -937,21 +1343,38 @@ export default function ProductsPage() {
 
                     {/* Pricing */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
+                      <div id="field-basePrice">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                          Giá niêm yết gốc (đ) *
+                          Giá niêm yết gốc (đ) <span className="text-rose-500 font-bold">*</span>
                         </label>
                         <input
                           type="number"
                           step="1000"
-                          required
                           value={formBasePrice}
-                          onChange={(e) => setFormBasePrice(Number(e.target.value))}
-                          className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
+                          onChange={(e) => {
+                            const newBase = Number(e.target.value);
+                            setFormBasePrice(newBase);
+                            clearError("basePrice");
+                            const eff = formDiscountPrice && formDiscountPrice > 0 ? formDiscountPrice : newBase;
+                            setMatrixVariants((prev) =>
+                              prev.map((v) => ({ ...v, price: eff }))
+                            );
+                          }}
+                          className={`w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border transition focus:outline-none focus:ring-2 ${
+                            formErrors.basePrice
+                              ? "bg-rose-50/40 border-rose-400 text-rose-950 focus:ring-rose-500/20"
+                              : "bg-slate-50 border-slate-200 focus:ring-blue-500/20 focus:bg-white"
+                          }`}
                         />
+                        {formErrors.basePrice && (
+                          <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                            <span>{formErrors.basePrice}</span>
+                          </p>
+                        )}
                       </div>
 
-                      <div>
+                      <div id="field-discountPrice">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5">
                           Giá khuyến mãi / Sale (đ)
                         </label>
@@ -960,10 +1383,300 @@ export default function ProductsPage() {
                           step="1000"
                           placeholder="Không bắt buộc"
                           value={formDiscountPrice || ""}
-                          onChange={(e) => setFormDiscountPrice(Number(e.target.value))}
-                          className="w-full px-3.5 py-2.5 bg-slate-50 text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
+                          onChange={(e) => {
+                            const newDisc = Number(e.target.value);
+                            setFormDiscountPrice(newDisc);
+                            clearError("discountPrice");
+                            const eff = newDisc > 0 ? newDisc : formBasePrice;
+                            setMatrixVariants((prev) =>
+                              prev.map((v) => ({ ...v, price: eff }))
+                            );
+                          }}
+                          className={`w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border transition focus:outline-none focus:ring-2 ${
+                            formErrors.discountPrice
+                              ? "bg-rose-50/40 border-rose-400 text-rose-950 focus:ring-rose-500/20"
+                              : "bg-slate-50 border-slate-200 focus:ring-blue-500/20 focus:bg-white"
+                          }`}
                         />
+                        {formErrors.discountPrice && (
+                          <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                            <span>{formErrors.discountPrice}</span>
+                          </p>
+                        )}
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 my-4" />
+
+                  {/* 2. Product Images & Thumbnail Section */}
+                  <div
+                    id="field-images"
+                    className={`space-y-5 rounded-2xl transition ${
+                      formErrors.images ? "p-4 border-2 border-rose-300 bg-rose-50/20 shadow-xs" : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <ImageIcon className="w-3.5 h-3.5 text-blue-600" /> 2. Quản lý Ảnh Thumbnail & Ảnh Sản Phẩm <span className="text-rose-500 font-bold">*</span>
+                      </h3>
+                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-mono">
+                        Lưu tại HuyHung/images/
+                      </span>
+                    </div>
+
+                    {formErrors.images && (
+                      <div className="p-3 rounded-xl bg-rose-100/90 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-150">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>{formErrors.images}</span>
+                      </div>
+                    )}
+
+                    {/* Block A: THUMBNAIL (Ảnh đại diện chính) */}
+                    <div className="p-4 rounded-2xl border border-blue-100 bg-blue-50/30 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-900 block flex items-center gap-1.5">
+                            ★ Ảnh đại diện sản phẩm (Thumbnail)
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Ảnh chính hiển thị ngoài trang chủ, danh sách sản phẩm và thẻ tìm kiếm (Lưu tại <strong>images/thumbnails/</strong>)
+                          </span>
+                        </div>
+                        {formThumbnail && (
+                          <button
+                            type="button"
+                            onClick={handleClearThumbnail}
+                            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                          >
+                            Xóa Thumbnail
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        {/* Thumbnail Preview Box */}
+                        <div className="w-24 h-24 rounded-2xl border-2 border-slate-200 bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-xs relative group">
+                          {formThumbnail ? (
+                            <>
+                              <img
+                                src={formThumbnail}
+                                alt="Thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span className="text-[10px] text-white font-bold px-2 py-1 rounded bg-black/50">
+                                  Thumbnail
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center p-2 text-slate-400">
+                              <ImageIcon className="w-7 h-7 mx-auto mb-1 text-slate-300" />
+                              <span className="text-[9px] font-bold block">Chưa có ảnh</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Thumbnail Controls */}
+                        <div className="flex-1 space-y-2 w-full">
+                          <div className="flex flex-wrap gap-2">
+                            <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs active:scale-95">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleThumbnailUpload}
+                                disabled={isUploadingThumbnail}
+                              />
+                              {isUploadingThumbnail ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Upload className="w-3.5 h-3.5" />
+                              )}
+                              <span>{isUploadingThumbnail ? "Đang tải lên..." : "Tải ảnh Thumbnail từ máy"}</span>
+                            </label>
+                            <span className="text-[11px] text-slate-400 self-center">hoặc dán liên kết URL bên dưới</span>
+                          </div>
+
+                          <div className="flex gap-1.5">
+                            <input
+                              type="text"
+                              placeholder="Dán link URL Thumbnail (VD: https://images.unsplash.com/...)"
+                              value={customThumbnailInput}
+                              onChange={(e) => setCustomThumbnailInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddCustomThumbnailUrl();
+                                }
+                              }}
+                              className="flex-1 min-w-0 px-3 py-2 bg-white text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddCustomThumbnailUrl}
+                              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shrink-0 cursor-pointer"
+                            >
+                              Gán Thumbnail
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Block B: PRODUCT GALLERY (Bộ sưu tập ảnh chi tiết sản phẩm) */}
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-900 block flex items-center gap-1.5">
+                            <Package className="w-3.5 h-3.5 text-blue-600" /> Bộ sưu tập ảnh sản phẩm chi tiết
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Các góc chụp khác nhau của sản phẩm trong trang chi tiết (Lưu tại <strong>images/products/</strong>)
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                          {formImages.length} ảnh trong album
+                        </span>
+                      </div>
+
+                      {/* Upload & Link Controls for Product Images */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-3 flex items-center justify-center gap-2.5 bg-white hover:bg-blue-50/50 cursor-pointer transition group">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleProductImagesUpload}
+                            disabled={isUploadingImage}
+                          />
+                          {isUploadingImage ? (
+                            <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition" />
+                          )}
+                          <div className="text-left">
+                            <span className="text-xs font-bold text-slate-800 group-hover:text-blue-700 block">
+                              {isUploadingImage ? "Đang tải ảnh..." : "Thêm ảnh sản phẩm từ máy"}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">Chọn 1 hoặc nhiều ảnh</span>
+                          </div>
+                        </label>
+
+                        <div className="flex items-center gap-1.5 bg-white p-2 border border-slate-200 rounded-xl">
+                          <input
+                            type="text"
+                            placeholder="Dán link ảnh chi tiết..."
+                            value={customUrlInput}
+                            onChange={(e) => setCustomUrlInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddCustomProductUrl();
+                              }
+                            }}
+                            className="flex-1 min-w-0 px-2 py-1 text-xs bg-slate-50 rounded-lg border border-slate-200 focus:outline-none focus:bg-white font-medium"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddCustomProductUrl}
+                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
+                          >
+                            Thêm
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Quick Image Presets based on selected Category */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-600">
+                            Kho ảnh mẫu gợi ý theo môn {formCategory}:
+                          </span>
+                          <span className="text-[10px] text-slate-400">(Nhấp để thêm nhanh vào album)</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          {(PRESET_SPORTS_IMAGES[formCategory] || PRESET_SPORTS_IMAGES.Football).map((preset) => {
+                            const isAdded = formImages.includes(preset.url);
+                            return (
+                              <button
+                                key={preset.url}
+                                type="button"
+                                onClick={() => handleSelectPreset(preset.url)}
+                                className={`group relative aspect-video rounded-lg overflow-hidden border transition text-left cursor-pointer ${
+                                  isAdded ? "ring-2 ring-blue-600 border-blue-600" : "border-slate-200 hover:border-blue-400"
+                                }`}
+                              >
+                                <img src={preset.url} alt={preset.label} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1">
+                                  <span className="text-[9px] font-bold text-white block truncate">{preset.label}</span>
+                                </div>
+                                {isAdded && (
+                                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">
+                                    <Check className="w-2.5 h-2.5" />
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Selected Images Gallery */}
+                      {formImages.length > 0 ? (
+                        <div className="space-y-2 pt-1">
+                          <label className="block text-xs font-bold text-slate-700">
+                            Danh sách ảnh chi tiết ({formImages.length} ảnh):
+                          </label>
+                          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
+                            {formImages.map((imgUrl) => {
+                              const isMain = formThumbnail === imgUrl;
+                              return (
+                                <div
+                                  key={imgUrl}
+                                  className={`relative group aspect-square rounded-xl overflow-hidden border bg-white transition ${
+                                    isMain ? "ring-2 ring-blue-600 border-transparent shadow-sm" : "border-slate-200 hover:border-slate-300"
+                                  }`}
+                                >
+                                  <img src={imgUrl} alt="Product" className="w-full h-full object-cover" />
+                                  {isMain && (
+                                    <span className="absolute top-1.5 left-1.5 bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs z-10">
+                                      ★ Thumbnail
+                                    </span>
+                                  )}
+                                  <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5 p-1">
+                                    {!isMain && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetThumbnail(imgUrl)}
+                                        title="Đặt ảnh này làm Thumbnail"
+                                        className="p-1 rounded-lg bg-white text-blue-600 hover:bg-blue-50 text-[10px] font-bold transition shadow-xs cursor-pointer"
+                                      >
+                                        Làm Thumbnail
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveImage(imgUrl)}
+                                      title="Xóa ảnh này khỏi album"
+                                      className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition shadow-xs cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white rounded-xl border border-slate-200 text-center text-xs text-slate-400">
+                          Chưa có ảnh chi tiết nào. Hãy tải ảnh từ máy tính hoặc nhấp chọn ảnh mẫu ở trên.
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -973,7 +1686,7 @@ export default function ProductsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-600" /> 2. Bộ sinh biến thể (Size & Màu sắc)
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" /> 3. Bộ sinh biến thể (Size & Màu sắc)
                       </h3>
                       <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                         {matrixVariants.length} Biến thể phối
@@ -981,9 +1694,9 @@ export default function ProductsPage() {
                     </div>
 
                     {/* Color Multi-select */}
-                    <div>
+                    <div id="field-colors">
                       <label className="block text-xs font-bold text-slate-700 mb-2">
-                        Chọn các màu sẵn có:
+                        Chọn các màu sẵn có: <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {AVAILABLE_COLORS.map((c) => {
@@ -1008,12 +1721,18 @@ export default function ProductsPage() {
                           );
                         })}
                       </div>
+                      {formErrors.colors && (
+                        <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formErrors.colors}</span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Size Multi-select */}
-                    <div>
+                    <div id="field-sizes">
                       <label className="block text-xs font-bold text-slate-700 mb-2">
-                        Chọn các size sẵn có:
+                        Chọn các size sẵn có: <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {AVAILABLE_SIZES.map((size) => {
@@ -1034,13 +1753,25 @@ export default function ProductsPage() {
                           );
                         })}
                       </div>
+                      {formErrors.sizes && (
+                        <p className="mt-1.5 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formErrors.sizes}</span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Variant Matrix Table */}
-                    <div className="mt-4">
+                    <div id="field-variants" className="mt-4">
                       <label className="block text-xs font-bold text-slate-700 mb-2">
                         Ma trận SKU, Giá bán & Tồn kho từng biến thể:
                       </label>
+                      {formErrors.variants && (
+                        <p className="mb-2 text-[11px] font-semibold text-rose-600 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{formErrors.variants}</span>
+                        </p>
+                      )}
                       <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
@@ -1133,7 +1864,7 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    {viewProduct.thumbnail && (viewProduct.thumbnail.startsWith("http") || viewProduct.thumbnail.startsWith("/")) ? (
+                    {viewProduct.thumbnail && (viewProduct.thumbnail.startsWith("http") || viewProduct.thumbnail.startsWith("/") || viewProduct.thumbnail.startsWith("data:")) ? (
                       <img src={viewProduct.thumbnail} alt={viewProduct.title} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-3xl">{viewProduct.thumbnail || "👟"}</span>

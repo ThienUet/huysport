@@ -5,7 +5,7 @@ import { db } from "../db/store.js";
 
 export class PaymentController {
   // Sort an object alphabetically by keys for VNPAY checksum
-  private static sortObject(obj: Record<string, any>): Record<string, string> {
+  public static sortObject(obj: Record<string, any>): Record<string, string> {
     const sorted: Record<string, string> = {};
     const str: string[] = [];
     let key: string;
@@ -21,13 +21,27 @@ export class PaymentController {
     return sorted;
   }
 
-  // Create VNPAY Payment URL
-  public static createVNPayUrl(req: Request, res: Response) {
-    const { orderId, amount, bankCode, orderInfo, locale = "vn" } = req.body;
-
-    const order = orderId ? db.getOrderById(orderId) : null;
-    const finalAmount = amount || (order ? order.totalAmount * 25000 : 500000); // convert USD to VND standard if needed, or in VND
-    const orderRef = order ? order.orderNumber : `SPX-${Date.now().toString().slice(-6)}`;
+  // Generate VNPAY payment gateway URL
+  public static generatePaymentUrl({
+    orderNumber,
+    amount,
+    bankCode,
+    orderInfo,
+    ipAddr = "127.0.0.1",
+    locale = "vn",
+  }: {
+    orderNumber: string;
+    amount: number;
+    bankCode?: string;
+    orderInfo?: string;
+    ipAddr?: string;
+    locale?: string;
+  }): string {
+    const cleanRef = orderNumber.replace(/^#/, "");
+    let finalAmount = Number(amount);
+    if (finalAmount < 1000 && finalAmount > 0) {
+      finalAmount = finalAmount * 25000;
+    }
 
     const date = new Date();
     const createDate =
@@ -37,11 +51,6 @@ export class PaymentController {
       ("0" + date.getHours()).slice(-2) +
       ("0" + date.getMinutes()).slice(-2) +
       ("0" + date.getSeconds()).slice(-2);
-
-    const ipAddr =
-      req.headers["x-forwarded-for"] ||
-      req.socket.remoteAddress ||
-      "127.0.0.1";
 
     const tmnCode = config.vnpay.tmnCode;
     const secretKey = config.vnpay.hashSecret;
@@ -54,12 +63,12 @@ export class PaymentController {
     vnp_Params["vnp_TmnCode"] = tmnCode;
     vnp_Params["vnp_Locale"] = locale;
     vnp_Params["vnp_CurrCode"] = "VND";
-    vnp_Params["vnp_TxnRef"] = orderRef;
-    vnp_Params["vnp_OrderInfo"] = orderInfo || `Thanh toan don hang ${orderRef} tai SportX`;
+    vnp_Params["vnp_TxnRef"] = cleanRef;
+    vnp_Params["vnp_OrderInfo"] = orderInfo || `Thanh toan don hang ${cleanRef} tai SportX`;
     vnp_Params["vnp_OrderType"] = "other";
     vnp_Params["vnp_Amount"] = Math.round(finalAmount * 100);
     vnp_Params["vnp_ReturnUrl"] = returnUrl;
-    vnp_Params["vnp_IpAddr"] = String(ipAddr);
+    vnp_Params["vnp_IpAddr"] = String(ipAddr || "127.0.0.1");
     vnp_Params["vnp_CreateDate"] = createDate;
 
     if (bankCode) {
@@ -74,12 +83,35 @@ export class PaymentController {
 
     const hmac = crypto.createHmac("sha512", secretKey);
     const signed = hmac.update(Buffer.from(querystring, "utf-8")).digest("hex");
-    vnpUrl += "?" + querystring + "&vnp_SecureHash=" + signed;
+    return vnpUrl + "?" + querystring + "&vnp_SecureHash=" + signed;
+  }
+
+  // Create VNPAY Payment URL Endpoint
+  public static createVNPayUrl(req: Request, res: Response) {
+    const { orderId, amount, bankCode, orderInfo, locale = "vn" } = req.body;
+
+    const order = orderId ? db.getOrderById(orderId) : null;
+    const finalAmount = amount || (order ? order.totalAmount : 500000);
+    const orderRef = order ? order.orderNumber : `SPX-${Date.now().toString().slice(-6)}`;
+
+    const ipAddr =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress ||
+      "127.0.0.1";
+
+    const paymentUrl = PaymentController.generatePaymentUrl({
+      orderNumber: orderRef,
+      amount: finalAmount,
+      bankCode,
+      orderInfo,
+      ipAddr: String(ipAddr),
+      locale,
+    });
 
     res.json({
       success: true,
       data: {
-        paymentUrl: vnpUrl,
+        paymentUrl,
         orderRef,
         amount: finalAmount,
       },
@@ -108,7 +140,7 @@ export class PaymentController {
 
     // Update order if found
     if (txnRef) {
-      const order = db.getOrders().find((o) => o.orderNumber === txnRef);
+      const order = db.getOrders().find((o) => o.orderNumber === txnRef || o.orderNumber === `#${txnRef}`);
       if (order && isSuccess) {
         db.updateOrder(order.id, {
           paymentStatus: "Paid",
@@ -135,5 +167,53 @@ export class PaymentController {
         isSignatureValid: signed === secureHash,
       },
     });
+  }
+
+  // Handle IPN (Instant Payment Notification) Webhook from VNPAY Server
+  public static vnpayIpn(req: Request, res: Response) {
+    let vnp_Params = req.query as Record<string, string>;
+    const secureHash = vnp_Params["vnp_SecureHash"];
+
+    delete vnp_Params["vnp_SecureHash"];
+    delete vnp_Params["vnp_SecureHashType"];
+
+    vnp_Params = PaymentController.sortObject(vnp_Params);
+    const secretKey = config.vnpay.hashSecret;
+    const querystring = Object.entries(vnp_Params)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("&");
+
+    const hmac = crypto.createHmac("sha512", secretKey);
+    const signed = hmac.update(Buffer.from(querystring, "utf-8")).digest("hex");
+
+    if (signed !== secureHash) {
+      return res.status(200).json({ RspCode: "97", Message: "Checksum failed" });
+    }
+
+    const txnRef = vnp_Params["vnp_TxnRef"];
+    const order = db.getOrders().find((o) => o.orderNumber === txnRef || o.orderNumber === `#${txnRef}`);
+    if (!order) {
+      return res.status(200).json({ RspCode: "01", Message: "Order not found" });
+    }
+
+    if (order.paymentStatus === "Paid") {
+      return res.status(200).json({ RspCode: "02", Message: "Order already confirmed" });
+    }
+
+    if (vnp_Params["vnp_ResponseCode"] === "00") {
+      db.updateOrder(order.id, {
+        paymentStatus: "Paid",
+        fulfillmentStatus: "Processing",
+        transactionDetails: {
+          gateway: "VNPAY",
+          transactionCode: vnp_Params["vnp_TransactionNo"] || `VNP${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          bankCode: vnp_Params["vnp_BankCode"] || "VNPAY",
+          responseMessage: "00 (Transaction Successful)",
+        },
+      });
+    }
+
+    return res.status(200).json({ RspCode: "00", Message: "Confirm Success" });
   }
 }

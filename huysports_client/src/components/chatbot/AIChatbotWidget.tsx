@@ -12,7 +12,7 @@ import {
   FaMessage,
 } from "react-icons/fa6";
 import { useChatbotStore } from "@/stores/useChatbotStore";
-import { chatbotService } from "@/services/chatbotService";
+import { useChatbotMessage } from "@/hooks";
 
 // Helper to render markdown bold (**text**) and line breaks cleanly
 function renderFormattedMessage(text: string) {
@@ -45,6 +45,7 @@ export default function AIChatbotWidget() {
 
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatMessageMutation = useChatbotMessage();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,7 +69,7 @@ export default function AIChatbotWidget() {
     setIsTyping(true);
 
     try {
-      const response = await chatbotService.sendMessage(text, sessionId);
+      const response = await chatMessageMutation.mutateAsync({ message: text, sessionId });
       setIsTyping(false);
 
       if (response && response.success) {

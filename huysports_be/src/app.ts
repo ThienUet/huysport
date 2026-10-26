@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import apiRouter from "./routes/index.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { imagesDir, uploadsDir } from "./config/index.js";
 
 const app = express();
 
@@ -15,9 +16,13 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(morgan("dev"));
+
+// Static media directory at HuyHung/images with subfolders (avatars, products, thumbnails)
+app.use("/images", express.static(imagesDir));
+app.use("/uploads", express.static(imagesDir)); // backward compatibility
 
 // API Root
 app.use("/api", apiRouter);

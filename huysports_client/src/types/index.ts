@@ -16,6 +16,7 @@ export interface Product {
   sport: "Bóng đá" | "Chạy bộ" | "Gym / Fitness" | "Cầu lông" | "Phụ kiện" | "Tất cả";
   gender: "Nam" | "Nữ" | "Unisex";
   brand: string;
+  basePrice?: number;
   price: number;
   originalPrice?: number;
   discountPercent?: number;
@@ -45,6 +46,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   maxStock: number;
+  selected?: boolean;
 }
 
 export interface OrderItem {
@@ -99,7 +101,7 @@ export interface Order {
   discountAmount: number;
   couponCode?: string;
   totalAmount: number;
-  paymentMethod: "COD" | "VNPAY" | "MOMO" | "BANK_TRANSFER";
+  paymentMethod: "COD" | "VNPAY";
   paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   fulfillmentStatus: "PENDING" | "PROCESSING" | "SHIPPING" | "DELIVERED" | "CANCELLED";
   shippingCarrier?: string;

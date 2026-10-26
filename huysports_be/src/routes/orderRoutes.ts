@@ -4,6 +4,7 @@ import { OrderController } from "../controllers/orderController.js";
 const router = Router();
 
 router.get("/", OrderController.getAll);
+router.get("/track", OrderController.getAll);
 router.get("/:id", OrderController.getById);
 router.post("/", OrderController.create);
 router.post("/:id/cancel", OrderController.cancel);

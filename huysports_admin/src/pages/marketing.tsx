@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import AdminLayout from "@/layouts/admin-layout";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { marketingService } from "@/services/api";
 import { useToastStore } from "@/store/useToastStore";
+import { useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon } from "@/hooks";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { formatDateTime } from "@/utils/formatUtils";
+import { TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
 import {
   Ticket,
   Plus,
@@ -123,52 +123,60 @@ const INITIAL_COUPONS: Coupon[] = [
 ];
 
 export default function MarketingPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
 
   const [activeTab, setActiveTab] = useState<CampaignStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
-  // Fetch coupons from backend
-  const { data: serverCoupons = [] } = useQuery({
-    queryKey: ["coupons"],
-    queryFn: marketingService.getCoupons,
-  });
+  // Fetch coupons from backend with custom hook
+  const { data: serverCoupons = [], isLoading } = useCoupons();
 
   const coupons: Coupon[] = serverCoupons.length > 0 ? serverCoupons : INITIAL_COUPONS;
 
   // Create Coupon Mutation
-  const createCouponMutation = useMutation({
-    mutationFn: marketingService.createCoupon,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["coupons"] });
-      toast.success("Thành công", "Đã tạo mã giảm giá mới");
-      setIsModalOpen(false);
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseCreateCoupon = useCreateCoupon();
+  const createCouponMutation = {
+    ...baseCreateCoupon,
+    mutate: (payload: any) =>
+      baseCreateCoupon.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã tạo mã giảm giá mới");
+          setIsModalOpen(false);
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
   // Update Coupon Mutation
-  const updateCouponMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => marketingService.updateCoupon(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["coupons"] });
-      toast.success("Thành công", "Đã cập nhật mã giảm giá");
-      setIsModalOpen(false);
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseUpdateCoupon = useUpdateCoupon();
+  const updateCouponMutation = {
+    ...baseUpdateCoupon,
+    mutate: ({ id, data }: { id: string; data: any }) =>
+      baseUpdateCoupon.mutate(
+        { id, data },
+        {
+          onSuccess: () => {
+            toast.success("Thành công", "Đã cập nhật mã giảm giá");
+            setIsModalOpen(false);
+          },
+          onError: (err: any) => toast.error("Lỗi", err.message),
+        }
+      ),
+  };
 
   // Delete Coupon Mutation
-  const deleteCouponMutation = useMutation({
-    mutationFn: marketingService.deleteCoupon,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["coupons"] });
-      toast.success("Thành công", "Đã xóa mã giảm giá");
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  const baseDeleteCoupon = useDeleteCoupon();
+  const deleteCouponMutation = {
+    ...baseDeleteCoupon,
+    mutate: (id: string) =>
+      baseDeleteCoupon.mutate(id, {
+        onSuccess: () => {
+          toast.success("Thành công", "Đã xóa mã giảm giá");
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -411,7 +419,9 @@ export default function MarketingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                {filteredCoupons.length > 0 ? (
+                {isLoading ? (
+                  <TableSkeletonRows cols={7} rows={4} />
+                ) : filteredCoupons.length > 0 ? (
                   filteredCoupons.map((coupon) => {
                     const usagePercent = Math.min(
                       100,

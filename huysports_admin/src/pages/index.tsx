@@ -1,8 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "@/layouts/admin-layout";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { dashboardService, orderService } from "@/services/api";
+import { useDashboardStats, useRevenueChart, useTopProducts, useOrders } from "@/hooks";
 import {
   DollarSign,
   ShoppingBag,
@@ -28,6 +27,7 @@ import { useToastStore } from "@/store/useToastStore";
 import { HeroSelect } from "@/components/ui/HeroSelect";
 import { HeroDropdown } from "@/components/ui/HeroDropdown";
 import { formatDateTime } from "@/utils/formatUtils";
+import { StatCardsSkeleton, TableSkeletonRows } from "@/components/ui/LoadingSkeletons";
 
 // Helper to format currency nicely in VNĐ
 const formatCurrency = (val: number | string) => {
@@ -45,25 +45,10 @@ export default function IndexPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   // React Query Hooks (Realtime DB)
-  const { data: statsData } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: dashboardService.getStats,
-  });
-
-  const { data: chartData } = useQuery({
-    queryKey: ["dashboard-chart", timeRange],
-    queryFn: () => dashboardService.getRevenueChart(timeRange),
-  });
-
-  const { data: topProductsData } = useQuery({
-    queryKey: ["dashboard-top-products"],
-    queryFn: dashboardService.getTopProducts,
-  });
-
-  const { data: ordersData } = useQuery({
-    queryKey: ["dashboard-orders"],
-    queryFn: () => orderService.getAll(),
-  });
+  const { data: statsData, isLoading: isStatsLoading } = useDashboardStats();
+  const { data: chartData } = useRevenueChart(timeRange);
+  const { data: topProductsData, isLoading: isTopProductsLoading } = useTopProducts();
+  const { data: ordersData, isLoading: isOrdersLoading } = useOrders();
 
   const activeDataset = chartData || {
     avgRevenue: "350.000đ",
@@ -331,7 +316,10 @@ export default function IndexPage() {
         </div>
 
         {/* 2. Key Performance Metrics (4 Stat Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {isStatsLoading ? (
+          <StatCardsSkeleton count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: Total Revenue */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 group">
             <div className="flex items-center justify-between mb-3">
@@ -428,6 +416,7 @@ export default function IndexPage() {
             </p>
           </div>
         </div>
+        )}
 
         {/* 3. Main Content Grid (2 Columns) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -617,41 +606,56 @@ export default function IndexPage() {
               </div>
 
               {/* Items List */}
-              <div className="space-y-3">
-                {topProducts.slice(0, 5).map((product: any) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100"
-                  >
+              {isTopProductsLoading ? (
+                <div className="space-y-3 animate-pulse">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center gap-3 p-2">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3.5 w-3/4 bg-slate-200 rounded" />
+                        <div className="h-2.5 w-1/2 bg-slate-100 rounded" />
+                      </div>
+                      <div className="h-4 w-14 bg-slate-200 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {topProducts.slice(0, 5).map((product: any) => (
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg border ${product.bg}`}
+                      key={product.id}
+                      className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100"
                     >
-                      {product.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate" title={product.name}>
-                        {product.name}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${product.badgeColor}`}>
-                          {product.category}
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          Kho: <strong className={product.stock === 0 ? "text-rose-600" : "text-slate-600"}>{product.stock}</strong>
-                        </span>
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg border ${product.bg}`}
+                      >
+                        {product.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 truncate" title={product.name}>
+                          {product.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${product.badgeColor}`}>
+                            {product.category}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            Kho: <strong className={product.stock === 0 ? "text-rose-600" : "text-slate-600"}>{product.stock}</strong>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xs font-bold text-slate-900">
+                          {product.salesCount} <span className="text-[10px] font-normal text-slate-400">đã bán</span>
+                        </div>
+                        <div className="text-xs font-bold text-emerald-600">
+                          {product.revenueFormatted}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xs font-bold text-slate-900">
-                        {product.salesCount} <span className="text-[10px] font-normal text-slate-400">đã bán</span>
-                      </div>
-                      <div className="text-xs font-bold text-emerald-600">
-                        {product.revenueFormatted}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Inventory CTA */}
@@ -729,7 +733,9 @@ export default function IndexPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium text-slate-700">
-                {filteredOrders.length > 0 ? (
+                {isOrdersLoading ? (
+                  <TableSkeletonRows cols={7} rows={5} />
+                ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((order: any) => (
                     <tr key={order.id} className="hover:bg-slate-50/70 transition group">
                       {/* Order ID */}

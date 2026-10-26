@@ -1,6 +1,85 @@
 {
   "products": [
     {
+      "id": "p-1793007001356",
+      "title": "Áo Đá Bóng mới nhập abcvsdfassasd asdas đấ sdas đâsdasdasdasd",
+      "sku": "SPX-FB-212",
+      "category": "Football",
+      "brand": "SportX Pro",
+      "basePrice": 8000000,
+      "discountPrice": 5200000,
+      "thumbnail": "http://localhost:5000/images/thumbnails/1793006984709-thumb-Screenshot_2026-08-14_160204.png",
+      "images": [
+        "http://localhost:5000/images/thumbnails/1793006984709-thumb-Screenshot_2026-08-14_160204.png",
+        "http://localhost:5000/images/products/1793006995984-prod-Screenshot_2026-08-17_150225.png",
+        "http://localhost:5000/images/products/1793006995990-prod-Screenshot_2026-08-17_160539.png",
+        "http://localhost:5000/images/products/1793006995997-prod-Screenshot_2026-08-17_161602.png",
+        "http://localhost:5000/images/products/1793006996007-prod-Screenshot_2026-08-17_162637.png",
+        "http://localhost:5000/images/products/1793006996015-prod-Screenshot_2026-08-17_162659.png",
+        "http://localhost:5000/images/products/1793006996024-prod-Screenshot_2026-08-17_163058.png",
+        "http://localhost:5000/images/products/1793006996036-prod-Screenshot_2026-08-17_163424.png",
+        "http://localhost:5000/images/products/1793006996042-prod-Screenshot_2026-08-17_164238.png",
+        "http://localhost:5000/images/products/1793006996048-prod-Screenshot_2026-08-17_164405.png"
+      ],
+      "icon": "⚽",
+      "sizes": [
+        "M",
+        "L"
+      ],
+      "colors": [
+        {
+          "name": "Đen",
+          "hex": "#0F172A"
+        },
+        {
+          "name": "Đỏ",
+          "hex": "#DC2626"
+        }
+      ],
+      "totalStock": 100,
+      "status": "Active",
+      "description": "a sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá a sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá \na sdasd asda á đá adasdadadas asd asda á asd asda đá a sdasd asda á đá adasdadadas asd asda á asd asda đá a sdasd asda á đá adasdadadas asd asda á asd asda đá a sdasd asda á đá adasdadadas asd asda á asd asda đá",
+      "variants": [
+        {
+          "id": "var-Đen-M-1793006945259",
+          "sku": "SPX-FB-212-ĐEN-M",
+          "color": "Đen",
+          "colorHex": "#0F172A",
+          "size": "M",
+          "price": 5200000,
+          "stock": 25
+        },
+        {
+          "id": "var-Đen-L-1793006945259",
+          "sku": "SPX-FB-212-ĐEN-L",
+          "color": "Đen",
+          "colorHex": "#0F172A",
+          "size": "L",
+          "price": 5200000,
+          "stock": 25
+        },
+        {
+          "id": "var-Đỏ-M-1793006945259",
+          "sku": "SPX-FB-212-ĐỎ-M",
+          "color": "Đỏ",
+          "colorHex": "#DC2626",
+          "size": "M",
+          "price": 5200000,
+          "stock": 25
+        },
+        {
+          "id": "var-Đỏ-L-1793006945259",
+          "sku": "SPX-FB-212-ĐỎ-L",
+          "color": "Đỏ",
+          "colorHex": "#DC2626",
+          "size": "L",
+          "price": 5200000,
+          "stock": 25
+        }
+      ],
+      "createdAt": "2026-10-26T09:30:01.356Z"
+    },
+    {
       "id": "p-1",
       "title": "Nike Mercurial Superfly 9 Elite FG",
       "sku": "SPX-FTB-01",
@@ -30,7 +109,7 @@
           "hex": "#0F172A"
         }
       ],
-      "totalStock": 145,
+      "totalStock": 135,
       "status": "Active",
       "description": "High-performance football boots designed with Zoom Air unit for explosive speed and traction.",
       "variants": [
@@ -41,7 +120,7 @@
           "colorHex": "#DC2626",
           "size": "M",
           "price": 229,
-          "stock": 45
+          "stock": 37
         },
         {
           "id": "v1-2",
@@ -50,7 +129,7 @@
           "colorHex": "#DC2626",
           "size": "L",
           "price": 229,
-          "stock": 35
+          "stock": 33
         },
         {
           "id": "v1-3",
@@ -98,7 +177,7 @@
           "hex": "#1E3A8A"
         }
       ],
-      "totalStock": 18,
+      "totalStock": 17,
       "status": "Active",
       "description": "Rapid weight change dumbbell set with anti-slip ergonomic steel grip.",
       "variants": [
@@ -109,7 +188,7 @@
           "colorHex": "#0F172A",
           "size": "M",
           "price": 169,
-          "stock": 10
+          "stock": 9
         },
         {
           "id": "v2-2",
@@ -154,7 +233,7 @@
           "hex": "#DC2626"
         }
       ],
-      "totalStock": 320,
+      "totalStock": 317,
       "status": "Active",
       "description": "Epic energy return with lightest Boost technology for marathon training.",
       "variants": [
@@ -165,7 +244,7 @@
           "colorHex": "#E2E8F0",
           "size": "M",
           "price": 149,
-          "stock": 100
+          "stock": 97
         },
         {
           "id": "v3-2",
@@ -266,7 +345,7 @@
           "hex": "#1E3A8A"
         }
       ],
-      "totalStock": 86,
+      "totalStock": 85,
       "status": "Active",
       "description": "Breathable moisture-wicking fabric for intense gym and fitness sessions.",
       "variants": [
@@ -277,7 +356,7 @@
           "colorHex": "#0F172A",
           "size": "M",
           "price": 35,
-          "stock": 31
+          "stock": 30
         },
         {
           "id": "v5-2",
@@ -351,6 +430,531 @@
     }
   ],
   "orders": [
+    {
+      "id": "ord-1793006778198",
+      "orderNumber": "SPX-4437",
+      "dateTime": "26-10-2026 16:26",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-5",
+          "sku": "SPX-APP-20-BLK-M",
+          "name": "SportX Pro Dry-Fit Training Vest",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800",
+          "size": "M",
+          "color": "Black",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 35000
+        }
+      ],
+      "subtotal": 35000,
+      "shippingFee": 30000,
+      "totalAmount": 65000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Shipping",
+      "note": "",
+      "createdAt": "2026-10-26T09:26:18.199Z",
+      "shippingCarrier": "GHTK",
+      "trackingCode": "GHTK-4437",
+      "dispatchedAt": "2026-10-26T09:26:47.907Z"
+    },
+    {
+      "id": "ord-1793000700435",
+      "orderNumber": "SPX-5768",
+      "dateTime": "26-10-2026 14:45",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 229000,
+      "shippingFee": 30000,
+      "totalAmount": 259000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Canceled",
+      "note": "skdnfsndfasdfsadfsa s",
+      "createdAt": "2026-10-26T07:45:00.435Z",
+      "cancelReason": "Đặt trùng đơn hàng",
+      "cancelledAt": "2026-10-26T08:06:52.705Z",
+      "cancelledBy": "customer"
+    },
+    {
+      "id": "ord-1792999774421",
+      "orderNumber": "SPX-6398",
+      "dateTime": "26-10-2026 14:29",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-3",
+          "sku": "SPX-RUN-14-WHT-M",
+          "name": "Adidas Ultraboost Light Running Shoes",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
+          "size": "M",
+          "color": "White",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 149000
+        }
+      ],
+      "subtotal": 149000,
+      "shippingFee": 30000,
+      "totalAmount": 179000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Processing",
+      "note": "",
+      "createdAt": "2026-10-26T07:29:34.421Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "15715091",
+        "timestamp": "2026-10-26T07:30:10.411Z",
+        "bankCode": "NCB",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792999460840",
+      "orderNumber": "SPX-3104",
+      "dateTime": "26-10-2026 14:24",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 229000,
+      "shippingFee": 30000,
+      "totalAmount": 259000,
+      "paymentMethod": "COD",
+      "paymentStatus": "Unpaid",
+      "fulfillmentStatus": "Pending Approval",
+      "note": "",
+      "createdAt": "2026-10-26T07:24:20.840Z"
+    },
+    {
+      "id": "ord-1792998538197",
+      "orderNumber": "SPX-1240",
+      "dateTime": "26-10-2026 14:08",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 229000,
+      "shippingFee": 30000,
+      "totalAmount": 259000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Processing",
+      "note": "",
+      "createdAt": "2026-10-26T07:08:58.197Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "15715043",
+        "timestamp": "2026-10-26T07:09:35.612Z",
+        "bankCode": "NCB",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792997698259",
+      "orderNumber": "SPX-8908",
+      "dateTime": "26-10-2026 13:54",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-3",
+          "sku": "SPX-RUN-14-WHT-M",
+          "name": "Adidas Ultraboost Light Running Shoes",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
+          "size": "M",
+          "color": "White",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 149000
+        }
+      ],
+      "subtotal": 149000,
+      "shippingFee": 30000,
+      "discountAmount": 14900,
+      "couponCode": "SPORTX10",
+      "totalAmount": 164100,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Processing",
+      "note": "",
+      "createdAt": "2026-10-26T06:54:58.259Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "15715023",
+        "timestamp": "2026-10-26T06:55:50.357Z",
+        "bankCode": "NCB",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792997605416",
+      "orderNumber": "SPX-9573",
+      "dateTime": "26-10-2026 13:53",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-L",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "L",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        },
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 2,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 687000,
+      "shippingFee": 0,
+      "totalAmount": 687000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Processing",
+      "note": "",
+      "createdAt": "2026-10-26T06:53:25.416Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "15715019",
+        "timestamp": "2026-10-26T06:54:01.182Z",
+        "bankCode": "NCB",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792996952891",
+      "orderNumber": "SPX-5011",
+      "dateTime": "26-10-2026 13:42",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-L",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "L",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        },
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 458000,
+      "shippingFee": 30000,
+      "totalAmount": 488000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Pending Approval",
+      "note": "",
+      "createdAt": "2026-10-26T06:42:32.891Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "VNP1792996952891",
+        "timestamp": "2026-10-26T06:42:32.891Z",
+        "bankCode": "NCB / VNPAY-QR",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792995033591",
+      "orderNumber": "SPX-7046",
+      "dateTime": "26-10-2026 13:10",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 229000,
+      "shippingFee": 30000,
+      "totalAmount": 259000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Pending Approval",
+      "note": "",
+      "createdAt": "2026-10-26T06:10:33.591Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "VNP1792995033591",
+        "timestamp": "2026-10-26T06:10:33.591Z",
+        "bankCode": "NCB / VNPAY-QR",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792994698465",
+      "orderNumber": "SPX-7468",
+      "dateTime": "26-10-2026 13:04",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-2",
+          "sku": "SPX-GYM-08-BLK-M",
+          "name": "SportX Pro Adjustable Dumbbell 20kg",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800",
+          "size": "M",
+          "color": "Black",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 169000
+        }
+      ],
+      "subtotal": 169000,
+      "shippingFee": 30000,
+      "totalAmount": 199000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Pending Approval",
+      "note": "",
+      "createdAt": "2026-10-26T06:04:58.465Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "VNP1792994698465",
+        "timestamp": "2026-10-26T06:04:58.465Z",
+        "bankCode": "NCB / VNPAY-QR",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
+    {
+      "id": "ord-1792992803464",
+      "orderNumber": "SPX-8802",
+      "dateTime": "26-10-2026 12:33",
+      "customer": {
+        "id": "usr-cust-01",
+        "name": "Jane Cooper",
+        "phone": "+84 912 888 999",
+        "email": "customer@sportx.store",
+        "avatar": "JC",
+        "address": "Số 12, Đường Hữu Nghị, Xuân Khanh, Sơn Tây, Hà Nội"
+      },
+      "items": [
+        {
+          "id": "p-3",
+          "sku": "SPX-RUN-14-WHT-M",
+          "name": "Adidas Ultraboost Light Running Shoes",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
+          "size": "M",
+          "color": "White",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 149000
+        },
+        {
+          "id": "p-1",
+          "sku": "SPX-FTB-01-RED-M",
+          "name": "Nike Mercurial Superfly 9 Elite FG",
+          "category": "Sportswear",
+          "thumbnail": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=800",
+          "size": "M",
+          "color": "Red",
+          "colorHex": "#0F172A",
+          "qty": 1,
+          "unitPrice": 229000
+        }
+      ],
+      "subtotal": 378000,
+      "shippingFee": 30000,
+      "totalAmount": 408000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Shipping",
+      "note": "âsdasdasdasdasdasdasdasdasd",
+      "createdAt": "2026-10-26T05:33:23.465Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "15714937",
+        "timestamp": "2026-10-26T05:34:31.665Z",
+        "bankCode": "NCB",
+        "responseMessage": "00 (Transaction Successful)"
+      },
+      "shippingCarrier": "GHTK",
+      "trackingCode": "GHTK-8802",
+      "dispatchedAt": "2026-10-26T05:34:42.691Z"
+    },
+    {
+      "id": "ord-1792992547628",
+      "orderNumber": "SPX-4417",
+      "dateTime": "26-10-2026 12:29",
+      "customer": {
+        "name": "Nguyen Van Test",
+        "phone": "0987654321",
+        "email": "test@gmail.com",
+        "avatar": "NV",
+        "address": "Hanoi"
+      },
+      "items": [
+        {
+          "id": "p-1",
+          "size": "M",
+          "category": "Football",
+          "color": "Black",
+          "name": "Test Item",
+          "colorHex": "#000",
+          "qty": 1,
+          "unitPrice": 250000,
+          "thumbnail": ""
+        }
+      ],
+      "totalAmount": 250000,
+      "paymentMethod": "VNPAY",
+      "paymentStatus": "Paid",
+      "fulfillmentStatus": "Pending Approval",
+      "createdAt": "2026-10-26T05:29:07.628Z",
+      "transactionDetails": {
+        "gateway": "VNPAY",
+        "transactionCode": "VNP1792992547628",
+        "timestamp": "2026-10-26T05:29:07.628Z",
+        "bankCode": "NCB / VNPAY-QR",
+        "responseMessage": "00 (Transaction Successful)"
+      }
+    },
     {
       "id": "ord-1792953546448",
       "orderNumber": "SPX-3561",
@@ -690,14 +1294,14 @@
         }
       ],
       "totalAmount": 184,
-      "paymentMethod": "MoMo",
+      "paymentMethod": "VNPAY",
       "paymentStatus": "Paid",
       "fulfillmentStatus": "Shipping",
       "transactionDetails": {
-        "gateway": "MoMo",
-        "transactionCode": "MM220926884192",
+        "gateway": "VNPAY",
+        "transactionCode": "VNP220926884192",
         "timestamp": "22-09-2026 11:16",
-        "bankCode": "MOMO_WALLET",
+        "bankCode": "NCB / VNPAY-QR",
         "responseMessage": "Success"
       },
       "createdAt": "2026-09-22T11:15:00Z"
@@ -1036,16 +1640,14 @@
     {
       "id": "faq-4",
       "question": "SportX hỗ trợ những hình thức thanh toán nào?",
-      "answer": "SportX hỗ trợ thanh toán trực tuyến qua cổng VNPAY (QR-Code, Thẻ ATM/Nội địa, Thẻ quốc tế Visa/Mastercard), Ví MoMo, và thanh toán khi nhận hàng (COD).",
+      "answer": "SportX hỗ trợ thanh toán trực tuyến qua cổng VNPAY (QR-Code, Thẻ ATM/Nội địa, Thẻ quốc tế Visa/Mastercard) và thanh toán khi nhận hàng (COD).",
       "intent": "Payment & Warranty",
       "confidence": 0.99,
       "usageCount": 420,
       "keywords": [
         "thanh toán",
         "vnpay",
-        "momo",
         "cod",
-        "chuyển khoản",
         "payment"
       ]
     },
@@ -1524,7 +2126,7 @@
         {
           "id": "m-1792940392998-bot",
           "sender": "bot",
-          "text": "📦 **Thông tin đơn hàng SPX-9820:**\n\n• **Trạng thái:** 🚚 Đang vận chuyển giao hàng\n• **Khách hàng:** Tran Van Duc (+84 987 654 321)\n• **Địa chỉ nhận:** 45 Nguyen Trai, Thanh Xuan, Hanoi\n• **Thanh toán:** MoMo (Đã thanh toán)\n• **Tổng tiền:** **184.000đ**\n\n**Sản phẩm trong đơn:**\n• **Adidas Ultraboost Light Running Shoes** (x1) - Size L (42.5 EU)\n• **SportX Pro Dry-Fit Training Vest** (x1) - Size L\n\nNếu bạn cần hỗ trợ thay đổi địa chỉ hoặc hủy đơn, vui lòng liên hệ hotline: **0912.888.999** nhé!",
+          "text": "📦 **Thông tin đơn hàng SPX-9820:**\n\n• **Trạng thái:** 🚚 Đang vận chuyển giao hàng\n• **Khách hàng:** Tran Van Duc (+84 987 654 321)\n• **Địa chỉ nhận:** 45 Nguyen Trai, Thanh Xuan, Hanoi\n• **Thanh toán:** VNPAY (Đã thanh toán)\n• **Tổng tiền:** **184.000đ**\n\n**Sản phẩm trong đơn:**\n• **Adidas Ultraboost Light Running Shoes** (x1) - Size L (42.5 EU)\n• **SportX Pro Dry-Fit Training Vest** (x1) - Size L\n\nNếu bạn cần hỗ trợ thay đổi địa chỉ hoặc hủy đơn, vui lòng liên hệ hotline: **0912.888.999** nhé!",
           "timestamp": "21:59"
         },
         {
@@ -1640,7 +2242,7 @@
       "minOrderValue": 200000,
       "maxDiscount": 50000,
       "usageLimit": 500,
-      "usedCount": 144,
+      "usedCount": 145,
       "startDate": "2026-01-01",
       "endDate": "2026-12-31",
       "status": "Active"
@@ -1712,8 +2314,6 @@
     "vnpayEnabled": true,
     "vnpayTmnCode": "SPORTX01",
     "vnpayHashSecret": "ABCXYZ1234567890SPORTXSECRETKEY",
-    "momoEnabled": true,
-    "momoPartnerCode": "MOMO_SPORTX_DEMO",
     "codEnabled": true,
     "chatbotEnabled": true,
     "chatbotAutoReply": true,
@@ -1807,7 +2407,7 @@
       "status": "Active",
       "createdAt": "2026-09-01T00:00:00Z",
       "passwordHash": "$2b$10$FYwL1rYC9j76v4.vnkqG9umMkWS6ACDHC8gThu8QlyZ0/45F90BiW",
-      "lastLoginAt": "2026-10-25T16:56:56.786Z"
+      "lastLoginAt": "2026-10-26T08:44:09.095Z"
     },
     {
       "id": "usr-staff-01",
@@ -1819,7 +2419,7 @@
       "status": "Active",
       "createdAt": "2026-09-05T00:00:00Z",
       "passwordHash": "$2b$10$E0nteGEPA93gX6wYgq2bbe7UcNjkb0VuvUjYW2tU0yM0Xu.vmZedO",
-      "lastLoginAt": "2026-10-25T16:55:03.214Z"
+      "lastLoginAt": "2026-10-26T08:11:26.019Z"
     },
     {
       "id": "usr-cust-01",
@@ -1827,11 +2427,11 @@
       "fullName": "Jane Cooper",
       "phone": "+84 912 888 999",
       "role": "CUSTOMER",
-      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "avatar": "http://localhost:5000/images/avatars/1793006661854-avatar-Screenshot_2026-08-25_154413.png",
       "status": "Active",
       "createdAt": "2026-09-10T00:00:00Z",
       "passwordHash": "$2b$10$tzxBK6l8iILsa9MV8E522.lCKDegoGfciIVVBBmIH1Obpz6Px1/9G",
-      "lastLoginAt": "2026-10-25T18:49:39.880Z"
+      "lastLoginAt": "2026-10-26T07:27:48.406Z"
     }
   ]
 }

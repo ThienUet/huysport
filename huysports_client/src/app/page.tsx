@@ -22,9 +22,9 @@ import {
   FaEnvelope,
 } from "react-icons/fa6";
 import { GiShuttlecock } from "react-icons/gi";
-import { useQuery } from "@tanstack/react-query";
-import { productService } from "@/services/productService";
+import { useProducts } from "@/hooks";
 import ProductCard from "@/components/products/ProductCard";
+import ProductCardSkeleton from "@/components/products/ProductCardSkeleton";
 import AISizeAdvisorModal from "@/components/products/AISizeAdvisorModal";
 import { Product } from "@/types";
 import { useFilterStore } from "@/stores/useFilterStore";
@@ -53,10 +53,7 @@ export default function HomePage() {
   }, []);
 
   // Fetch Products
-  const { data: productsData, isLoading } = useQuery({
-    queryKey: ["products", "home"],
-    queryFn: () => productService.getProducts(),
-  });
+  const { data: productsData, isLoading } = useProducts();
 
   const allProducts: Product[] = productsData?.data || [];
   const flashSaleProducts = allProducts.filter((p) => p.discountPercent && p.discountPercent > 0).slice(0, 4);
@@ -233,7 +230,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. Flash Sale Section */}
-      {flashSaleProducts.length > 0 && (
+      {(isLoading || flashSaleProducts.length > 0) && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
           <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -268,16 +265,20 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {flashSaleProducts.map((prod) => (
-                <ProductCard
-                  key={prod.id}
-                  product={prod}
-                  onOpenSizeAdvisor={(p) => {
-                    setSelectedProductForSize(p);
-                    setIsSizeModalOpen(true);
-                  }}
-                />
-              ))}
+              {isLoading ? (
+                [1, 2, 3, 4].map((i) => <ProductCardSkeleton key={i} />)
+              ) : (
+                flashSaleProducts.map((prod) => (
+                  <ProductCard
+                    key={prod.id}
+                    product={prod}
+                    onOpenSizeAdvisor={(p) => {
+                      setSelectedProductForSize(p);
+                      setIsSizeModalOpen(true);
+                    }}
+                  />
+                ))
+              )}
             </div>
           </div>
         </section>
@@ -317,7 +318,7 @@ export default function HomePage() {
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="aspect-[3/4] rounded-xl bg-gray-100 animate-pulse" />
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : (

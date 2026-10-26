@@ -10,6 +10,7 @@ export interface IProductDocument extends Document {
   basePrice: number;
   discountPrice?: number;
   thumbnail: string;
+  images?: string[];
   icon: string;
   sizes: string[];
   colors: { name: string; hex: string }[];
@@ -44,6 +45,7 @@ const ProductSchema = new Schema<IProductDocument>(
     basePrice: { type: Number, required: true },
     discountPrice: { type: Number },
     thumbnail: { type: String, required: true },
+    images: [{ type: String }],
     icon: { type: String, default: "⚽" },
     sizes: [{ type: String }],
     colors: [

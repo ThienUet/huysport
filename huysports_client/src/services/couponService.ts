@@ -87,4 +87,14 @@ export const couponService = {
       };
     }
   },
+
+  getActiveCoupons: async (): Promise<{ success: boolean; data: Coupon[] }> => {
+    try {
+      const res = await api.get("/coupons");
+      const list = res.data?.data || res.data || [];
+      return { success: true, data: Array.isArray(list) ? list : [] };
+    } catch {
+      return { success: true, data: [] };
+    }
+  },
 };

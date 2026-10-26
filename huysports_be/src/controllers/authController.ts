@@ -249,6 +249,36 @@ export const updateUserRole = async (req: AuthenticatedRequest, res: Response): 
   }
 };
 
+export const updateProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: "Chưa đăng nhập." });
+      return;
+    }
+
+    const { fullName, phone, address, avatar } = req.body;
+    const updateData: Partial<User> = {};
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+    if (avatar !== undefined) updateData.avatar = avatar;
+
+    const updated = db.updateUser(req.user.id, updateData);
+    if (!updated) {
+      res.status(404).json({ success: false, message: "Không tìm thấy người dùng." });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: "Cập nhật thông tin thành công!",
+      data: sanitizeUser(updated),
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 export const toggleUserStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

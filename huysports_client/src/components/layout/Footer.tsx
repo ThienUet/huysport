@@ -141,7 +141,6 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-2">
              <span className="px-3 py-1.5 rounded bg-gray-800/50 text-gray-400 text-[11px] font-medium border border-gray-800 tracking-wider">VNPAY</span>
-             <span className="px-3 py-1.5 rounded bg-gray-800/50 text-gray-400 text-[11px] font-medium border border-gray-800 tracking-wider">MOMO</span>
              <span className="px-3 py-1.5 rounded bg-gray-800/50 text-gray-400 text-[11px] font-medium border border-gray-800 tracking-wider">COD</span>
           </div>
         </div>

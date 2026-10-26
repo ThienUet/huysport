@@ -17,7 +17,8 @@ import {
   FaCircleExclamation,
 } from "react-icons/fa6";
 import confetti from "canvas-confetti";
-import { orderService } from "@/services/orderService";
+import { useCancelOrder } from "@/hooks";
+import { api } from "@/services/api";
 
 const CANCEL_REASONS = [
   "Sai thông tin nhận hàng (địa chỉ, số điện thoại)",
@@ -30,27 +31,124 @@ const CANCEL_REASONS = [
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get("orderNumber") || "#ORD-2026-0001";
-  const method = searchParams.get("method") || "COD";
-  const total = Number(searchParams.get("total") || 0);
+
+  // VNPAY Return Params
+  const vnpResponseCode = searchParams.get("vnp_ResponseCode");
+  const vnpTxnRef = searchParams.get("vnp_TxnRef");
+  const vnpAmount = searchParams.get("vnp_Amount");
+  const vnpBankCode = searchParams.get("vnp_BankCode");
+  const vnpTransactionNo = searchParams.get("vnp_TransactionNo");
+
+  const isVnpayReturn = Boolean(vnpResponseCode);
+  const isVnpaySuccess = vnpResponseCode === "00";
+
+  const urlOrderNum = (searchParams.get("orderNumber") || "").replace(/^#/, "").trim();
+  const vnpNum = (vnpTxnRef || searchParams.get("vnp_TxnRef") || "").replace(/^#/, "").trim();
+
+  // Find most recent order from local storage if available as reliable backup
+  let localOrderNum = "";
+  if (typeof window !== "undefined") {
+    try {
+      const local = JSON.parse(localStorage.getItem("sportx_local_orders") || "[]");
+      if (Array.isArray(local) && local.length > 0 && local[0]?.orderNumber) {
+        localOrderNum = String(local[0].orderNumber).replace(/^#/, "").trim();
+      }
+    } catch {}
+  }
+
+  // Priority: URL orderNumber > vnpTxnRef > local storage latest order
+  const cleanOrderNumber = urlOrderNum || vnpNum || localOrderNum || "SPX-6398";
+  const orderNumber = `#${cleanOrderNumber}`;
+  const method = isVnpayReturn ? "VNPAY" : searchParams.get("method") || "COD";
+  const total = vnpAmount ? Number(vnpAmount) / 100 : Number(searchParams.get("total") || 0);
 
   useEffect(() => {
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    } catch {}
-  }, []);
+    if (!isVnpayReturn || isVnpaySuccess) {
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      } catch {}
+    }
+  }, [isVnpayReturn, isVnpaySuccess]);
 
   const [copied, setCopied] = React.useState(false);
+  const [isInsidePopup, setIsInsidePopup] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
   const [customReasonText, setCustomReasonText] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const cancelOrderMutation = useCancelOrder();
+
+  useEffect(() => {
+    // Detect if this page is running inside the popup window
+    const inPopup =
+      typeof window !== "undefined" &&
+      (Boolean(window.opener && window.opener !== window) ||
+        window.name === "VnpayPaymentWindow" ||
+        window.name === "VNPAY_PAYMENT_POPUP");
+    setIsInsidePopup(inPopup);
+
+    const callbackPayload = {
+      type: "VNPAY_PAYMENT_CALLBACK",
+      timestamp: Date.now(),
+      success: isVnpaySuccess,
+      orderNumber: cleanOrderNumber,
+      total,
+      vnpResponseCode,
+      vnpTransactionNo,
+      vnpBankCode,
+    };
+
+    if (isVnpayReturn) {
+      // 1. Notify backend callback to update order status in database
+      api
+        .get(`/payment/vnpay/callback?${searchParams.toString()}`)
+        .catch(() => {})
+        .finally(() => {
+          // 2. BroadcastChannel: Works across tabs/windows of same origin even if window.opener is null
+          try {
+            if (typeof BroadcastChannel !== "undefined") {
+              const bc = new BroadcastChannel("VNPAY_PAYMENT_CHANNEL");
+              bc.postMessage(callbackPayload);
+              bc.close();
+            }
+          } catch (e) {
+            console.error("BroadcastChannel error:", e);
+          }
+
+          // 3. localStorage Storage Event: Fires instantly in parent checkout tab
+          try {
+            localStorage.setItem("vnpay_payment_sync", JSON.stringify(callbackPayload));
+          } catch (e) {
+            console.error("localStorage sync error:", e);
+          }
+
+          // 4. window.opener.postMessage (if window.opener is still connected)
+          try {
+            if (window.opener && window.opener !== window) {
+              window.opener.postMessage(callbackPayload, "*");
+            }
+          } catch (e) {
+            console.error("window.opener postMessage error:", e);
+          }
+
+          // 5. If running inside popup window, auto-close after 600ms
+          if (inPopup) {
+            const closeTimer = setTimeout(() => {
+              try {
+                window.close();
+              } catch {}
+            }, 600);
+            return () => clearTimeout(closeTimer);
+          }
+        });
+    }
+  }, [isVnpayReturn, isVnpaySuccess, orderNumber, total, vnpResponseCode, vnpTransactionNo, vnpBankCode, searchParams]);
 
   const handleCancelOrder = async () => {
     setIsCancelling(true);
@@ -58,7 +156,8 @@ function OrderSuccessContent() {
     const finalReason = selectedReason === "Khác..." ? (customReasonText.trim() || "Khách yêu cầu hủy đơn") : selectedReason;
 
     try {
-      await orderService.cancelOrder(orderNumber, finalReason);
+      const cleanId = orderNumber.replace(/^#/, "");
+      await cancelOrderMutation.mutateAsync({ id: cleanId, reason: finalReason });
       setIsCancelled(true);
       setIsCancelModalOpen(false);
     } catch (err: any) {
@@ -74,6 +173,40 @@ function OrderSuccessContent() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  if (isInsidePopup && isVnpayReturn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 font-sans">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-xl border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div
+            className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl shadow-sm ${
+              isVnpaySuccess ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+            }`}
+          >
+            {isVnpaySuccess ? <FaCircleCheck /> : <FaCircleExclamation />}
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base font-extrabold text-gray-900">
+              {isVnpaySuccess ? "Giao Dịch Thành Công!" : "Giao Dịch Chưa Hoàn Tất"}
+            </h2>
+            <p className="text-xs text-gray-500 font-mono">
+              Đơn hàng: <strong className="text-gray-900">{orderNumber}</strong>
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 leading-relaxed">
+            Đang tự động đồng bộ kết quả về tab mua hàng SportX... Cửa sổ này sẽ đóng lại trong giây lát.
+          </p>
+          <Button
+            size="sm"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl h-10 shadow-sm cursor-pointer"
+            onClick={() => window.close()}
+          >
+            Đóng cửa sổ này
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 space-y-8 bg-gray-50 min-h-screen">
       {/* Success Badge Header */}
@@ -83,16 +216,58 @@ function OrderSuccessContent() {
         </div>
         <div className="space-y-1">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
-            Đặt Hàng Thành Công
+            {isVnpayReturn && !isVnpaySuccess ? "Ghi Nhận Đơn Hàng" : "Đặt Hàng Thành Công"}
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Cảm Ơn Bạn Đã Mua Sắm Tại SportX!
+            {isVnpayReturn && !isVnpaySuccess ? "Đơn Hàng Đang Chờ Thanh Toán" : "Cảm Ơn Bạn Đã Mua Sắm Tại SportX!"}
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
             Mã đơn hàng của bạn là <strong className="text-emerald-600 font-mono">{orderNumber}</strong>. Chúng tôi đã gửi thông tin xác nhận đến email của bạn.
           </p>
         </div>
       </div>
+
+      {/* VNPAY Status Banner */}
+      {isVnpayReturn && (
+        <div
+          className={`p-4 rounded-xl border text-xs space-y-2 ${
+            isVnpaySuccess
+              ? "bg-blue-50/80 border-blue-200 text-blue-900"
+              : "bg-amber-50/80 border-amber-200 text-amber-900"
+          }`}
+        >
+          <div className="flex items-center gap-2 font-bold text-sm">
+            {isVnpaySuccess ? (
+              <>
+                <FaCircleCheck className="w-4 h-4 text-emerald-600" />
+                <span>Thanh toán VNPAY Sandbox thành công!</span>
+              </>
+            ) : (
+              <>
+                <FaCircleExclamation className="w-4 h-4 text-amber-600" />
+                <span>Giao dịch VNPAY chưa hoàn tất (Mã kết quả: {vnpResponseCode})</span>
+              </>
+            )}
+          </div>
+          {isVnpaySuccess ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+              <div>
+                <span className="text-blue-600">Ngân hàng:</span> <strong>{vnpBankCode || "NCB"}</strong>
+              </div>
+              <div>
+                <span className="text-blue-600">Mã GD VNPAY:</span> <strong className="font-mono">{vnpTransactionNo || "N/A"}</strong>
+              </div>
+              <div>
+                <span className="text-blue-600">Số tiền:</span> <strong>{total.toLocaleString("vi-VN")}đ</strong>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-amber-700">
+              Giao dịch trực tuyến đã bị hủy hoặc chưa hoàn tất. Đơn hàng vẫn được lưu lại trong hệ thống ở trạng thái Chờ thanh toán. Bạn có thể kiểm tra trong mục Tra cứu đơn hàng.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* VietQR Bank Transfer Box if Bank Transfer */}
       {method === "BANK_TRANSFER" && (
@@ -209,7 +384,7 @@ function OrderSuccessContent() {
           className="font-bold text-xs rounded-full h-11 px-8 shadow-md bg-emerald-600 hover:bg-emerald-700 text-white"
           endContent={<FaArrowRight className="w-3.5 h-3.5" />}
           as={Link}
-          href={`/orders?search=${encodeURIComponent(orderNumber)}`}
+          href={`/orders?search=${encodeURIComponent(cleanOrderNumber)}`}
         >
           Theo Dõi Trạng Thái Đơn Hàng
         </Button>

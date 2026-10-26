@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useToastStore } from "@/store/useToastStore";
-import { authService } from "@/services/api";
+import { useAdminLogin } from "@/hooks";
 import {
   Lock,
   Mail,
@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const from = (location.state as any)?.from?.pathname || "/";
+  const loginMutation = useAdminLogin();
 
   const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
     if (e) e.preventDefault();
@@ -43,7 +44,7 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
-      const res = await authService.login({
+      const res = await loginMutation.mutateAsync({
         email: loginEmail.trim(),
         password: loginPassword.trim(),
       });

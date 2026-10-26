@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input, Textarea } from "@heroui/react";
 import {
   FaShieldHalved,
@@ -12,35 +12,61 @@ import {
   FaCircleCheck,
   FaCircleExclamation,
   FaQrcode,
-  FaWallet,
-  FaBuildingColumns,
   FaBoxOpen,
   FaTicket,
   FaTrashCan,
+  FaArrowUpRightFromSquare,
+  FaRotate,
+  FaXmark,
+  FaHourglassHalf,
+  FaBagShopping,
+  FaBolt,
 } from "react-icons/fa6";
 import { useCartStore } from "@/stores/useCartStore";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { orderService } from "@/services/orderService";
-import { couponService } from "@/services/couponService";
+import { useValidateCoupon, useCreateOrder } from "@/hooks";
+import { api } from "@/services/api";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get("mode") === "buy_now";
+
   const {
     items,
+    buyNowItem,
+    clearBuyNowItem,
     coupon,
     discountAmount,
     setCoupon,
     removeCoupon,
-    clearCart,
+    removeSelectedItems,
+    getSelectedItems,
     getSubtotal,
     getShippingFee,
     getTotal,
   } = useCartStore();
   const { user } = useAuthStore();
 
-  const subtotal = getSubtotal();
-  const shippingFee = getShippingFee();
-  const total = getTotal();
+  const checkoutItems = isBuyNow ? (buyNowItem ? [buyNowItem] : []) : getSelectedItems();
+
+  const subtotal = isBuyNow
+    ? checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    : getSubtotal(true);
+  const shippingFee = subtotal === 0 ? 0 : subtotal >= 500000 ? 0 : 30000;
+  const total = Math.max(0, subtotal + shippingFee - discountAmount);
+
+  const finalizeOrderCompletion = () => {
+    if (isBuyNow) {
+      clearBuyNowItem();
+    } else {
+      removeSelectedItems();
+    }
+    removeCoupon();
+  };
+
+  const validateCouponMutation = useValidateCoupon();
+  const createOrderMutation = useCreateOrder();
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -56,15 +82,19 @@ export default function CheckoutPage() {
     setCouponError("");
     setCouponSuccess("");
 
-    const res = await couponService.validateCoupon(code, subtotal);
-    setIsApplyingCoupon(false);
-
-    if (res.success && res.coupon) {
-      setCoupon(res.coupon, res.discountAmount);
-      setCouponSuccess(res.message);
-      setCouponInput("");
-    } else {
-      setCouponError(res.message);
+    try {
+      const res = await validateCouponMutation.mutateAsync({ code, orderValue: subtotal });
+      if (res.success && res.coupon) {
+        setCoupon(res.coupon, res.discountAmount);
+        setCouponSuccess(res.message);
+        setCouponInput("");
+      } else {
+        setCouponError(res.message);
+      }
+    } catch (err: any) {
+      setCouponError(err.message || "Không thể áp dụng mã ưu đãi lúc này.");
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -83,12 +113,219 @@ export default function CheckoutPage() {
   const [ward, setWard] = useState("Xuân Khanh");
   const [addressLine, setAddressLine] = useState(user?.address || "Số 12, Đường Hữu Nghị");
   const [note, setNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY" | "MOMO" | "BANK_TRANSFER">("COD");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY">("COD");
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
+  // VNPAY Popup & Background Tab state
+  const [isVnpayWaiting, setIsVnpayWaiting] = useState(false);
+  const [vnpayPendingOrder, setVnpayPendingOrder] = useState<{
+    orderNumber: string;
+    total: number;
+    paymentUrl: string;
+  } | null>(null);
+  const [vnpayPopupBlocked, setVnpayPopupBlocked] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+
+  const popupRef = useRef<Window | null>(null);
+  const popupCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const openVnpayPopup = (
+    url: string,
+    orderData: { orderNumber: string; total: number; paymentUrl: string }
+  ) => {
+    const width = 840;
+    const height = 760;
+    const left = typeof window !== "undefined" ? window.screenX + (window.outerWidth - width) / 2 : 100;
+    const top = typeof window !== "undefined" ? window.screenY + (window.outerHeight - height) / 2 : 100;
+
+    const popup = window.open(
+      url,
+      "VnpayPaymentWindow",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,status=no,resizable=yes`
+    );
+
+    popupRef.current = popup;
+    setVnpayPendingOrder(orderData);
+    setIsVnpayWaiting(true);
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      setVnpayPopupBlocked(true);
+    } else {
+      setVnpayPopupBlocked(false);
+      try {
+        popup.focus();
+      } catch {}
+    }
+  };
+
+  useEffect(() => {
+    if (!isVnpayWaiting) return;
+
+    const onPaymentSuccess = (orderNumber: string, orderTotal?: number, vnpResponseCode?: string) => {
+      setIsVnpayWaiting(false);
+      setVnpayPendingOrder(null);
+      if (popupCheckIntervalRef.current) clearInterval(popupCheckIntervalRef.current);
+      if (popupRef.current && !popupRef.current.closed) {
+        try {
+          popupRef.current.close();
+        } catch {}
+      }
+      finalizeOrderCompletion();
+      const cleanNum = (orderNumber || vnpayPendingOrder?.orderNumber || "").replace(/^#/, "").trim();
+      router.push(
+        `/order-success?orderNumber=${encodeURIComponent(cleanNum)}&method=VNPAY&total=${orderTotal || total}&vnp_ResponseCode=${vnpResponseCode || "00"}`
+      );
+    };
+
+    const onPaymentFailure = (msg?: string) => {
+      setIsVnpayWaiting(false);
+      setVnpayPendingOrder(null);
+      if (popupCheckIntervalRef.current) clearInterval(popupCheckIntervalRef.current);
+      if (popupRef.current && !popupRef.current.closed) {
+        try {
+          popupRef.current.close();
+        } catch {}
+      }
+      setErrorMessage(
+        msg || "Giao dịch thanh toán VNPAY không thành công hoặc bạn đã hủy giao dịch. Đơn hàng đã được lưu, bạn có thể thử lại."
+      );
+    };
+
+    // 1. Listen via postMessage (if window.opener is still active)
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "VNPAY_PAYMENT_CALLBACK") {
+        const { success, orderNumber, total: orderTotal, vnpResponseCode } = event.data;
+        if (success) {
+          onPaymentSuccess(orderNumber, orderTotal, vnpResponseCode);
+        } else {
+          onPaymentFailure();
+        }
+      }
+    };
+    window.addEventListener("message", handleMessage);
+
+    // 2. Listen via BroadcastChannel (Works 100% across tabs/windows of same origin even if opener is null)
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        bc = new BroadcastChannel("VNPAY_PAYMENT_CHANNEL");
+        bc.onmessage = (event) => {
+          if (event.data?.type === "VNPAY_PAYMENT_CALLBACK") {
+            const { success, orderNumber, total: orderTotal, vnpResponseCode } = event.data;
+            if (success) {
+              onPaymentSuccess(orderNumber, orderTotal, vnpResponseCode);
+            } else {
+              onPaymentFailure();
+            }
+          }
+        };
+      }
+    } catch (e) {
+      console.error("BroadcastChannel init error:", e);
+    }
+
+    // 3. Listen via localStorage Storage Event (Triggers immediately across tabs on same origin)
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "vnpay_payment_sync" && event.newValue) {
+        try {
+          const data = JSON.parse(event.newValue);
+          if (data?.type === "VNPAY_PAYMENT_CALLBACK") {
+            try {
+              localStorage.removeItem("vnpay_payment_sync");
+            } catch {}
+            if (data.success) {
+              onPaymentSuccess(data.orderNumber, data.total, data.vnpResponseCode);
+            } else {
+              onPaymentFailure();
+            }
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    // 4. Background polling: Poll backend order status every 1.5s in case callback updated DB directly
+    popupCheckIntervalRef.current = setInterval(async () => {
+      if (!vnpayPendingOrder) return;
+
+      try {
+        const trackRes = await api.get(`/orders?search=${vnpayPendingOrder.orderNumber}`);
+        const orderList = trackRes?.data?.data || trackRes?.data;
+        const cleanRef = vnpayPendingOrder.orderNumber.replace(/^#/, "");
+        const order = Array.isArray(orderList)
+          ? orderList.find((o: any) => o.orderNumber === cleanRef || o.orderNumber === `#${cleanRef}`)
+          : null;
+
+        if (order && (order.paymentStatus === "Paid" || order.fulfillmentStatus === "Processing")) {
+          onPaymentSuccess(vnpayPendingOrder.orderNumber, vnpayPendingOrder.total, "00");
+          return;
+        }
+      } catch {}
+
+      // If user closed the popup window manually
+      if (popupRef.current && popupRef.current.closed) {
+        if (popupCheckIntervalRef.current) clearInterval(popupCheckIntervalRef.current);
+        setIsVnpayWaiting(false);
+        setErrorMessage("Cửa sổ thanh toán VNPAY đã bị đóng. Bạn có thể mở lại cửa sổ thanh toán hoặc chọn phương thức khác.");
+      }
+    }, 1500);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("storage", handleStorage);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {}
+      }
+      if (popupCheckIntervalRef.current) clearInterval(popupCheckIntervalRef.current);
+    };
+  }, [isVnpayWaiting, vnpayPendingOrder, router, total]);
+
+  const handleCheckVnpayStatusManual = async () => {
+    if (!vnpayPendingOrder) return;
+    setIsCheckingPayment(true);
+    try {
+      const res = await api.get(`/orders?search=${vnpayPendingOrder.orderNumber}`);
+      const orderList = res?.data?.data || res?.data;
+      const cleanRef = vnpayPendingOrder.orderNumber.replace(/^#/, "");
+      const order = Array.isArray(orderList)
+        ? orderList.find((o: any) => o.orderNumber === cleanRef || o.orderNumber === `#${cleanRef}`)
+        : null;
+
+      if (order && (order.paymentStatus === "Paid" || order.fulfillmentStatus === "Processing")) {
+        setIsVnpayWaiting(false);
+        finalizeOrderCompletion();
+        const cleanNum = (vnpayPendingOrder.orderNumber || "").replace(/^#/, "").trim();
+        router.push(
+          `/order-success?orderNumber=${encodeURIComponent(cleanNum)}&method=VNPAY&total=${vnpayPendingOrder.total}&vnp_ResponseCode=00`
+        );
+      } else {
+        setErrorMessage("Chưa ghi nhận kết quả thanh toán thành công từ VNPAY. Vui lòng hoàn tất giao dịch tại cửa sổ thanh toán.");
+      }
+    } catch {
+      setErrorMessage("Chưa thể kiểm tra trạng thái đơn hàng lúc này.");
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
+
+  const handleCancelVnpayPayment = () => {
+    if (popupRef.current && !popupRef.current.closed) {
+      try {
+        popupRef.current.close();
+      } catch {}
+    }
+    if (popupCheckIntervalRef.current) {
+      clearInterval(popupCheckIntervalRef.current);
+    }
+    setIsVnpayWaiting(false);
+    setErrorMessage("Bạn đã hủy phiên thanh toán VNPAY. Đơn hàng vẫn được lưu trong hệ thống, bạn có thể thanh toán lại bất cứ lúc nào.");
+  };
+
+  const hasOutOfStockItems = checkoutItems.some((i) => (i.maxStock ?? 0) <= 0);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,13 +334,17 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (items.length === 0) {
-      setErrorMessage("Giỏ hàng của bạn đang trống!");
+    if (checkoutItems.length === 0) {
+      setErrorMessage(
+        isBuyNow
+          ? "Không tìm thấy thông tin sản phẩm mua ngay!"
+          : "Chưa có sản phẩm nào được chọn trong giỏ hàng để thanh toán!"
+      );
       return;
     }
 
     if (hasOutOfStockItems) {
-      setErrorMessage("Trong đơn hàng có sản phẩm hiện đã tạm hết hàng. Vui lòng quay lại giỏ hàng để cập nhật!");
+      setErrorMessage("Trong các sản phẩm thanh toán có sản phẩm hiện đã tạm hết hàng trong kho!");
       return;
     }
 
@@ -128,7 +369,7 @@ export default function CheckoutPage() {
           addressLine,
           note,
         },
-        items: items.map((item) => ({
+        items: checkoutItems.map((item) => ({
           productId: item.productId,
           productName: item.productName,
           productImage: item.productImage,
@@ -147,16 +388,21 @@ export default function CheckoutPage() {
         notes: note,
       };
 
-      const res = await orderService.createOrder(orderPayload);
+      const res = await createOrderMutation.mutateAsync(orderPayload);
 
       if (res.success && res.data) {
         const orderNumber = res.data.orderNumber;
-        clearCart();
 
         if (paymentMethod === "VNPAY" && res.paymentUrl) {
-          window.location.href = res.paymentUrl;
+          openVnpayPopup(res.paymentUrl, {
+            orderNumber,
+            total,
+            paymentUrl: res.paymentUrl,
+          });
         } else {
-          router.push(`/order-success?orderNumber=${orderNumber}&method=${paymentMethod}&total=${total}`);
+          finalizeOrderCompletion();
+          const cleanNum = (orderNumber || "").replace(/^#/, "").trim();
+          router.push(`/order-success?orderNumber=${encodeURIComponent(cleanNum)}&method=${paymentMethod}&total=${total}`);
         }
       } else {
         setErrorMessage("Không thể tạo đơn hàng. Vui lòng thử lại!");
@@ -168,20 +414,34 @@ export default function CheckoutPage() {
     }
   };
 
-  if (items.length === 0) {
+  if (checkoutItems.length === 0 && !isVnpayWaiting) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
         <FaBoxOpen className="w-12 h-12 mx-auto text-gray-400" />
-        <h2 className="text-xl font-bold text-gray-800">Không có sản phẩm để thanh toán</h2>
-        <Button as={Link} href="/products" className="bg-emerald-600 text-white rounded-full">
-          Xem Danh Mục Sản Phẩm
-        </Button>
+        <h2 className="text-xl font-bold text-gray-800">
+          {isBuyNow ? "Không có sản phẩm mua ngay" : "Chưa chọn sản phẩm thanh toán"}
+        </h2>
+        <p className="text-xs text-gray-500">
+          {isBuyNow
+            ? "Vui lòng chọn size/màu và bấm Mua Ngay tại trang chi tiết sản phẩm."
+            : "Vui lòng vào giỏ hàng và chọn các sản phẩm bạn muốn thanh toán."}
+        </p>
+        <div className="flex justify-center gap-3 pt-2">
+          {!isBuyNow && (
+            <Button as={Link} href="/cart" variant="bordered" className="rounded-full">
+              Về Giỏ Hàng
+            </Button>
+          )}
+          <Button as={Link} href="/products" className="bg-emerald-600 text-white rounded-full">
+            Xem Danh Mục Sản Phẩm
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div>
         <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
@@ -192,14 +452,40 @@ export default function CheckoutPage() {
         </h1>
       </div>
 
+      {/* Shopee-style Buy Now Notification Banner */}
+      {isBuyNow && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="bg-emerald-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+              <FaBolt className="w-2.5 h-2.5" /> Mua Ngay
+            </span>
+            <span className="text-emerald-950 font-semibold">
+              Đơn hàng mua nhanh riêng biệt (không ảnh hưởng tới các sản phẩm đang lưu trong giỏ hàng của bạn).
+            </span>
+          </div>
+          <Link href="/cart" className="text-emerald-700 font-bold hover:underline whitespace-nowrap flex items-center gap-1">
+            <FaBagShopping className="w-3.5 h-3.5" /> Xem giỏ hàng ({items.length})
+          </Link>
+        </div>
+      )}
+
       {hasOutOfStockItems && (
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FaCircleExclamation className="w-4 h-4 text-rose-600 flex-shrink-0" />
-            <span>Có sản phẩm trong giỏ hàng đã tạm hết hàng trong kho. Vui lòng quay lại giỏ hàng để cập nhật!</span>
+            <span>
+              {isBuyNow
+                ? "Sản phẩm mua ngay này tạm hết hàng trong kho. Vui lòng chọn sản phẩm khác!"
+                : "Có sản phẩm bạn đã chọn tạm hết hàng trong kho. Vui lòng quay lại giỏ hàng để cập nhật!"}
+            </span>
           </div>
-          <Button as={Link} href="/cart" size="sm" className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs whitespace-nowrap self-start sm:self-center">
-            Quay lại giỏ hàng
+          <Button
+            as={Link}
+            href={isBuyNow ? "/products" : "/cart"}
+            size="sm"
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs whitespace-nowrap self-start sm:self-center"
+          >
+            {isBuyNow ? "Xem sản phẩm khác" : "Quay lại giỏ hàng"}
           </Button>
         </div>
       )}
@@ -353,65 +639,14 @@ export default function CheckoutPage() {
                   />
                   <div>
                     <div className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
-                      Cổng thanh toán VNPAY QR / Thẻ ATM
-                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">Ưu tiên</span>
+                      Cổng thanh toán trực tuyến VNPAY Sandbox
+                      <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">Online</span>
                     </div>
-                    <div className="text-[11px] text-gray-500">Quét mã VNPAY-QR hoặc dùng thẻ ATM/Visa/MasterCard</div>
+                    <div className="text-[11px] text-gray-500">Quét mã VNPAY-QR hoặc dùng thẻ ATM/Visa/MasterCard qua cổng VNPAY</div>
                   </div>
                 </div>
                 <FaQrcode className="w-4 h-4 text-emerald-600" />
               </label>
-
-              {/* MOMO */}
-              <label
-                className={`p-4 rounded-xl border-2 flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === "MOMO"
-                    ? "border-emerald-600 bg-emerald-50 shadow-sm"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPaymentMethod("MOMO")}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === "MOMO"}
-                    onChange={() => setPaymentMethod("MOMO")}
-                    className="w-4 h-4 text-emerald-600 accent-emerald-600"
-                  />
-                  <div>
-                    <div className="font-bold text-xs text-gray-900">Ví điện tử MoMo</div>
-                    <div className="text-[11px] text-gray-500">Thanh toán bảo mật tức thì qua ứng dụng MoMo</div>
-                  </div>
-                </div>
-                <FaWallet className="w-4 h-4 text-emerald-600" />
-              </label>
-
-              {/* BANK TRANSFER */}
-              <label
-                className={`p-4 rounded-xl border-2 flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === "BANK_TRANSFER"
-                    ? "border-emerald-600 bg-emerald-50 shadow-sm"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setPaymentMethod("BANK_TRANSFER")}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === "BANK_TRANSFER"}
-                    onChange={() => setPaymentMethod("BANK_TRANSFER")}
-                    className="w-4 h-4 text-emerald-600 accent-emerald-600"
-                  />
-                  <div>
-                    <div className="font-bold text-xs text-gray-900">Chuyển khoản Ngân hàng (VietQR)</div>
-                    <div className="text-[11px] text-gray-500">Quét mã QR chuyển khoản chính xác tới tài khoản cửa hàng</div>
-                  </div>
-                </div>
-                <FaBuildingColumns className="w-4 h-4 text-emerald-600" />
-              </label>
-
             </div>
           </div>
 
@@ -420,11 +655,13 @@ export default function CheckoutPage() {
         {/* Right: Order Summary (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm space-y-6 sticky top-28">
-            <h3 className="font-bold text-base text-gray-900">Đơn Hàng ({items.length} món)</h3>
+            <h3 className="font-bold text-base text-gray-900">
+              {isBuyNow ? "Đơn Hàng Mua Ngay (1 sản phẩm)" : `Đơn Hàng (${checkoutItems.length} món)`}
+            </h3>
 
             {/* List of items preview */}
             <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-gray-100 pr-1">
-              {items.map((item) => (
+              {checkoutItems.map((item) => (
                 <div key={item.sku} className="pt-2 first:pt-0 flex items-center gap-3 text-xs">
                   <div className="relative w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-200 overflow-hidden">
                     <img
@@ -598,7 +835,131 @@ export default function CheckoutPage() {
           </div>
         </div>
 
+        {/* VNPAY Popup Processing Modal Overlay */}
+        {isVnpayWaiting && vnpayPendingOrder && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 space-y-6 text-center animate-in fade-in zoom-in-95 duration-200">
+              {/* Animated Header */}
+              <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-blue-500/15 animate-ping" />
+                <div className="w-16 h-16 rounded-full border-3 border-blue-100 border-t-blue-600 animate-spin" />
+                <div className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md">
+                  <FaCreditCard className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
+                  Cổng thanh toán VNPAY Sandbox
+                </span>
+                <h3 className="text-lg font-extrabold text-gray-900">
+                  Đang chờ thanh toán tại cửa sổ VNPAY...
+                </h3>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Cửa sổ thanh toán đã được mở riêng biệt. Vui lòng quét mã QR hoặc nhập thông tin thẻ test tại cửa sổ đó để hoàn tất giao dịch.
+                </p>
+              </div>
+
+              {/* Order Brief Info */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs space-y-2 text-left">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Mã đơn hàng:</span>
+                  <span className="font-mono font-bold text-gray-900">{vnpayPendingOrder.orderNumber}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Số tiền thanh toán:</span>
+                  <span className="font-bold text-emerald-600 text-sm">
+                    {vnpayPendingOrder.total.toLocaleString("vi-VN")}đ
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-[11px]">
+                  <span className="text-gray-400">Trạng thái:</span>
+                  <span className="text-amber-600 font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    Chờ bạn hoàn tất trên popup
+                  </span>
+                </div>
+              </div>
+
+              {/* Popup Blocked Warning if detected */}
+              {vnpayPopupBlocked && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 text-left space-y-2.5">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <FaCircleExclamation className="w-4 h-4 text-amber-600 shrink-0" />
+                    Trình duyệt đang chặn mở cửa sổ bật lên tự động.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl h-9 cursor-pointer"
+                    onClick={() => openVnpayPopup(vnpayPendingOrder.paymentUrl, vnpayPendingOrder)}
+                  >
+                    Bấm vào đây để mở cửa sổ thanh toán
+                  </Button>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1 font-bold text-xs h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
+                    onClick={() => {
+                      if (popupRef.current && !popupRef.current.closed) {
+                        try {
+                          popupRef.current.focus();
+                        } catch {
+                          openVnpayPopup(vnpayPendingOrder.paymentUrl, vnpayPendingOrder);
+                        }
+                      } else {
+                        openVnpayPopup(vnpayPendingOrder.paymentUrl, vnpayPendingOrder);
+                      }
+                    }}
+                    startContent={<FaArrowUpRightFromSquare className="w-3 h-3" />}
+                  >
+                    Mở lại cửa sổ VNPAY
+                  </Button>
+                  <Button
+                    variant="bordered"
+                    className="font-bold text-xs h-10 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    isLoading={isCheckingPayment}
+                    onClick={handleCheckVnpayStatusManual}
+                    startContent={<FaRotate className="w-3 h-3" />}
+                  >
+                    Kiểm tra kết quả
+                  </Button>
+                </div>
+
+                <Button
+                  variant="light"
+                  size="sm"
+                  className="w-full text-xs text-gray-400 hover:text-rose-600 font-semibold cursor-pointer"
+                  onClick={handleCancelVnpayPayment}
+                >
+                  Hủy phiên thanh toán này & chọn lại phương thức
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </form>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="flex items-center gap-3 text-emerald-600 font-medium text-sm">
+            <span className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            Đang tải thông tin đơn hàng...
+          </div>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }

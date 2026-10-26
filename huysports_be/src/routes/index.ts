@@ -10,6 +10,7 @@ import settingsRoutes from "./settingsRoutes.js";
 import paymentRoutes from "./paymentRoutes.js";
 import authRoutes from "./authRoutes.js";
 import searchRoutes from "./searchRoutes.js";
+import uploadRoutes from "./uploadRoutes.js";
 
 const apiRouter = Router();
 
@@ -25,6 +26,7 @@ apiRouter.use("/analytics", analyticsRoutes);
 apiRouter.use("/settings", settingsRoutes);
 apiRouter.use("/payment", paymentRoutes);
 apiRouter.use("/search", searchRoutes);
+apiRouter.use("/upload", uploadRoutes);
 
 // Health check endpoint
 apiRouter.get("/health", (req, res) => {

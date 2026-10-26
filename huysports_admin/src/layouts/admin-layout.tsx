@@ -23,7 +23,21 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  Camera,
+  Upload,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
+import { uploadService } from "@/services/api";
+
+const PRESET_AVATARS = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80",
+];
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,10 +46,13 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, hasRole } = useAuthStore();
+  const { user, logout, updateUser, hasRole } = useAuthStore();
   const toast = useToastStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarUrlInput, setAvatarUrlInput] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Clean full name by removing any embedded parenthetical roles like "(Super Admin)"
   const cleanFullName = (user?.fullName || "Đinh Công Hùng")
@@ -386,6 +403,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="py-1 space-y-0.5">
                   <button
                     type="button"
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-xl transition cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4 text-blue-600" />
+                    Đổi ảnh đại diện (Avatar)
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => navigate("/settings")}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition cursor-pointer"
                   >
@@ -420,6 +445,150 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Main Body */}
         <main className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl w-full mx-auto">{children}</main>
       </div>
+
+      {/* Avatar Change Modal */}
+      {isAvatarModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900">Thay đổi ảnh đại diện</h3>
+                  <p className="text-[11px] text-slate-400">Lưu vào thư mục <strong>HuyHung/images/avatars/</strong></p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Current Avatar Preview */}
+            <div className="flex flex-col items-center justify-center gap-2 py-2">
+              <div className="relative">
+                <img
+                  src={user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
+                  alt={cleanFullName}
+                  className="w-24 h-24 rounded-full object-cover ring-4 ring-blue-500/20 shadow-md"
+                />
+                <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white text-[10px]">
+                  ✓
+                </span>
+              </div>
+              <span className="text-xs font-bold text-slate-800">{cleanFullName}</span>
+            </div>
+
+            {/* Option 1: Upload from computer */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700">1. Tải ảnh mới từ máy tính:</label>
+              <label className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-3.5 flex items-center justify-center gap-3 bg-slate-50 hover:bg-blue-50/50 cursor-pointer transition">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setIsUploadingAvatar(true);
+                    try {
+                      const base64 = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                      });
+
+                      const res = await uploadService.uploadImage({
+                        image: base64,
+                        filename: `avatar-${file.name}`,
+                        type: "avatar",
+                      });
+                      const finalUrl = res?.url || base64;
+                      updateUser({ avatar: finalUrl });
+                      toast.success("Thành công", "Đã lưu ảnh đại diện vào thư mục images/avatars");
+                      setIsAvatarModalOpen(false);
+                    } catch (err: any) {
+                      toast.error("Lỗi", err.message || "Không thể tải ảnh avatar lên");
+                    } finally {
+                      setIsUploadingAvatar(false);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                ) : (
+                  <Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
+                )}
+                <div className="text-left">
+                  <span className="text-xs font-bold text-slate-700 block">
+                    {isUploadingAvatar ? "Đang tải ảnh avatar lên..." : "Chọn ảnh từ máy tính"}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">PNG, JPG, WEBP</span>
+                </div>
+              </label>
+            </div>
+
+            {/* Option 2: Enter Image URL */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700">2. Hoặc dán link URL ảnh trực tiếp:</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="https://images.unsplash.com/..."
+                  value={avatarUrlInput}
+                  onChange={(e) => setAvatarUrlInput(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-slate-50 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = avatarUrlInput.trim();
+                    if (!url) return;
+                    updateUser({ avatar: url });
+                    toast.success("Thành công", "Đã cập nhật ảnh đại diện từ liên kết");
+                    setAvatarUrlInput("");
+                    setIsAvatarModalOpen(false);
+                  }}
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                >
+                  Lưu
+                </button>
+              </div>
+            </div>
+
+            {/* Option 3: Pick from Presets */}
+            <div className="space-y-2 pt-1">
+              <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" /> 3. Hoặc chọn nhanh avatar mẫu:
+              </label>
+              <div className="grid grid-cols-6 gap-2">
+                {PRESET_AVATARS.map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      updateUser({ avatar: url });
+                      toast.success("Thành công", "Đã chọn ảnh đại diện mẫu");
+                      setIsAvatarModalOpen(false);
+                    }}
+                    className="relative aspect-square rounded-full overflow-hidden border-2 border-slate-200 hover:border-blue-600 hover:scale-105 transition cursor-pointer"
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

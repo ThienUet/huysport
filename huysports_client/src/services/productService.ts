@@ -55,14 +55,33 @@ export const normalizeProduct = (raw: any): Product => {
   const category = mapCategoryToVietnamese(raw.category || raw.sport);
   const fallbackImages = CATEGORY_IMAGES[category] || CATEGORY_IMAGES["Bóng đá"];
 
+  const toFullUrl = (url: string) => {
+    if (!url) return url;
+    if (url.startsWith("/")) {
+      const apiHost = process.env.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
+        : "http://localhost:5000";
+      return `${apiHost}${url}`;
+    }
+    return url;
+  };
+
   // Normalize images
   let images: string[] = [];
-  if (Array.isArray(raw.images) && raw.images.length > 0 && raw.images[0].startsWith("http")) {
-    images = raw.images;
-  } else if (raw.thumbnail && typeof raw.thumbnail === "string" && raw.thumbnail.startsWith("http")) {
-    images = [raw.thumbnail, ...fallbackImages];
+  if (Array.isArray(raw.images) && raw.images.length > 0 && raw.images.some((img: string) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/") || img.startsWith("data:")))) {
+    images = raw.images.map(toFullUrl);
+  } else if (raw.thumbnail && typeof raw.thumbnail === "string" && (raw.thumbnail.startsWith("http") || raw.thumbnail.startsWith("/") || raw.thumbnail.startsWith("data:"))) {
+    images = [toFullUrl(raw.thumbnail), ...fallbackImages];
   } else {
     images = fallbackImages;
+  }
+
+  // Ensure thumbnail is always included at the front of images gallery
+  if (raw.thumbnail && typeof raw.thumbnail === "string" && (raw.thumbnail.startsWith("http") || raw.thumbnail.startsWith("/") || raw.thumbnail.startsWith("data:"))) {
+    const fullThumb = toFullUrl(raw.thumbnail);
+    if (!images.includes(fullThumb)) {
+      images.unshift(fullThumb);
+    }
   }
 
   // Normalize prices (if backend stores in USD e.g. 229.0 or small units, convert to VND e.g. 229000)
@@ -85,7 +104,14 @@ export const normalizeProduct = (raw: any): Product => {
   if (Array.isArray(raw.variants) && raw.variants.length > 0) {
     variants = raw.variants.map((v: any) => {
       let vPrice = Number(v.price || effectivePrice);
-      if (vPrice < 1000) vPrice = Math.round(vPrice * 1000);
+      if (vPrice < 1000 && vPrice > 0) vPrice = Math.round(vPrice * 1000);
+
+      // If variant has old default 250000 or equals rawPrice while discountPrice is active,
+      // sync with current effectivePrice:
+      if (!vPrice || vPrice === 250000 || rawDiscountPrice || vPrice === rawPrice) {
+        vPrice = effectivePrice;
+      }
+
       return {
         sku: v.sku || `${raw.sku || "SPX"}-${v.size || "L"}`,
         size: v.size || "L",
@@ -124,6 +150,7 @@ export const normalizeProduct = (raw: any): Product => {
     sport: category,
     gender: (raw.gender as any) || "Unisex",
     brand: raw.brand || "SportX Pro",
+    basePrice: rawPrice,
     price: effectivePrice,
     originalPrice,
     discountPercent,
@@ -218,6 +245,22 @@ const FALLBACK_PRODUCTS: Product[] = [
 ];
 
 export const productService = {
+  searchProducts: async (query: string): Promise<Product[]> => {
+    if (!query || !query.trim()) return [];
+    try {
+      const res = await api.get("/search", { params: { q: query.trim() } });
+      const rawProducts = res.data?.data?.products || [];
+      if (Array.isArray(rawProducts) && rawProducts.length > 0) {
+        return rawProducts.map(normalizeProduct);
+      }
+      const fallback = await productService.getProducts({ search: query.trim() });
+      return fallback.data.slice(0, 6);
+    } catch {
+      const fallback = await productService.getProducts({ search: query.trim() });
+      return fallback.data.slice(0, 6);
+    }
+  },
+
   getProducts: async (params?: ProductQueryParams): Promise<{ success: boolean; data: Product[]; total?: number }> => {
     try {
       const res = await api.get("/products", { params });

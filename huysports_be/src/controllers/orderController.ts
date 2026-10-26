@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../db/store.js";
 import { Order } from "../types/index.js";
 import { formatDateTime } from "../utils/formatUtils.js";
+import { PaymentController } from "./paymentController.js";
 
 export class OrderController {
   public static getAll(req: Request, res: Response) {
@@ -9,14 +10,20 @@ export class OrderController {
     const { status, search, paymentMethod } = req.query;
 
     if (search && typeof search === "string") {
-      const q = search.toLowerCase();
-      orders = orders.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customer.name.toLowerCase().includes(q) ||
-          o.customer.email.toLowerCase().includes(q) ||
-          o.customer.phone.toLowerCase().includes(q)
-      );
+      const rawQ = search.trim().toLowerCase();
+      const cleanQ = rawQ.replace(/^#/, "");
+      orders = orders.filter((o) => {
+        const rawOrderNum = o.orderNumber.toLowerCase();
+        const cleanOrderNum = rawOrderNum.replace(/^#/, "");
+        return (
+          rawOrderNum.includes(rawQ) ||
+          cleanOrderNum.includes(cleanQ) ||
+          rawOrderNum.includes(cleanQ) ||
+          o.customer.name.toLowerCase().includes(rawQ) ||
+          o.customer.email.toLowerCase().includes(rawQ) ||
+          o.customer.phone.toLowerCase().includes(cleanQ)
+        );
+      });
     }
 
     if (status && typeof status === "string" && status !== "all") {
@@ -52,9 +59,13 @@ export class OrderController {
 
   public static getById(req: Request, res: Response) {
     const { id } = req.params;
+    const cleanId = id.replace(/^#/, "").toUpperCase();
     const order =
       db.getOrderById(id) ||
-      db.getOrders().find((o) => o.orderNumber.toUpperCase() === id.toUpperCase());
+      db.getOrders().find((o) => {
+        const cleanOrderNumber = o.orderNumber.replace(/^#/, "").toUpperCase();
+        return cleanOrderNumber === cleanId || o.id === id || o.orderNumber.toUpperCase() === id.toUpperCase();
+      });
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
@@ -217,28 +228,11 @@ export class OrderController {
       couponCode: couponCode ? String(couponCode).trim().toUpperCase() : undefined,
       totalAmount: Number(totalAmount),
       paymentMethod,
-      paymentStatus: paymentMethod === "COD" ? "Unpaid" : "Paid",
+      paymentStatus: "Unpaid",
       fulfillmentStatus: "Pending Approval",
       note,
       createdAt: new Date().toISOString(),
-      transactionDetails:
-        paymentMethod === "VNPAY"
-          ? {
-              gateway: "VNPAY",
-              transactionCode: `VNP${Date.now()}`,
-              timestamp: new Date().toISOString(),
-              bankCode: "NCB / VNPAY-QR",
-              responseMessage: "00 (Transaction Successful)",
-            }
-          : paymentMethod === "MoMo"
-          ? {
-              gateway: "MoMo",
-              transactionCode: `MM${Date.now()}`,
-              timestamp: new Date().toISOString(),
-              bankCode: "MOMO_WALLET",
-              responseMessage: "Success",
-            }
-          : undefined,
+      transactionDetails: undefined,
     };
 
     const created = db.addOrder(newOrder);
@@ -276,10 +270,25 @@ export class OrderController {
       }
     }
 
+    // Generate VNPAY payment URL if payment method is VNPAY
+    let paymentUrl: string | undefined;
+    if (paymentMethod === "VNPAY") {
+      const ipAddr =
+        req.headers["x-forwarded-for"] ||
+        req.socket.remoteAddress ||
+        "127.0.0.1";
+      paymentUrl = PaymentController.generatePaymentUrl({
+        orderNumber: created.orderNumber,
+        amount: Number(totalAmount),
+        ipAddr: String(ipAddr),
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: "Order placed successfully",
       data: created,
+      paymentUrl,
     });
   }
 
@@ -440,7 +449,19 @@ export class OrderController {
     const { id } = req.params;
     const { reason, cancelledBy = "customer" } = req.body;
 
-    const order = db.getOrderById(id);
+    const cleanId = (id || "").replace(/^#/, "").toUpperCase();
+    const order =
+      db.getOrderById(id) ||
+      db.getOrderById(cleanId) ||
+      db.getOrders().find((o) => {
+        const cleanOrderNumber = (o.orderNumber || "").replace(/^#/, "").toUpperCase();
+        return (
+          cleanOrderNumber === cleanId ||
+          o.id === id ||
+          (o.orderNumber && o.orderNumber.toUpperCase() === id.toUpperCase())
+        );
+      });
+
     if (!order) {
       return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
     }
@@ -457,14 +478,6 @@ export class OrderController {
 
     if (normStatus === "SHIPPING") {
       return res.status(400).json({ success: false, message: "Đang giao hàng, bạn không được hủy đơn hàng." });
-    }
-
-    // Chỉ cho phép hủy khi ở trạng thái chờ xác nhận (Pending) hoặc đang đóng gói (Processing)
-    if (normStatus !== "PENDING" && normStatus !== "PROCESSING") {
-      return res.status(400).json({
-        success: false,
-        message: `Đơn hàng đang ở trạng thái "${order.fulfillmentStatus}", không thể hủy. Chỉ được hủy khi đơn ở trạng thái chờ xác nhận hoặc đang đóng gói.`,
-      });
     }
 
     // Restore stock for all items
@@ -515,7 +528,7 @@ export class OrderController {
       }
     }
 
-    const updated = db.updateOrder(id, {
+    const updated = db.updateOrder(order.id, {
       fulfillmentStatus: "Canceled",
       cancelReason: reason || (cancelledBy === "customer" ? "Khách yêu cầu hủy / Sai thông tin" : "Hủy đơn hàng"),
       cancelledAt: new Date().toISOString(),
@@ -537,9 +550,18 @@ export class OrderController {
       return res.status(400).json({ success: false, message: "Vui lòng chọn lý do hoàn hàng / đổi trả" });
     }
 
+    const cleanId = (id || "").replace(/^#/, "").toUpperCase();
     const order =
       db.getOrderById(id) ||
-      db.getOrders().find((o) => o.orderNumber.toUpperCase() === id.toUpperCase());
+      db.getOrderById(cleanId) ||
+      db.getOrders().find((o) => {
+        const cleanOrderNumber = (o.orderNumber || "").replace(/^#/, "").toUpperCase();
+        return (
+          cleanOrderNumber === cleanId ||
+          o.id === id ||
+          (o.orderNumber && o.orderNumber.toUpperCase() === id.toUpperCase())
+        );
+      });
 
     if (!order) {
       return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng cần yêu cầu hoàn trả" });

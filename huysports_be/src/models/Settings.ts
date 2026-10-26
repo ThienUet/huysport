@@ -11,8 +11,6 @@ export interface ISettingsDocument extends Document {
   vnpayEnabled: boolean;
   vnpayTmnCode: string;
   vnpayHashSecret: string;
-  momoEnabled: boolean;
-  momoPartnerCode: string;
   codEnabled: boolean;
   chatbotEnabled: boolean;
   chatbotAutoReply: boolean;
@@ -31,8 +29,6 @@ const SettingsSchema = new Schema<ISettingsDocument>(
     vnpayEnabled: { type: Boolean, default: true },
     vnpayTmnCode: { type: String, default: "SPORTX01" },
     vnpayHashSecret: { type: String, default: "ABCXYZ1234567890SPORTXSECRETKEY" },
-    momoEnabled: { type: Boolean, default: true },
-    momoPartnerCode: { type: String, default: "MOMO_SPORTX_DEMO" },
     codEnabled: { type: Boolean, default: true },
     chatbotEnabled: { type: Boolean, default: true },
     chatbotAutoReply: { type: Boolean, default: true },

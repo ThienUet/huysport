@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/layouts/admin-layout";
 import { HeroSelect } from "@/components/ui/HeroSelect";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { settingsService } from "@/services/api";
+import { useSystemSettings, useUpdateSettings } from "@/hooks";
 import { useToastStore } from "@/store/useToastStore";
 import {
   Save,
@@ -19,17 +18,13 @@ import {
 type SettingsTab = "general" | "payments" | "shipping" | "security";
 
 export default function SettingsPage() {
-  const queryClient = useQueryClient();
   const toast = useToastStore();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [isSaved, setIsSaved] = useState(false);
 
-  // Fetch settings from Backend
-  const { data: serverSettings } = useQuery({
-    queryKey: ["system-settings"],
-    queryFn: settingsService.get,
-  });
+  // Fetch settings from Backend using custom hook
+  const { data: serverSettings } = useSystemSettings();
 
   // General Settings State
   const [storeName, setStoreName] = useState("SportX Vietnam Co., Ltd.");
@@ -46,10 +41,6 @@ export default function SettingsPage() {
   const [vnpayMerchantId, setVnpayMerchantId] = useState("SPORTXVN01");
   const [vnpaySecretHash, setVnpaySecretHash] = useState("9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d");
   const [vnpaySandbox, setVnpaySandbox] = useState(true);
-
-  const [momoActive, setMomoActive] = useState(true);
-  const [momoPartnerCode, setMomoPartnerCode] = useState("MOMOSPORTX");
-  const [momoApiKey, setMomoApiKey] = useState("sec_momo_894102938472910");
 
   const [codActive, setCodActive] = useState(true);
 
@@ -72,24 +63,26 @@ export default function SettingsPage() {
       if (serverSettings.storeAddress) setStoreAddress(serverSettings.storeAddress);
       if (serverSettings.vnpayEnabled !== undefined) setVnpayActive(serverSettings.vnpayEnabled);
       if (serverSettings.vnpayTmnCode) setVnpayMerchantId(serverSettings.vnpayTmnCode);
-      if (serverSettings.momoEnabled !== undefined) setMomoActive(serverSettings.momoEnabled);
       if (serverSettings.codEnabled !== undefined) setCodActive(serverSettings.codEnabled);
       if (serverSettings.shippingFeeDefault) setDefaultShippingFee(serverSettings.shippingFeeDefault);
       if (serverSettings.freeShippingThreshold) setFreeShippingThreshold(serverSettings.freeShippingThreshold);
     }
   }, [serverSettings]);
 
-  // Update Settings Mutation
-  const updateSettingsMutation = useMutation({
-    mutationFn: settingsService.update,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["system-settings"] });
-      setIsSaved(true);
-      toast.success("Thành công", "Đã lưu cài đặt hệ thống SportX");
-      setTimeout(() => setIsSaved(false), 3000);
-    },
-    onError: (err: any) => toast.error("Lỗi", err.message),
-  });
+  // Update Settings Mutation using custom hook
+  const baseUpdateSettings = useUpdateSettings();
+  const updateSettingsMutation = {
+    ...baseUpdateSettings,
+    mutate: (payload: any) =>
+      baseUpdateSettings.mutate(payload, {
+        onSuccess: () => {
+          setIsSaved(true);
+          toast.success("Thành công", "Đã lưu cài đặt hệ thống SportX");
+          setTimeout(() => setIsSaved(false), 3000);
+        },
+        onError: (err: any) => toast.error("Lỗi", err.message),
+      }),
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,8 +97,6 @@ export default function SettingsPage() {
       vnpayEnabled: vnpayActive,
       vnpayTmnCode: vnpayMerchantId,
       vnpayHashSecret: vnpaySecretHash,
-      momoEnabled: momoActive,
-      momoPartnerCode,
       codEnabled: codActive,
     });
   };
@@ -175,7 +166,7 @@ export default function SettingsPage() {
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            Cổng thanh toán (VNPAY / MoMo / COD)
+            Cổng thanh toán (VNPAY / COD)
           </button>
 
           <button
@@ -383,70 +374,8 @@ export default function SettingsPage() {
                   className="rounded text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor="vnpay-sandbox" className="text-slate-600 font-medium cursor-pointer">
-                  Kích hoạt môi trường thử nghiệm Sandbox (Chế độ test)
+                  Kích hoạt môi trường thử nghiệm Sandbox (Chế độ test không cần đăng ký doanh nghiệp)
                 </label>
-              </div>
-            </div>
-
-            {/* MoMo Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-200 text-pink-700 flex items-center justify-center font-bold text-xs">
-                    MoMo
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900">Ví điện tử MoMo</h3>
-                    <p className="text-xs text-slate-400">Thanh toán ví MoMo & Quét mã QR</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                      momoActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {momoActive ? "Đang bật" : "Tạm tắt"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setMomoActive(!momoActive)}
-                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none ${
-                      momoActive ? "bg-pink-600" : "bg-slate-300"
-                    }`}
-                  >
-                    <span
-                      className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
-                        momoActive ? "left-6" : "left-1"
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Mã đối tác (Partner Code)</label>
-                  <input
-                    type="text"
-                    value={momoPartnerCode}
-                    onChange={(e) => setMomoPartnerCode(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 font-mono text-xs font-bold text-pink-600 rounded-xl border border-slate-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Khóa truy cập API (Access Key)</label>
-                  <input
-                    type="password"
-                    value={momoApiKey}
-                    onChange={(e) => setMomoApiKey(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 font-mono text-xs font-bold rounded-xl border border-slate-200"
-                  />
-                </div>
               </div>
             </div>
 

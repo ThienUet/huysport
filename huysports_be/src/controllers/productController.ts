@@ -54,7 +54,8 @@ export class ProductController {
       brand,
       basePrice,
       discountPrice,
-      thumbnail = "👟",
+      thumbnail,
+      images,
       icon = "⚽",
       sizes = ["S", "M", "L", "XL"],
       colors = [{ name: "Black", hex: "#0F172A" }],
@@ -64,10 +65,16 @@ export class ProductController {
       variants,
     } = req.body;
 
-    if (!title || !sku || !category || basePrice === undefined) {
+    const effectiveSku = sku?.trim() || `SPX-${Date.now().toString().slice(-6)}`;
+
+    if (!title || !category || basePrice === undefined || basePrice === null) {
+      const missingFields: string[] = [];
+      if (!title) missingFields.push("Tên sản phẩm (title)");
+      if (!category) missingFields.push("Môn thể thao (category)");
+      if (basePrice === undefined || basePrice === null) missingFields.push("Giá gốc (basePrice)");
       return res.status(400).json({
         success: false,
-        message: "Missing required product fields: title, sku, category, basePrice",
+        message: `Thiếu các trường thông tin bắt buộc: ${missingFields.join(", ")}`,
       });
     }
 
@@ -83,7 +90,7 @@ export class ProductController {
         for (const size of sizes) {
           generatedVariants.push({
             id: `v-${productId}-${count++}`,
-            sku: `${sku}-${color.name.slice(0, 3).toUpperCase()}-${size}`,
+            sku: `${effectiveSku}-${color.name.slice(0, 3).toUpperCase()}-${size}`,
             color: color.name,
             colorHex: color.hex,
             size,
@@ -94,15 +101,30 @@ export class ProductController {
       }
     }
 
+    const productThumbnail =
+      thumbnail ||
+      (Array.isArray(images) && images.length > 0 ? images[0] : "👟");
+
+    const productImages =
+      Array.isArray(images) && images.length > 0
+        ? images
+        : productThumbnail &&
+          (productThumbnail.startsWith("http") ||
+            productThumbnail.startsWith("/") ||
+            productThumbnail.startsWith("data:"))
+        ? [productThumbnail]
+        : [];
+
     const newProduct: Product = {
       id: productId,
       title,
-      sku,
+      sku: effectiveSku,
       category,
       brand: brand || "SportX",
       basePrice: Number(basePrice),
       discountPrice: discountPrice ? Number(discountPrice) : undefined,
-      thumbnail,
+      thumbnail: productThumbnail,
+      images: productImages,
       icon,
       sizes,
       colors,

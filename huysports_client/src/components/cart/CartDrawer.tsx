@@ -33,14 +33,24 @@ export default function CartDrawer() {
     getSubtotal,
     getShippingFee,
     getTotal,
+    toggleSelectItem,
+    toggleSelectAll,
+    getSelectedItems,
+    getSelectedCount,
   } = useCartStore();
+
+  const selectedItems = getSelectedItems();
+  const selectedCount = getSelectedCount();
+  const allSelected = items.length > 0 && items.every((i) => i.selected !== false);
+  const isIndeterminate = items.some((i) => i.selected !== false) && !allSelected;
 
   const subtotal = getSubtotal();
   const shippingFee = getShippingFee();
   const total = getTotal();
   const freeShipThreshold = 500000;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShipThreshold) * 100));
-  const hasOutOfStockItems = items.some((i) => (i.maxStock ?? 0) <= 0);
+  const hasOutOfStockSelected = selectedItems.some((i) => (i.maxStock ?? 0) <= 0);
+  const hasAnyOutOfStock = items.some((i) => (i.maxStock ?? 0) <= 0);
 
   return (
     <Drawer
@@ -107,17 +117,46 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {hasOutOfStockItems && (
+                  {hasOutOfStockSelected && (
                     <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-medium flex items-center gap-2">
                       <FaCircleExclamation className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span>Trong giỏ có sản phẩm tạm hết hàng. Vui lòng xóa trước khi thanh toán.</span>
+                      <span>Trong các sản phẩm ĐÃ CHỌN có món tạm hết hàng. Vui lòng bỏ chọn để thanh toán.</span>
                     </div>
                   )}
 
+                  {/* Select All Checkbox in Drawer */}
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-100 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate;
+                        }}
+                        onChange={(e) => toggleSelectAll(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 cursor-pointer accent-emerald-600"
+                      />
+                      <span className="font-semibold text-gray-700">Chọn tất cả</span>
+                    </label>
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      Đã chọn: <strong className="text-emerald-600 font-bold">{selectedCount}</strong> món
+                    </span>
+                  </div>
+
                   <div className="divide-y divide-gray-100">
                     {items.map((item) => (
-                      <div key={item.sku} className="pt-3 first:pt-0 flex gap-3">
-                        <div className="relative w-18 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                      <div key={item.sku} className="pt-3 first:pt-0 flex items-start gap-2.5">
+                        <div className="pt-2">
+                          <input
+                            type="checkbox"
+                            checked={item.selected !== false}
+                            onChange={() => toggleSelectItem(item.sku)}
+                            className="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 cursor-pointer accent-emerald-600"
+                            title="Chọn sản phẩm này"
+                          />
+                        </div>
+
+                        <div className="relative w-16 h-18 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
                           <img
                             src={
                               item.productImage && (item.productImage.startsWith("http") || item.productImage.startsWith("/"))
@@ -233,18 +272,22 @@ export default function CartDrawer() {
                     Xem Giỏ Hàng
                   </Button>
                   <Button
-                    isDisabled={hasOutOfStockItems}
+                    isDisabled={selectedCount === 0 || hasOutOfStockSelected}
                     className={`font-bold text-xs h-10 rounded-full shadow-md ${
-                      hasOutOfStockItems
+                      selectedCount === 0 || hasOutOfStockSelected
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
                     }`}
                     endContent={<FaArrowRight className="w-3.5 h-3.5" />}
-                    onPress={() => !hasOutOfStockItems && setIsCartDrawerOpen(false)}
+                    onPress={() => !(selectedCount === 0 || hasOutOfStockSelected) && setIsCartDrawerOpen(false)}
                     as={Link}
-                    href={hasOutOfStockItems ? "#" : "/checkout"}
+                    href={selectedCount === 0 || hasOutOfStockSelected ? "#" : "/checkout"}
                   >
-                    {hasOutOfStockItems ? "Có SP Hết Hàng" : "Thanh Toán"}
+                    {selectedCount === 0
+                      ? "Chưa Chọn Món"
+                      : hasOutOfStockSelected
+                      ? "Có SP Hết Hàng"
+                      : `Thanh Toán (${selectedCount})`}
                   </Button>
                 </div>
               </DrawerFooter>

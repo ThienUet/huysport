@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useToastStore } from "@/store/useToastStore";
-import { authService } from "@/services/api";
+import { useAdminRegister } from "@/hooks";
 import {
   Zap,
   Lock,
@@ -29,6 +29,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const registerMutation = useAdminRegister();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +53,7 @@ export default function RegisterPage() {
     setErrorMessage(null);
 
     try {
-      const res = await authService.register({
+      const res = await registerMutation.mutateAsync({
         fullName: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),

@@ -19,11 +19,11 @@ export interface IOrderDocument extends Document {
   discountAmount?: number;
   couponCode?: string;
   totalAmount: number;
-  paymentMethod: "VNPAY" | "MoMo" | "COD";
+  paymentMethod: "VNPAY" | "COD";
   paymentStatus: "Paid" | "Unpaid";
   fulfillmentStatus: "Pending Approval" | "Processing" | "Shipping" | "Completed" | "Canceled";
   transactionDetails?: {
-    gateway: "VNPAY" | "MoMo" | "COD";
+    gateway: "VNPAY" | "COD";
     transactionCode: string;
     timestamp: string;
     bankCode?: string;
@@ -63,7 +63,7 @@ const OrderSchema = new Schema<IOrderDocument>(
     },
     items: [OrderItemSchema],
     totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ["VNPAY", "MoMo", "COD"], required: true },
+    paymentMethod: { type: String, enum: ["VNPAY", "COD"], required: true },
     paymentStatus: { type: String, enum: ["Paid", "Unpaid"], default: "Unpaid" },
     fulfillmentStatus: {
       type: String,

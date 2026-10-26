@@ -1,7 +1,6 @@
 import AdminLayout from "@/layouts/admin-layout";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { analyticsService } from "@/services/api";
+import { useAnalyticsReports } from "@/hooks";
 import {
   Download,
   DollarSign,
@@ -25,16 +24,14 @@ import {
 import { exportToCSV, exportToExcel, printHtmlReport, ReportSection } from "@/utils/exportUtils";
 import { useToastStore } from "@/store/useToastStore";
 import { HeroDropdown } from "@/components/ui/HeroDropdown";
+import { StatCardsSkeleton } from "@/components/ui/LoadingSkeletons";
 
 export default function AnalyticsPage() {
   const toast = useToastStore();
   const dateRange = "Tháng 10/2026 (Hiện tại)";
 
-  // Fetch real analytics report from database
-  const { data: reportData } = useQuery({
-    queryKey: ["analytics-reports"],
-    queryFn: analyticsService.getReports,
-  });
+  // Fetch real analytics report from database using custom React Query hook
+  const { data: reportData, isLoading } = useAnalyticsReports();
 
   const kpis = reportData?.kpis || {
     totalRevenue: 2190000,
@@ -213,7 +210,10 @@ export default function AnalyticsPage() {
         </div>
 
         {/* 1. Core KPIs (4 Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {isLoading ? (
+          <StatCardsSkeleton count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: Total Revenue */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition">
             <div className="flex items-center justify-between mb-2.5">
@@ -286,6 +286,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
         </div>
+        )}
 
         {/* 2. Middle Row: Category Breakdown & Fulfillment Status (2 Columns) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
