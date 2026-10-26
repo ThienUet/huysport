@@ -390,7 +390,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
-                {product.brand || "SportX Pro"} · {product.gender}
+                {product.brand || "SportX Pro"} · {product.sport || product.category}
               </span>
               <span className="text-xs text-gray-400 font-mono">SKU: {product.sku}</span>
             </div>
@@ -400,14 +400,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </h1>
 
             <div className="flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-1 text-amber-500 font-bold">
-                <FaStar className="w-3.5 h-3.5" />
-                <span>{product.rating || 5.0}</span>
-                <span className="text-gray-400 font-normal">({product.reviewCount || 24} đánh giá)</span>
-              </div>
+              <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                <FaCircleCheck className="w-3.5 h-3.5" /> Hàng chính hãng 100%
+              </span>
               <span className="text-gray-200">|</span>
-              <span className="text-emerald-600 font-medium flex items-center gap-1">
-                <FaCircleCheck className="w-3.5 h-3.5" /> Đã bán {product.reviewCount ? product.reviewCount * 7 : 150}+
+              <span className="text-gray-500 font-medium flex items-center gap-1">
+                <FaTruckFast className="w-3.5 h-3.5 text-blue-500" /> Giao hàng toàn quốc
               </span>
             </div>
           </div>
@@ -657,7 +655,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Tabs: Description, Specs, Reviews */}
+      {/* Tabs: Description & Specs (100% from DB) */}
       <div className="pt-8 border-t border-gray-200">
         <Tabs
           aria-label="Product Information"
@@ -667,73 +665,49 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             tabContent: "group-data-[selected=true]:text-emerald-600",
           }}
         >
-          <Tab key="desc" title="Mô Tả Chi Tiết">
-            <div className="py-6 max-w-none text-sm leading-relaxed text-gray-600 space-y-4">
-              <p>{product.description}</p>
-              <h4 className="text-sm font-bold text-gray-900 mt-4">Đặc điểm nổi bật:</h4>
-              <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
-                <li>Chất liệu thể thao cao cấp, co giãn 4 chiều và thoáng khí tối đa.</li>
-                <li>Công nghệ dệt kháng khuẩn, khử mùi hôi hiệu quả trong suốt buổi tập.</li>
-                <li>Đường may phẳng Flatlock không gây cọ xát hay kích ứng da.</li>
-                <li>Kiểu dáng năng động, hiện đại phù hợp cả tập luyện lẫn mặc thường ngày.</li>
-              </ul>
+          <Tab key="desc" title="Mô Tả Sản Phẩm">
+            <div className="py-6 max-w-none text-sm leading-relaxed text-gray-700">
+              {product.description ? (
+                <div className="whitespace-pre-line leading-relaxed text-gray-700 bg-gray-50/60 p-5 rounded-2xl border border-gray-100">
+                  {product.description}
+                </div>
+              ) : (
+                <p className="text-gray-400 italic">Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>
+              )}
             </div>
           </Tab>
 
-          <Tab key="specs" title="Thông Số Kỹ Thuật">
+          <Tab key="specs" title="Thông Số Chi Tiết">
             <div className="py-6 max-w-xl">
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-white text-sm">
                 <div className="grid grid-cols-2 p-3.5">
-                  <span className="text-gray-500">Môn thể thao:</span>
-                  <span className="font-semibold text-gray-900">{product.sport || product.category}</span>
+                  <span className="text-gray-500">Mã SKU:</span>
+                  <span className="font-mono font-bold text-gray-900">{product.sku}</span>
                 </div>
                 <div className="grid grid-cols-2 p-3.5 bg-gray-50">
-                  <span className="text-gray-500">Đối tượng:</span>
-                  <span className="font-semibold text-gray-900">{product.gender}</span>
+                  <span className="text-gray-500">Môn thể thao:</span>
+                  <span className="font-semibold text-gray-900">{product.sport || product.category}</span>
                 </div>
                 <div className="grid grid-cols-2 p-3.5">
                   <span className="text-gray-500">Thương hiệu:</span>
                   <span className="font-semibold text-gray-900">{product.brand || "SportX Pro"}</span>
                 </div>
                 <div className="grid grid-cols-2 p-3.5 bg-gray-50">
-                  <span className="text-gray-500">Chất liệu:</span>
-                  <span className="font-semibold text-gray-900">100% Polyester Aeroready</span>
+                  <span className="text-gray-500">Kích cỡ sẵn có:</span>
+                  <span className="font-semibold text-gray-900">{availableSizes.join(", ")}</span>
                 </div>
                 <div className="grid grid-cols-2 p-3.5">
-                  <span className="text-gray-500">Xuất xứ:</span>
-                  <span className="font-semibold text-gray-900">Việt Nam</span>
+                  <span className="text-gray-500">Màu sắc:</span>
+                  <span className="font-semibold text-gray-900">
+                    {availableColors.filter((c) => c !== "Mặc định").join(", ") || "Tiêu chuẩn"}
+                  </span>
                 </div>
-              </div>
-            </div>
-          </Tab>
-
-          <Tab key="reviews" title={`Đánh Giá (${product.reviewCount || 24})`}>
-            <div className="py-6 space-y-4 max-w-2xl">
-              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-extrabold text-gray-900">{product.rating || 5.0} / 5.0</div>
-                  <div className="text-xs text-gray-500">Dựa trên {product.reviewCount || 24} đánh giá</div>
+                <div className="grid grid-cols-2 p-3.5 bg-gray-50">
+                  <span className="text-gray-500">Tồn kho hệ thống:</span>
+                  <span className="font-semibold text-gray-900">
+                    {product.stock > 0 ? `${product.stock} sản phẩm` : "Tạm hết hàng"}
+                  </span>
                 </div>
-                <div className="flex text-amber-400 gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <FaStar key={s} className="w-4 h-4" />
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white border border-gray-200 space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <div className="font-bold text-gray-900">Trần Minh Quân (Hà Nội)</div>
-                  <span className="text-xs text-gray-400">2 ngày trước</span>
-                </div>
-                <div className="flex text-amber-400 gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <FaStar key={s} className="w-3 h-3" />
-                  ))}
-                </div>
-                <p className="text-gray-600">
-                  Áo mặc rất mát, form chuẩn theo AI tư vấn (mình cao 1m73 nặng 68kg chọn size L vừa in). Vải thấm mồ hôi nhanh!
-                </p>
               </div>
             </div>
           </Tab>
