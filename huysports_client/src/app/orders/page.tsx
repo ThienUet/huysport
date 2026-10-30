@@ -377,36 +377,40 @@ function OrdersContent() {
 
             {/* Tiến trình đơn hàng */}
             {order.fulfillmentStatus !== "CANCELLED" && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold flex items-center gap-1.5">
-                  <FaCircleCheck className="w-3.5 h-3.5 text-emerald-600" /> 1. Chờ xác nhận
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-[11px] sm:text-xs">
+                <div className="p-2 sm:p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold flex items-center gap-1.5 truncate">
+                  <FaCircleCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">1. Chờ xác nhận</span>
                 </div>
                 <div
-                  className={`p-3 rounded-lg border font-bold flex items-center gap-1.5 ${
+                  className={`p-2 sm:p-3 rounded-lg border font-bold flex items-center gap-1.5 truncate ${
                     order.fulfillmentStatus !== "PENDING"
                       ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                       : "bg-gray-50 border-gray-200 text-gray-400"
                   }`}
                 >
-                  <FaBoxOpen className="w-3.5 h-3.5" /> 2. Đang đóng gói
+                  <FaBoxOpen className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">2. Đang đóng gói</span>
                 </div>
                 <div
-                  className={`p-3 rounded-lg border font-bold flex items-center gap-1.5 ${
+                  className={`p-2 sm:p-3 rounded-lg border font-bold flex items-center gap-1.5 truncate ${
                     order.fulfillmentStatus === "SHIPPING" || order.fulfillmentStatus === "DELIVERED"
                       ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                       : "bg-gray-50 border-gray-200 text-gray-400"
                   }`}
                 >
-                  <FaTruckFast className="w-3.5 h-3.5" /> 3. Đang giao hàng
+                  <FaTruckFast className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">3. Đang giao hàng</span>
                 </div>
                 <div
-                  className={`p-3 rounded-lg border font-bold flex items-center gap-1.5 ${
+                  className={`p-2 sm:p-3 rounded-lg border font-bold flex items-center gap-1.5 truncate ${
                     order.fulfillmentStatus === "DELIVERED"
                       ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                       : "bg-gray-50 border-gray-200 text-gray-400"
                   }`}
                 >
-                  <FaCircleCheck className="w-3.5 h-3.5" /> 4. Giao thành công
+                  <FaCircleCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">4. Giao thành công</span>
                 </div>
               </div>
             )}

@@ -595,6 +595,16 @@ def build_thesis_document():
     add_p("Dưới đây là biểu đồ Use Case mô hình hóa các tương tác của Khách hàng và Khách vãng lai với hệ thống website:")
     add_figure("uc_customer.png", "Biểu đồ Use Case phân hệ Khách hàng và Trợ lý ảo Chatbot", "3.1")
 
+    add_p("Phân tích các mối quan hệ đặc tả trong biểu đồ Use Case phân hệ Khách hàng (Hình 3.1):")
+    add_bullet("Mối quan hệ Kế thừa (Generalization): Tác nhân Khách hàng (Customer) kế thừa toàn bộ các hành vi duyệt hệ thống từ Khách vãng lai (Guest) như xem trang chủ, tìm kiếm, lọc sản phẩm, xem chi tiết và quản lý giỏ hàng; đồng thời mở rộng thêm các tác nghiệp nghiệp vụ yêu cầu định danh như Đặt hàng (Checkout) và Theo dõi đơn hàng cá nhân.")
+    add_bullet("Mối quan hệ Bao hàm (<<include>>):")
+    add_p("  • UC-11 (Đặt hàng) <<include>> UC-14 (Thanh toán trực tuyến): Trong quy trình Checkout, bước thanh toán là bắt buộc để đơn hàng hoàn tất và cập nhật trạng thái giao dịch với cổng VNPAY.", indent=1.5)
+    add_p("  • UC-11 (Đặt hàng) <<include>> UC-09 (Quản lý giỏ hàng): Luồng đặt hàng bắt buộc trích xuất, xác thực danh mục mặt hàng và số lượng tồn kho từ giỏ hàng hiện thời.", indent=1.5)
+    add_bullet("Mối quan hệ Mở rộng (<<extend>>):")
+    add_p("  • UC-10 (Áp dụng mã giảm giá) <<extend>> UC-11 (Đặt hàng): Hành vi nhập coupon là tùy chọn (optional), chỉ kích hoạt khi khách hàng có mã ưu đãi nhằm chiết khấu tổng tiền đơn hàng.", indent=1.5)
+    add_p("  • UC-16 (Chatbot tư vấn chọn size) <<extend>> UC-08 (Xem chi tiết sản phẩm): Khi xem chi tiết trang phục thể thao, khách hàng có thể tùy chọn gọi tính năng AI Size Fitting để nhận gợi ý kích cỡ phù hợp theo chiều cao/cân nặng.", indent=1.5)
+    add_p("  • UC-17 (Tra cứu hỏi đáp FAQ) <<extend>> UC-15 (Trò chuyện với Chatbot): Khi trao đổi với Chatbot, nếu người dùng có thắc mắc về chính sách giao hàng/đổi trả, Chatbot Engine sẽ kích hoạt cơ chế đối sánh để tự động phản hồi các câu hỏi thường gặp.", indent=1.5)
+
     add_p("Biểu đồ Use Case mô hình hóa các chức năng tác nghiệp của Quản trị viên trên trang SportX Admin:")
     add_figure("uc_admin.png", "Biểu đồ Use Case phân hệ Quản trị hệ thống (SportX Admin)", "3.2")
 

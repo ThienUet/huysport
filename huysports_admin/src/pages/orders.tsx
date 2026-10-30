@@ -1079,10 +1079,10 @@ export default function OrdersPage() {
             />
 
             {/* Slide-over panel */}
-            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
               <div className="w-screen max-w-xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
                 {/* Panel Header */}
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold font-mono">
                       #{selectedOrder.orderNumber.slice(-4)}

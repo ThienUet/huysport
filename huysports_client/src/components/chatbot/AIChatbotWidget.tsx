@@ -98,7 +98,7 @@ export default function AIChatbotWidget() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
       {/* Floating Launcher Button */}
       {!isOpen && (
         <button
@@ -116,7 +116,7 @@ export default function AIChatbotWidget() {
 
       {/* Responsive Chat Window */}
       {isOpen && (
-        <div className="w-[calc(100vw-2rem)] sm:w-[410px] max-w-[420px] h-[520px] sm:h-[580px] max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-scale-in">
+        <div className="w-[calc(100vw-2rem)] sm:w-[410px] max-w-[420px] h-[480px] sm:h-[580px] max-h-[82vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-scale-in">
           
           {/* Header */}
           <div className="bg-emerald-600 text-white p-3.5 sm:p-4 flex items-center justify-between border-b border-emerald-700 flex-shrink-0">

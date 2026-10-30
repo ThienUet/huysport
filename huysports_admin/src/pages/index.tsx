@@ -471,7 +471,7 @@ export default function IndexPage() {
             </div>
 
             {/* Quick Metrics Strip */}
-            <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-slate-50 mb-6 border border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-slate-50 mb-6 border border-slate-100">
               <div>
                 <div className="text-[11px] text-slate-400 font-bold uppercase">Doanh thu TB</div>
                 <div className="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">
@@ -672,7 +672,7 @@ export default function IndexPage() {
         {/* 4. Bottom Section: Recent Orders Table */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
           {/* Table Header & Toolbar */}
-          <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-900">Đơn hàng gần đây</h2>
@@ -685,16 +685,16 @@ export default function IndexPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
               {/* Search in table */}
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none sm:w-60">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Tìm mã đơn, tên khách..."
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
 

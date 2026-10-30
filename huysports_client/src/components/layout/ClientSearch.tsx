@@ -165,9 +165,11 @@ export default function ClientSearch({ isMobile = false, onCloseMobileMenu }: Cl
       {/* Floating Instant Search Dropdown (Like Admin GlobalSearch) */}
       {isOpen && (
         <div
-          className={`absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200/90 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 ${
-            isMobile ? "max-h-[360px]" : "min-w-[340px] lg:min-w-[400px] max-h-[460px]"
-          } flex flex-col`}
+          className={`absolute ${
+            isMobile
+              ? "left-0 right-0 max-h-[360px]"
+              : "right-0 lg:left-0 lg:right-auto w-[340px] lg:w-[400px] max-w-[calc(100vw-2rem)] max-h-[460px]"
+          } top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200/90 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 flex flex-col`}
         >
           {/* State 1: Input empty - Quick Suggestions & Trending Categories */}
           {!debouncedSearch && (

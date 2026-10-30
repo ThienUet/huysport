@@ -297,8 +297,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }`}
       >
         {/* 1. Top Header Bar */}
-        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-          <div className="flex-1 max-w-xl">
+        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between sticky top-[57px] lg:top-0 z-30 shadow-xs">
+          <div className="flex-1 max-w-xl pr-2 sm:pr-0">
             {/* Global Autocomplete Search with Debounce */}
             <GlobalSearch />
           </div>
@@ -443,13 +443,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Main Body */}
-        <main className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl w-full mx-auto">{children}</main>
+        <main className="flex-1 p-3.5 sm:p-5 md:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl w-full mx-auto">{children}</main>
       </div>
 
       {/* Avatar Change Modal */}
       {isAvatarModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 sm:space-y-5 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">

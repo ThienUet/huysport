@@ -1158,10 +1158,10 @@ export default function ProductsPage() {
             />
 
             {/* Slide-over panel */}
-            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
               <div className="w-screen max-w-2xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
                 {/* Drawer Header */}
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                       <Boxes className="w-5 h-5" />
@@ -1598,7 +1598,7 @@ export default function ProductsPage() {
                           </span>
                           <span className="text-[10px] text-slate-400">(Nhấp để thêm nhanh vào album)</span>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {(PRESET_SPORTS_IMAGES[formCategory] || PRESET_SPORTS_IMAGES.Football).map((preset) => {
                             const isAdded = formImages.includes(preset.url);
                             return (
@@ -1631,7 +1631,7 @@ export default function ProductsPage() {
                           <label className="block text-xs font-bold text-slate-700">
                             Danh sách ảnh chi tiết ({formImages.length} ảnh):
                           </label>
-                          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                             {formImages.map((imgUrl) => {
                               const isMain = formThumbnail === imgUrl;
                               return (
@@ -1772,7 +1772,7 @@ export default function ProductsPage() {
                           <span>{formErrors.variants}</span>
                         </p>
                       )}
-                      <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                      <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-xs">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
                             <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">

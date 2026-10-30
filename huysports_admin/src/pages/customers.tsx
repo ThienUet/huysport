@@ -663,10 +663,10 @@ export default function CustomersPage() {
             />
 
             {/* Slide-over panel */}
-            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
               <div className="w-screen max-w-xl bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
                 {/* Header */}
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-12 h-12 rounded-full font-bold text-sm flex items-center justify-center shadow-xs ${detailCustomer.avatarBg}`}
@@ -705,7 +705,7 @@ export default function CustomersPage() {
                 </div>
 
                 {/* Profile Key Stats */}
-                <div className="p-6 bg-slate-50 border-b border-slate-100 grid grid-cols-3 gap-3 text-center">
+                <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-center">
                   <div className="p-3 bg-white rounded-xl border border-slate-200/70 shadow-xs">
                     <div className="text-[10px] font-bold text-slate-400 uppercase">Tổng chi tiêu</div>
                     <div className="text-base font-extrabold text-emerald-600 mt-0.5">

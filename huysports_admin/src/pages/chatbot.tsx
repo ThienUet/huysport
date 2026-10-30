@@ -731,7 +731,7 @@ export default function ChatbotPage() {
         {activeTab === "logs" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
             {/* Left Column: Recent Chat Sessions List (4 cols) */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[650px] overflow-hidden">
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[380px] sm:h-[450px] lg:h-[650px] overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">Cuộc trò chuyện gần đây</h3>
@@ -792,7 +792,7 @@ export default function ChatbotPage() {
             </div>
 
             {/* Right Column: Full Chat Transcript View (8 cols) */}
-            <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[650px] overflow-hidden">
+            <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[480px] sm:h-[550px] lg:h-[650px] overflow-hidden">
               {/* Transcript Header */}
               <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">

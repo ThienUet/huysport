@@ -23,20 +23,20 @@ plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'Segoe UI']
 plt.rcParams['axes.unicode_minus'] = False
 
 # ==============================================================================
-# 1. BIỂU ĐỒ USE CASE KHÁCH HÀNG & CHATBOT (FONT LỚN)
+# 1. BIỂU ĐỒ USE CASE KHÁCH HÀNG & CHATBOT (CHUẨN UML: ĐỦ INCLUDE & EXTEND)
 # ==============================================================================
 def draw_uc_customer():
-    fig, ax = plt.subplots(figsize=(8.5, 10.5), dpi=300)
+    fig, ax = plt.subplots(figsize=(12, 14.2), dpi=300)
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
     ax.axis('off')
 
     # Boundary Box
-    sys_box = patches.FancyBboxPatch((24, 4), 52, 92, boxstyle="round,pad=0.8", 
-                                     edgecolor="#1A365D", facecolor="#F8FAFC", linewidth=2.2)
+    sys_box = patches.FancyBboxPatch((21.5, 3.2), 56.5, 93.8, boxstyle="round,pad=0.8", 
+                                     edgecolor="#1A365D", facecolor="#F8FAFC", linewidth=2.4)
     ax.add_patch(sys_box)
-    ax.text(50, 93.5, "Phân hệ Khách hàng & Chatbot (SportX)", 
-            ha='center', va='center', fontsize=13, fontweight='bold', color="#1A365D")
+    ax.text(49.8, 95.0, "Phân hệ Khách hàng & Chatbot (SportX)", 
+            ha='center', va='center', fontsize=14, fontweight='bold', color="#1A365D")
 
     # Vẽ Actor người lớn, rõ
     def draw_actor(x, y, name, color="#1A202C"):
@@ -46,68 +46,128 @@ def draw_uc_customer():
         ax.plot([x - 2.8, x + 2.8], [y - 0.5, y - 0.5], color=color, lw=2.2) # Tay
         ax.plot([x, x - 2.5], [y - 3.2, y - 7.5], color=color, lw=2.2) # Chân trái
         ax.plot([x, x + 2.5], [y - 3.2, y - 7.5], color=color, lw=2.2) # Chân phải
-        ax.text(x, y - 10.5, name, ha='center', va='center', fontsize=11.5, fontweight='bold', color=color)
+        ax.text(x, y - 10.5, name, ha='center', va='center', fontsize=11, fontweight='bold', color=color)
 
-    draw_actor(11, 75, "Khách vãng lai\n(Guest)")
-    draw_actor(11, 32, "Khách hàng\n(Customer)")
+    draw_actor(10, 74, "Khách vãng lai\n(Guest)")
+    draw_actor(10, 29, "Khách hàng\n(Customer)")
 
-    # Secondary Actors bên phải
+    # Mũi tên kế thừa Khách hàng -> Khách vãng lai
+    ax.annotate("", xy=(10, 60.5), xytext=(10, 36.0),
+                arrowprops=dict(arrowstyle="-|>", color="#4A5568", lw=2.0, mutation_scale=18))
+    ax.text(12.8, 48.0, "<<kế thừa>>", fontsize=10, color="#4A5568", fontweight='bold', fontstyle='italic', ha='left', va='center')
+
+    # Secondary Actors bên phải (Hệ thống ngoài)
     def draw_sys_actor(x, y, w, h, name):
         box = patches.FancyBboxPatch((x, y), w, h, boxstyle="square,pad=0.4", 
                                      edgecolor="#22543D", facecolor="#F0FFF4", lw=2.0)
         ax.add_patch(box)
         ax.text(x + w/2, y + h/2, f"<<Hệ thống ngoài>>\n{name}", 
-                ha='center', va='center', fontsize=10.5, fontweight='bold', color="#22543D")
+                ha='center', va='center', fontsize=9.5, fontweight='bold', color="#22543D")
 
-    draw_sys_actor(78, 68, 20, 8.5, "Cổng VNPAY")
-    draw_sys_actor(78, 22, 20, 8.5, "Động cơ AI Chatbot\n(NLP Engine)")
+    draw_sys_actor(80.5, 27.5, 18.5, 7.5, "Cổng VNPAY")
+    draw_sys_actor(80.5, 9.0, 18.5, 9.0, "Động cơ AI Chatbot\n(NLP Engine)")
 
-    # Mũi tên kế thừa Khách hàng -> Khách vãng lai
-    ax.annotate("", xy=(11, 64), xytext=(11, 44),
-                arrowprops=dict(arrowstyle="-|>", color="#4A5568", lw=2.0, mutation_scale=18))
-    ax.text(13.5, 54, "<<kế thừa>>", fontsize=10, color="#4A5568", fontweight='bold', fontstyle='italic')
-
-    # Danh sách Use Case với chữ 11.5pt đậm
-    usecases = [
-        ("UC-01: Đăng ký & Đăng nhập", 50, 87),
-        ("UC-05: Xem danh mục & Trang chủ", 50, 79),
-        ("UC-06: Tìm kiếm & Lọc sản phẩm", 50, 71),
-        ("UC-08: Xem chi tiết sản phẩm", 50, 63),
-        ("UC-09: Quản lý giỏ hàng", 50, 55),
-        ("UC-10: Nhập mã giảm giá", 50, 47),
-        ("UC-11: Đặt hàng (Checkout)", 50, 39),
-        ("UC-12: Theo dõi đơn mua", 50, 31),
-        ("UC-14: Thanh toán trực tuyến", 50, 23),
-        ("UC-15: Chatbot tư vấn chọn size", 50, 15),
-        ("UC-17: Tra cứu hỏi đáp FAQ", 50, 7),
-    ]
-
-    for name, cx, cy in usecases:
-        ellipse = patches.Ellipse((cx, cy), 42, 6.5, edgecolor="#2B6CB0", facecolor="#EBF8FF", lw=1.8)
+    # Vẽ Use Case hình Elip
+    def draw_uc(cx, cy, w, h, name, code_color="#1A365D", bg="#EBF8FF", border="#2B6CB0"):
+        ellipse = patches.Ellipse((cx, cy), w, h, edgecolor=border, facecolor=bg, lw=1.8)
         ax.add_patch(ellipse)
-        ax.text(cx, cy, name, ha='center', va='center', fontsize=11, color="#1A365D", fontweight='bold')
+        ax.text(cx, cy, name, ha='center', va='center', fontsize=10, color=code_color, fontweight='bold')
 
-    # Đường nối Actor -> Use Case (dày 1.6pt)
-    guest_lines = [87, 79, 71, 63, 55, 15]
-    for y_uc in guest_lines:
-        ax.plot([17, 29], [75, y_uc], color="#4A5568", lw=1.6)
+    # Cột trái (Base Use Cases) cx = 35.5
+    draw_uc(35.5, 88.5, 23.5, 5.8, "UC-01: Đăng ký & Đăng nhập")
+    draw_uc(35.5, 79.5, 23.5, 5.8, "UC-05: Xem danh mục & Trang chủ")
+    draw_uc(35.5, 70.5, 23.5, 5.8, "UC-06: Tìm kiếm & Lọc sản phẩm")
+    draw_uc(35.5, 60.0, 23.5, 5.8, "UC-08: Xem chi tiết sản phẩm")
+    draw_uc(35.5, 49.5, 23.5, 5.8, "UC-09: Quản lý giỏ hàng")
+    draw_uc(35.5, 37.0, 23.5, 5.8, "UC-11: Đặt hàng (Checkout)")
+    draw_uc(35.5, 25.0, 23.5, 5.8, "UC-12: Theo dõi đơn hàng")
+    draw_uc(35.5, 13.5, 23.5, 5.8, "UC-15: Trò chuyện với Chatbot")
 
-    cust_lines = [47, 39, 31, 23, 7]
-    for y_uc in cust_lines:
-        ax.plot([17, 29], [32, y_uc], color="#2B6CB0", lw=1.8)
+    # Cột phải (Extended & Included Use Cases) cx = 65.5
+    draw_uc(65.5, 60.0, 22.0, 6.2, "UC-16: Chatbot tư vấn\nchọn size (AI Fit)", "#2C5282", "#FAF5FF", "#6B46C1")
+    draw_uc(65.5, 45.0, 22.0, 6.2, "UC-10: Áp dụng mã\ngiảm giá (Coupon)", "#2C5282", "#FAF5FF", "#6B46C1")
+    draw_uc(65.5, 31.0, 22.0, 6.2, "UC-14: Thanh toán\ntrực tuyến (VNPAY)", "#742A2A", "#FFF5F5", "#C53030")
+    draw_uc(65.5, 13.5, 22.0, 6.2, "UC-17: Tra cứu hỏi\nđáp chính sách FAQ", "#2C5282", "#FAF5FF", "#6B46C1")
 
-    # Nối UC-14 -> VNPAY
-    ax.plot([71, 78], [23, 72], color="#22543D", lw=1.8, linestyle="--")
+    # Đường nối Actor -> Use Case
+    # Guest -> UC-01, UC-05, UC-06, UC-08, UC-09, UC-15
+    for yt in [88.5, 79.5, 70.5, 60.0, 49.5, 13.5]:
+        ax.plot([14.5, 23.8], [74, yt], color="#4A5568", lw=1.6)
 
-    # Nối UC-15, UC-17 -> AI Chatbot
-    ax.plot([71, 78], [15, 27], color="#22543D", lw=1.8, linestyle="--")
-    ax.plot([71, 78], [7, 25], color="#22543D", lw=1.8, linestyle="--")
+    # Customer -> UC-11, UC-12
+    for yt in [37.0, 25.0]:
+        ax.plot([14.5, 23.8], [29, yt], color="#2B6CB0", lw=1.8)
+
+    # Nối Hệ thống ngoài
+    # UC-14 -> VNPAY
+    ax.plot([76.5, 80.5], [31.0, 31.2], color="#22543D", lw=1.8, linestyle="--")
+
+    # UC-17 -> AI Chatbot
+    ax.plot([76.5, 80.5], [13.5, 13.5], color="#22543D", lw=1.8, linestyle="--")
+
+    # UC-16 -> AI Chatbot
+    ax.plot([76.5, 79.2, 79.2, 80.5], [60.0, 60.0, 15.5, 15.5], color="#22543D", lw=1.6, linestyle="--")
+
+    # UC-15 -> AI Chatbot
+    ax.plot([47.2, 80.5], [11.8, 11.8], color="#22543D", lw=1.6, linestyle="--")
+
+    # --- MỐI QUAN HỆ <<INCLUDE>> VÀ <<EXTEND>> ---
+
+    # 1. UC-16 -> UC-08 (<<extend>>)
+    ax.annotate("", xy=(47.3, 60.0), xytext=(54.5, 60.0),
+                arrowprops=dict(arrowstyle="-|>", color="#6B46C1", lw=1.9, ls="--", mutation_scale=15))
+    ax.text(50.9, 61.3, "<<extend>>", fontsize=9.5, color="#6B46C1", fontweight='bold', fontstyle='italic', ha='center', va='bottom')
+
+    # 2. UC-10 -> UC-11 (<<extend>>)
+    ax.annotate("", xy=(47.0, 38.8), xytext=(55.0, 43.5),
+                arrowprops=dict(arrowstyle="-|>", color="#6B46C1", lw=1.9, ls="--", mutation_scale=15))
+    ax.text(50.8, 42.4, "<<extend>>", fontsize=9.5, color="#6B46C1", fontweight='bold', fontstyle='italic', rotation=30, ha='center', va='bottom')
+
+    # 3. UC-11 -> UC-14 (<<include>>)
+    ax.annotate("", xy=(55.0, 32.2), xytext=(47.0, 35.5),
+                arrowprops=dict(arrowstyle="-|>", color="#C53030", lw=1.9, ls="--", mutation_scale=15))
+    ax.text(50.8, 35.2, "<<include>>", fontsize=9.5, color="#C53030", fontweight='bold', fontstyle='italic', rotation=-22, ha='center', va='bottom')
+
+    # 4. UC-11 -> UC-09 (<<include>>) - Đặt hàng bao hàm lấy sản phẩm từ giỏ hàng
+    ax.annotate("", xy=(35.5, 46.5), xytext=(35.5, 40.0),
+                arrowprops=dict(arrowstyle="-|>", color="#C53030", lw=1.9, ls="--", mutation_scale=15))
+    ax.text(37.5, 43.2, "<<include>>", fontsize=9.2, color="#C53030", fontweight='bold', fontstyle='italic', ha='left', va='center')
+
+    # 5. UC-17 -> UC-15 (<<extend>>)
+    ax.annotate("", xy=(47.3, 13.5), xytext=(54.5, 13.5),
+                arrowprops=dict(arrowstyle="-|>", color="#6B46C1", lw=1.9, ls="--", mutation_scale=15))
+    ax.text(50.9, 14.8, "<<extend>>", fontsize=9.5, color="#6B46C1", fontweight='bold', fontstyle='italic', ha='center', va='bottom')
+
+    # Bảng chú thích ký hiệu (Legend)
+    legend_box = patches.FancyBboxPatch((23.0, 4.3), 53.5, 4.3, boxstyle="round,pad=0.3", 
+                                        edgecolor="#CBD5E1", facecolor="#FFFFFF", lw=1.2)
+    ax.add_patch(legend_box)
+    ax.text(24.5, 6.4, "Chú thích:", fontsize=9.5, fontweight='bold', color="#1E293B", va='center')
+
+    # 1. Liên kết
+    ax.plot([31.5, 35.0], [6.4, 6.4], color="#2B6CB0", lw=1.8)
+    ax.text(35.8, 6.4, "Liên kết", fontsize=8.8, color="#334155", va='center')
+
+    # 2. Kế thừa
+    ax.annotate("", xy=(46.5, 6.4), xytext=(43.0, 6.4),
+                arrowprops=dict(arrowstyle="-|>", color="#4A5568", lw=1.8, mutation_scale=13))
+    ax.text(47.5, 6.4, "Kế thừa", fontsize=8.8, color="#334155", va='center')
+
+    # 3. Include
+    ax.annotate("", xy=(57.5, 6.4), xytext=(54.0, 6.4),
+                arrowprops=dict(arrowstyle="-|>", color="#C53030", lw=1.8, ls="--", mutation_scale=13))
+    ax.text(58.5, 6.4, "<<include>>", fontsize=8.8, color="#C53030", fontweight='bold', fontstyle='italic', va='center')
+
+    # 4. Extend
+    ax.annotate("", xy=(69.5, 6.4), xytext=(66.0, 6.4),
+                arrowprops=dict(arrowstyle="-|>", color="#6B46C1", lw=1.8, ls="--", mutation_scale=13))
+    ax.text(70.5, 6.4, "<<extend>>", fontsize=8.8, color="#6B46C1", fontweight='bold', fontstyle='italic', va='center')
 
     plt.tight_layout()
     output_path = os.path.join(IMG_DIR, "uc_customer.png")
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print("Regenerated uc_customer.png with LARGE BOLD fonts")
+    print("Regenerated uc_customer.png with UML standard <<include>> and <<extend>> relationships")
 
 # ==============================================================================
 # 2. BIỂU ĐỒ USE CASE QUẢN TRỊ VIÊN (FONT LỚN)

@@ -638,17 +638,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Guarantee Badges */}
-          <div className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-[11px] text-gray-500">
-            <div className="flex items-center gap-1.5">
-              <FaTruckFast className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-2 p-3 sm:p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-xs sm:text-[11px] text-gray-600 sm:text-gray-500">
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <FaTruckFast className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-600 shrink-0" />
               <span>Freeship từ 500K</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FaShieldHalved className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <FaShieldHalved className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-600 shrink-0" />
               <span>100% Chính hãng</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FaRotateLeft className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <FaRotateLeft className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-600 shrink-0" />
               <span>Đổi size 30 ngày</span>
             </div>
           </div>

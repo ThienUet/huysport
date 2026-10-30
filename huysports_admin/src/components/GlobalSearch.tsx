@@ -114,7 +114,7 @@ export default function GlobalSearch() {
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Tìm sản phẩm, đơn hàng, khách hàng..."
-          className="w-full h-10 pl-10 pr-16 bg-slate-100/70 hover:bg-slate-100 focus:bg-white text-sm rounded-xl border border-transparent focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 font-normal focus:shadow-xs outline-none"
+          className="w-full h-9 sm:h-10 pl-9 sm:pl-10 pr-10 sm:pr-16 bg-slate-100/70 hover:bg-slate-100 focus:bg-white text-xs sm:text-sm rounded-xl border border-transparent focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 font-normal focus:shadow-xs outline-none"
         />
 
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
